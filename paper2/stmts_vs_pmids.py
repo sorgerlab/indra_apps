@@ -34,8 +34,8 @@ pmids = list(stmts_by_pmid.keys())
 #num_trials = 3
 
 sample_sizes_trials = [(10, 10), (30, 10), (100, 5), (300, 3),
-                (1000, 3), (1000, 3), (3000, 3), (10000, 3),
-                (30000, 1), (100000, 1), (250000, 1)]
+                (1000, 3), (3000, 1), (10000, 1),
+                (30000, 1), (100000, 1), (275000, 1)]
 sample_sizes = [t[0] for t in sample_sizes_trials]
 
 results = []
@@ -44,6 +44,7 @@ results_top = []
 results_filt = []
 
 for pmid_sample_size, num_trials in sample_sizes_trials:
+    print("\n\nSample size: %d\n\n" % pmid_sample_size)
     trial_results = []
     trial_results_uniq = []
     trial_results_top = []
@@ -55,7 +56,7 @@ for pmid_sample_size, num_trials in sample_sizes_trials:
         #
         be = BeliefEngine()
         pa = Preassembler(hierarchies, trial_stmts)
-        trial_stmts_top = pa.combine_related(poolsize=4, return_toplevel=True)
+        trial_stmts_top = pa.combine_related(poolsize=16, return_toplevel=True)
         trial_stmts_uniq = pa.unique_stmts
         trial_stmts_filt = ac.filter_belief(trial_stmts_top, 0.90)
         #trial_stmts_uniq = ac.run_preassembly_duplicate(pa, be)
@@ -76,12 +77,12 @@ results_filt = np.array(results_filt)
 plt.ion()
 
 plt.figure(figsize=(3, 3), dpi=150)
-plt.errorbar(sample_sizes, results[:,0], label='Raw', marker='.')
-plt.errorbar(sample_sizes, results_uniq[:,0], label='Unique', marker='.')
-plt.errorbar(sample_sizes, results_top[:, 0], label='Top-level', marker='.')
-plt.errorbar(sample_sizes, results_filt[:,0], label='$P \gt 0.9$', marker='.')
+plt.plot(sample_sizes, results[:,0], label='Raw', marker='.')
+plt.plot(sample_sizes, results_uniq[:,0], label='Unique', marker='.')
+plt.plot(sample_sizes, results_top[:, 0], label='Top-level', marker='.')
+plt.plot(sample_sizes, results_filt[:,0], label='P 0.9', marker='.')
 
-pf.set_fig_params()
+#pf.set_fig_params()
 ax = plt.gca()
 ax.set_xscale('log')
 ax.set_yscale('log')
