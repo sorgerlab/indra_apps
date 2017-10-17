@@ -126,14 +126,19 @@ if __name__ == '__main__':
     #indra_stmts = get_indra_db_stmts()
     indra_stmts = ac.load_statements('indra_phos_stmts.pkl')
     indra_stmts = ac.filter_genes_only(indra_stmts)
+    #indra_stmts = ac.filter_belief(indra_stmts)
+    reading_only_stmts = [s for s in indra_stmts
+                          if set(['reach']) == set([e.source_api
+                                                    for e in s.evidence])]
     #indra_stmts = ac.filter_enzyme_kinase(indra_stmts)
-    nk_stmts = get_ovarian_nk_stmts()
-    nk_stmts = ac.map_sequence(nk_stmts)
-    phos_stmts = get_phosphosite_stmts()
+    #nk_stmts = get_ovarian_nk_stmts()
+    #nk_stmts = ac.map_sequence(nk_stmts)
+    #phos_stmts = get_phosphosite_stmts()
 
-    all_stmts = indra_stmts + nk_stmts + phos_stmts
+    #all_stmts = indra_stmts + nk_stmts + phos_stmts
 
-    save_prior(all_stmts)
+    #save_prior(all_stmts)
+
     #def get_kin_sub(stmts):
     #    return set([(s.enz.name, s.sub.name, s.position) for s in stmts])
 
