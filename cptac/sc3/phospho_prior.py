@@ -6,9 +6,9 @@ from matplotlib_venn import venn2, venn3
 from matplotlib import pyplot as plt
 from indra.databases import hgnc_client
 from indra.statements import *
-from indra.db.query_db_stmts import by_gene_role_type
+#from indra.db.query_db_stmts import by_gene_role_type
 import synapseclient
-
+from indra.databases import omnipath_client
 
 def load_annotations_from_synapse(synapse_id='syn10998244'):
     syn = synapseclient.Synapse()
@@ -22,6 +22,15 @@ def load_annotations_from_synapse(synapse_id='syn10998244'):
         gene_list = row[1].split(',')
         prior[site_info] = gene_list
     return prior
+
+
+def get_omnipath_stmts():
+    stmts = omnipath_client.get_all_modifications()
+    stmts = ac.filter_by_type(stmts, Phosphorylation)
+    stmts = ac.map_sequence(stmts)
+    stmts = ac.filter_human_only(stmts)
+    stmts = ac.filter_genes_only(stmts)
+    return stmts
 
 
 def get_indra_db_stmts():
@@ -97,6 +106,9 @@ def save_prior(prior):
 
 
 if __name__ == '__main__':
+    omni_stmts = get_omnipath_stmts()
+    import sys
+    sys.exit()
     base_prior = load_annotations_from_synapse(synapse_id='syn10998244')
 
     phos_stmts = get_phosphosite_stmts()
@@ -106,6 +118,7 @@ if __name__ == '__main__':
     indra_stmts = ac.load_statements('sources/indra_phos_stmts.pkl')
     indra_stmts = ac.filter_genes_only(indra_stmts)
     indra_prior = to_prior(indra_stmts)
+
 
     #save_prior(all_stmts)
 
