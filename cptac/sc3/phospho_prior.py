@@ -1,39 +1,68 @@
+import numpy as np
 from indra.tools import assemble_corpus as ac
+from itertools import chain
 import pickle
 from collections import defaultdict
 from indra.util import read_unicode_csv, write_unicode_csv
 from matplotlib_venn import venn2, venn3
 from matplotlib import pyplot as plt
-from indra.databases import hgnc_client
+from indra.databases import hgnc_client, uniprot_client
 from indra.statements import *
-#from indra.db.query_db_stmts import by_gene_role_type
+from indra.db.query_db_stmts import by_gene_role_type
 import synapseclient
 from indra.databases import omnipath_client
+
+def get_ids(hgnc_name):
+    hgnc_id = hgnc_client.get_hgnc_id(hgnc_name)
+    up_id = hgnc_client.get_uniprot_id(hgnc_id)
+    return {'HGNC': hgnc_id, 'UP': up_id}
+
+
+def load_ov_sites():
+    ov_sites = set([])
+    with open('sources/all_peptides.txt', 'rt') as f:
+        for line in f:
+            gene, site = line.strip().split(':')
+            ov_sites.add((gene, site))
+    return ov_sites
+
 
 def load_annotations_from_synapse(synapse_id='syn10998244'):
     syn = synapseclient.Synapse()
     syn.login()
     # Obtain a pointer and download the data
     syn_data = syn.get('syn10998244')
-
     prior = {}
+    stmts = []
     for row in read_unicode_csv(syn_data.path, delimiter='\t'):
-        site_info = row[0]
+        sub_name, site_info = row[0].split(':')
+        res = site_info[0]
+        pos = site_info[1:]
         gene_list = row[1].split(',')
         prior[site_info] = gene_list
-    return prior
+        for enz_name in gene_list:
+            enz = Agent(enz_name, db_refs=get_ids(enz_name))
+            sub = Agent(sub_name, db_refs=get_ids(sub_name))
+            stmt = Phosphorylation(enz, sub, res, pos)
+            stmts.append(stmt)
+    stmts = ac.map_sequence(stmts)
+    stmts = ac.filter_human_only(stmts)
+    #stmts = ac.filter_genes_only(stmts)
+    return stmts
 
 
 def get_omnipath_stmts():
     stmts = omnipath_client.get_all_modifications()
-    stmts = ac.filter_by_type(stmts, Phosphorylation)
+    phos_stmts = ac.filter_by_type(stmts, Phosphorylation)
+    dephos_stmts = ac.filter_by_type(stmts, Dephosphorylation)
+    stmts = phos_stmts + dephos_stmts
     stmts = ac.map_sequence(stmts)
     stmts = ac.filter_human_only(stmts)
-    stmts = ac.filter_genes_only(stmts)
+    #stmts = ac.filter_genes_only(stmts)
     return stmts
 
 
-def get_indra_db_stmts():
+def get_indra_phos_stmts():
     stmts = by_gene_role_type(stmt_type='Phosphorylation')
     stmts = ac.map_grounding(stmts)
     # Expand families before site mapping
@@ -41,11 +70,26 @@ def get_indra_db_stmts():
     stmts = ac.filter_grounded_only(stmts)
     stmts = ac.map_sequence(stmts)
     stmts = ac.run_preassembly(stmts, poolsize=4,
-                               save='indra_phos_stmts_pre.pkl')
+                               save='sources/indra_phos_stmts_pre.pkl')
     stmts = ac.filter_human_only(stmts)
     stmts = ac.filter_genes_only(stmts)
     stmts = [s for s in stmts if s.enz and s.sub and s.residue and s.position]
-    ac.dump_statements(stmts, 'indra_phos_stmts.pkl')
+    ac.dump_statements(stmts, 'sources/indra_phos_stmts.pkl')
+    return stmts
+
+
+def get_indra_reg_act_stmts():
+    stmts = []
+    for stmt_type in ('Activation', 'Inhibition', 'ActiveForm'):
+        print("Getting %s statements from INDRA DB" % stmt_type)
+        stmts += by_gene_role_type(stmt_type=stmt_type)
+    stmts = ac.map_grounding(stmts, save='sources/indra_reg_act_gmap.pkl')
+    stmts = ac.filter_grounded_only(stmts)
+    stmts = ac.run_preassembly(stmts, poolsize=4,
+                               save='sources/indra_reg_act_pre.pkl')
+    stmts = ac.filter_human_only(stmts)
+    stmts = ac.filter_genes_only(stmts)
+    ac.dump_statements(stmts, 'sources/indra_reg_act_stmts.pkl')
     return stmts
 
 
@@ -105,19 +149,83 @@ def save_prior(prior):
             f.write('%s\t%s\n' % (gene_key, enzyme_list))
 
 
+def get_stmt_sites(stmts):
+    stmt_sites = set([])
+    for stmt in stmts:
+        site_info = '%s%s' % (stmt.residue, stmt.position)
+        stmt_sites.add((stmt.sub.name, site_info))
+    return stmt_sites
+
+
+def coverage(set1, set2):
+    coverage = len(set1.intersection(set2))
+    return coverage
+
+
+def load_brca_sites():
+    filename = 'sources/Merged_dataset_normalized_subset.csv'
+    sites = set([])
+    for row in read_unicode_csv(filename, skiprows=1):
+        entry_info = row[0]
+        site_info = entry_info.split('_')[1]
+        up_id = row[-1]
+        gene_name = uniprot_client.get_gene_name(up_id)
+        sites.add((gene_name, site_info))
+    return sites
+
+
 if __name__ == '__main__':
+    indra_reg_stmts = get_indra_reg_act_stmts()
+    import sys; sys.exit()
+    """
+    syn_stmts = load_annotations_from_synapse(synapse_id='syn10998244')
     omni_stmts = get_omnipath_stmts()
-    import sys
-    sys.exit()
-    base_prior = load_annotations_from_synapse(synapse_id='syn10998244')
-
     phos_stmts = get_phosphosite_stmts()
-    phos_prior = to_prior(phos_stmts)
-
     #indra_stmts = get_indra_db_stmts()
     indra_stmts = ac.load_statements('sources/indra_phos_stmts.pkl')
     indra_stmts = ac.filter_genes_only(indra_stmts)
-    indra_prior = to_prior(indra_stmts)
+    """
+
+    with open('sources/stmt_cache.pkl', 'rb') as f:
+        syn_stmts, omni_stmts, phos_stmts, indra_stmts = pickle.load(f)
+
+    ov_sites = load_ov_sites()
+    brca_sites = load_brca_sites()
+
+    all_stmts = syn_stmts + omni_stmts + phos_stmts + indra_stmts
+
+    print("Phosphosite: %d of %d peptides" %
+          (coverage(ov_sites, get_stmt_sites(phos_stmts)), len(ov_sites)))
+    print("Phosphosite + NetworKIN: %d of %d peptides" %
+          (coverage(ov_sites, get_stmt_sites(syn_stmts)), len(ov_sites)))
+    print("Omnipath (incl. PSP, Signor, et al.): %d of %d peptides" %
+          (coverage(ov_sites, get_stmt_sites(omni_stmts)), len(ov_sites)))
+    print("REACH/INDRA: %d of %d peptides" %
+          (coverage(ov_sites, get_stmt_sites(indra_stmts)), len(ov_sites)))
+    print("Combined prior: %d of %d peptides" %
+          (coverage(ov_sites, get_stmt_sites(all_stmts)), len(ov_sites)))
+    print("BRCA phospho-MS data: %d of %d peptides" %
+          (coverage(ov_sites, brca_sites), len(ov_sites)))
+
+    all_sites = get_stmt_sites(all_stmts).union(brca_sites)
+    print("Combined all: %d of %d peptides" %
+          (coverage(ov_sites, all_sites), len(ov_sites)))
+
+    # Get activators of kinases
+
+    # Mechanism link to find additional phosphorylation statements
+
+    #indra_prior = to_prior(indra_stmts)
+    db_stmts = syn_stmts + omni_stmts + phos_stmts
+    db_prior = to_prior(db_stmts)
+    db_counts = [len(kinases) for kinases in db_prior.values()]
+    all_prior = to_prior(all_stmts)
+    all_counts = [len(kinases) for kinases in all_prior.values()]
+    plt.ion()
+    plt.figure()
+    plt.hist(np.log10(db_counts), bins=20, alpha=0.5)
+    plt.hist(np.log10(all_counts), bins=20, alpha=0.5)
+
 
 
     #save_prior(all_stmts)
@@ -137,10 +245,6 @@ def get_ovarian_nk_stmts():
     for row_ix, row in enumerate(
                         read_unicode_csv('ovarian_kinase_substrate_table.csv',
                                          skiprows=1)):
-        def get_ids(hgnc_name):
-            hgnc_id = hgnc_client.get_hgnc_id(hgnc_name)
-            up_id = hgnc_client.get_uniprot_id(hgnc_id)
-            return {'HGNC': hgnc_id, 'UP': up_id}
 
         source = row[5]
         sources = set()
