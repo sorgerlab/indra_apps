@@ -18,14 +18,26 @@ def get_ids(hgnc_name):
     return {'HGNC': hgnc_id, 'UP': up_id}
 
 
-def load_ov_sites():
+def load_ov_sites(use_mapped=True):
     ov_sites = set([])
-    with open('sources/all_peptides.txt', 'rt') as f:
-        for line in f:
-            gene, site = line.strip().split(':')
-            ov_sites.add((gene, site))
+    mismatch_count = 0
+    for row in read_unicode_csv('mapped_peptides.txt', delimiter='\t',
+                                skiprows=1):
+        # Check for uniprot ID
+        gene_name = row[2]
+        up_id = row[3]
+        orig_site = row[4]
+        mapped_site = row[-1]
+        if orig_site != mapped_site:
+            mismatch_count += 1
+        if not up_id:
+            continue
+        if use_mapped:
+            ov_sites.add((gene_name, mapped_site))
+        else:
+            ov_sites.add((gene_name, orig_site))
+    print("%d mismatched sites of %d" % (mismatch_count, len(ov_sites)))
     return ov_sites
-
 
 def load_annotations_from_synapse(synapse_id='syn10998244'):
     syn = synapseclient.Synapse()
@@ -97,6 +109,9 @@ def get_indra_reg_act_stmts():
     ac.dump_statements(stmts, 'sources/indra_reg_act_stmts.pkl')
     return stmts
 
+
+def get_pc_reg_act_stmts():
+    pass
 
 def add_regulators(reg_stmts, prior):
     # Build a dict of regulators for each gene
@@ -205,11 +220,17 @@ def load_brca_sites():
 
 
 if __name__ == '__main__':
+    ov_sites = load_ov_sites(use_mapped=True)
+    brca_sites = load_brca_sites()
+
+    """
     reg_stmts = get_indra_reg_act_stmts()
     act_stmts = ac.filter_by_type(reg_stmts, Activation)
     inh_stmts = ac.filter_by_type(reg_stmts, Inhibition)
     reg_stmts = act_stmts + inh_stmts
     reg_stmts = [s for s in reg_stmts if s.subj is not None]
+    """
+
     """
     syn_stmts = load_annotations_from_synapse(synapse_id='syn10998244')
     omni_stmts = get_omnipath_stmts()
@@ -221,9 +242,6 @@ if __name__ == '__main__':
 
     with open('sources/stmt_cache.pkl', 'rb') as f:
         syn_stmts, omni_stmts, phos_stmts, indra_stmts = pickle.load(f)
-
-    ov_sites = load_ov_sites()
-    brca_sites = load_brca_sites()
 
     db_stmts = syn_stmts + omni_stmts + phos_stmts
     all_stmts = syn_stmts + omni_stmts + phos_stmts + indra_stmts
@@ -245,23 +263,31 @@ if __name__ == '__main__':
     print("Combined all: %d of %d peptides" %
           (coverage(ov_sites, all_sites), len(ov_sites)))
 
+    import sys; sys.exit()
+
     db_prior = to_prior(db_stmts)
     all_prior = to_prior(all_stmts)
     # Get activators of kinases
+    ext_db_prior = add_regulators(reg_stmts, db_prior)
     ext_prior = add_regulators(reg_stmts, all_prior)
 
     #indra_prior = to_prior(indra_stmts)
     db_counts = [len(kinases) for kinases in db_prior.values()]
     all_counts = [len(kinases) for kinases in all_prior.values()]
     ext_counts = [len(genes) for genes in ext_prior.values()]
+    ext_db_counts = [len(genes) for genes in ext_db_prior.values()]
+
     plt.ion()
     plt.figure()
-    plt.hist(np.log10(db_counts), bins=20, alpha=0.5)
-    plt.hist(np.log10(all_counts), bins=20, alpha=0.5)
+    #plt.hist(np.log10(db_counts), bins=20, alpha=0.5)
+    #plt.hist(np.log10(all_counts), bins=20, alpha=0.5)
+    plt.hist(np.log10(ext_db_counts), bins=20, alpha=0.5)
     plt.hist(np.log10(ext_counts), bins=20, alpha=0.5)
 
     plt.xlabel('log10(Num annotations)')
     plt.ylabel('Number of peptides')
+
+    # Get list of kinases that bind to the gene
 
 
     #save_prior(all_stmts)
