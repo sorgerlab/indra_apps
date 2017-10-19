@@ -89,8 +89,8 @@ def run_msa(gene_dict, rs_data, problems):
     aln_data = {}
     for gene_sym, rs_ids in gene_dict.items():
         counter += 1
-        if counter >= 20:
-            break
+        #if counter >= 20:
+        #    break
         print("%s: %d of %d genes" % (gene_sym, counter, len(gene_dict)))
         fasta_lines = []
         # Get the main Uniprot sequence from the gene symbol
@@ -130,9 +130,9 @@ def run_msa(gene_dict, rs_data, problems):
                 for line in fasta_lines:
                     f.write(line)
             # Run the sequence alignment
-            print("\tRunning sequence alignment.")
-            subprocess.call(['./clustal-omega-1.2.3-macosx', '-i', in_file,
-                             '-o', out_file, '--force'])
+            #print("\tRunning sequence alignment.")
+            #subprocess.call(['./clustal-omega-1.2.3-macosx', '-i', in_file,
+            #                 '-o', out_file, '--force'])
     return aln_data
 
 
@@ -200,15 +200,13 @@ def get_mapped_sites(aln_data, rs_data, num_res=7):
             # Now get the alignment info
             aln_entry = aln_data.get(rs_id)
             # If no alignment info, don't try to get mapped sites
-            if gene_sym == 'ABLIM1':
-                import ipdb; ipdb.set_trace()
             if not aln_entry:
                 mapped_sites.append('')
             else:
                 (_, matched_seq, aln_file) = aln_entry
                 # Sequence was a match, no need to map site, copy over site info
                 if matched_seq:
-                    mapped_sites.append(site)
+                    mapped_sites.append('%s%s' % (res, pos))
                 else:
                     # Read the alignment file
                     aln = AlignIO.read(aln_file, 'fasta')
@@ -217,14 +215,15 @@ def get_mapped_sites(aln_data, rs_data, num_res=7):
                     rs_row_ix = ix_map[rs_id]['ix']
                     gene_row_ix = ix_map[gene_sym]['ix']
                     assert aln[rs_row_ix][aln_col_ix] == res
-                    assert aln[gene_row_ix][aln_col_ix] == '-' or \
-                           aln[gene_row_ix][aln_col_ix] == res
                     gene_pos = ix_map[gene_sym]['to'][aln_col_ix]
-                    # This site is not present in the gene sequence
-                    if gene_pos is None:
+                    if gene_pos is None or \
+                            not aln[gene_row_ix][aln_col_ix] == res:
                         mapped_sites.append('')
+                        print("Site %s in %s not found in seq for %s" %
+                             (site, rs_id, gene_sym))
                     else:
                         mapped_sites.append('%s%s' % (res, gene_pos+1))
+
         result = (site_id, rs_id, gene_sym,
                   ','.join([s.upper() for s in site_list]),
                   ','.join(flanks),
