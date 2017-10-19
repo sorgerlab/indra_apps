@@ -86,7 +86,7 @@ def run_msa(gene_dict, rs_data, problems):
     # Next, get sequences and run alignments
     counter = 0
     matches = set()
-    aln_data = []
+    aln_data = {}
     for gene_sym, rs_ids in gene_dict.items():
         counter += 1
         if counter >= 20:
@@ -106,7 +106,6 @@ def run_msa(gene_dict, rs_data, problems):
         in_file = 'aln/in/%s.fasta' % gene_sym
         out_file = 'aln/out/%s.fasta' % gene_sym
         # Iterate over the Refseq IDs
-        aln_rows = []
         for rs_id in rs_ids:
             seq_info = rs_data.get(rs_id)
             if not seq_info:
@@ -115,16 +114,15 @@ def run_msa(gene_dict, rs_data, problems):
             seq_ids.append(rs_id)
             fasta_header, sequence = seq_info
             fasta_lines.append('>%s\n%s\n' % (rs_id, sequence))
-            aln_row = [rs_id, gene_sym, False, out_file]
-            aln_rows.append(aln_row)
-        if len(seq_ids) == -1:
+            if sequence == up_sequence:
+                aln_data[rs_id] = (gene_sym, True, None)
+            else:
+                aln_data[rs_id] = (gene_sym, False, out_file)
+        if len(seq_ids) == 0:
             continue
 
         if len(seq_ids) == 1 and sequence == up_sequence:
-            print("\tSequences match, no alignment needed.")
-            matches.add((rs_id, up_id_main))
-            aln_rows = [[rs_id, gene_sym, True, None]]
-            aln_data += aln_rows
+            print("\tAll sequences match, no alignment needed.")
             continue
         else:
             # Write the fasta file
@@ -135,11 +133,29 @@ def run_msa(gene_dict, rs_data, problems):
             print("\tRunning sequence alignment.")
             subprocess.call(['./clustal-omega-1.2.3-macosx', '-i', in_file,
                              '-o', out_file, '--force'])
-            aln_data += aln_rows
     return aln_data
 
 
-def get_mapped_sites(aln_data, rs_data, num_res=6):
+def _get_index_map(aln):
+    ix_map = {}
+    for aln_ix, aln_row in enumerate(aln):
+        seq = aln_row.seq
+        from_ix_map = []
+        to_ix_map = []
+        seq_ctr = 0
+        for aa_ix, aa in enumerate(seq):
+            if aa != '-':
+                from_ix_map.append(aa_ix)
+                to_ix_map.append(seq_ctr)
+                seq_ctr += 1
+            else:
+                to_ix_map.append(None)
+        ix_map[aln_row.id] = {'ix': aln_ix, 'from': from_ix_map,
+                              'to': to_ix_map}
+    return ix_map
+
+
+def get_mapped_sites(aln_data, rs_data, num_res=7):
     # For each peptide, get info, then get flanking sequence and site on refseq
     results = []
     for row in read_unicode_csv(peptide_file, delimiter='\t', skiprows=1):
@@ -160,8 +176,9 @@ def get_mapped_sites(aln_data, rs_data, num_res=6):
         #up_sequence = uniprot_client.get_sequence(up_id_main)
         flanks = []
         site_ixs = []
+        mapped_sites = []
         for site in site_list:
-            res = site[0]
+            res = site[0].upper()
             pos = int(site[1:])
             try:
                 seq_info = rs_data[rs_id]
@@ -179,11 +196,40 @@ def get_mapped_sites(aln_data, rs_data, num_res=6):
             if end_ix > len(sequence):
                 end_ix = len(sequence)
             flanks.append(sequence[start_ix:end_ix])
-
+            site_ixs.append(str(site_ix))
+            # Now get the alignment info
+            aln_entry = aln_data.get(rs_id)
+            # If no alignment info, don't try to get mapped sites
+            if gene_sym == 'ABLIM1':
+                import ipdb; ipdb.set_trace()
+            if not aln_entry:
+                mapped_sites.append('')
+            else:
+                (_, matched_seq, aln_file) = aln_entry
+                # Sequence was a match, no need to map site, copy over site info
+                if matched_seq:
+                    mapped_sites.append(site)
+                else:
+                    # Read the alignment file
+                    aln = AlignIO.read(aln_file, 'fasta')
+                    ix_map = _get_index_map(aln)
+                    aln_col_ix = ix_map[rs_id]['from'][pos-1]
+                    rs_row_ix = ix_map[rs_id]['ix']
+                    gene_row_ix = ix_map[gene_sym]['ix']
+                    assert aln[rs_row_ix][aln_col_ix] == res
+                    assert aln[gene_row_ix][aln_col_ix] == '-' or \
+                           aln[gene_row_ix][aln_col_ix] == res
+                    gene_pos = ix_map[gene_sym]['to'][aln_col_ix]
+                    # This site is not present in the gene sequence
+                    if gene_pos is None:
+                        mapped_sites.append('')
+                    else:
+                        mapped_sites.append('%s%s' % (res, gene_pos+1))
         result = (site_id, rs_id, gene_sym,
                   ','.join([s.upper() for s in site_list]),
                   ','.join(flanks),
-                  ','.join(site_ixs))
+                  ','.join(site_ixs),
+                  ','.join(mapped_sites))
         results.append(result)
     return results
 
@@ -198,23 +244,7 @@ if __name__ == '__main__':
     #write_unicode_csv('seq_match_ids.txt', matches)
     #write_unicode_csv('problems.txt', problems)
     """
-        def get_index_map(aln):
-            ix_map = {}
-            for aln_row in aln:
-                seq = aln_row.seq
-                seq_ix_map = []
-                for aa_ix, aa in enumerate(seq):
-                    if aa != '-':
-                        seq_ix_map.append(aa_ix)
-                ix_map[aln_row.id] = seq_ix_map
-            return ix_map
 
-        # Read the output
-        aln = AlignIO(out_file, 'fasta')
-        # Write the seq to a file
-        #peptide_info = (site_id, gene_sym, refseq_id, up_id_from_rs, site_info)
-        #ids.add(peptide_info)
-        ix_map = get_index_map(aln)
 
     id_map = load_refseq_up_map()
 
