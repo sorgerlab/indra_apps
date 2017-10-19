@@ -1,33 +1,32 @@
+import re
+import subprocess
 from Bio import AlignIO
 from indra.util import read_unicode_csv, write_unicode_csv
 from indra.databases import uniprot_client, hgnc_client
-import subprocess
-import re
 
-peptide_file = 'sources/retrospective_ova_phospho_sort_common_gene_10057.txt'
 
-# Problem: statements from reading and many databases give results in terms
-# of HGNC identifiers, which are mapped to canonical Uniprot IDs.
-# However, protein data is mapped to RefSeq identifiers, which often refer
-# to isoforms that don't match the canonical Uniprot sequence. Sometimes
-# they also can't mapped to any of the isoforms of the canonical entry in Uniprot
-# due to differences in sequence.
+# Problem: statements from reading and many databases give results in terms of
+# HGNC identifiers, which are mapped to canonical Uniprot IDs.  However,
+# protein data is mapped to RefSeq identifiers, which often refer to isoforms
+# that don't match the canonical Uniprot sequence. Sometimes they also can't
+# mapped to any of the isoforms of the canonical entry in Uniprot due to
+# differences in sequence.
 #
-# Solution: Get RefSeq IDs for all peptides and group by gene symbol. Then
-# Get a Uniprot ID corresponding to each RefSeq ID (ideally an isoform of the
+# Solution: Get RefSeq IDs for all peptides and group by gene symbol. Then Get
+# a Uniprot ID corresponding to each RefSeq ID (ideally an isoform of the
 # reviewed entry, though it doesn't really matter which one since the point is
-# just to get the sequence for running an alignment.
-# Get the Uniprot ID associated with the gene symbol.
+# just to get the sequence for running an alignment.  Get the Uniprot ID
+# associated with the gene symbol.
 #
-# Get sequences for all Uniprot IDs associated with a given gene symbol.
-# Run sequences through sequence alignment.
+# Get sequences for all Uniprot IDs associated with a given gene symbol.  Run
+# sequences through sequence alignment.
 #
 # Then, for a given peptide, look up phosphorylated site; get upid for refseq
-# id. If matches canonical up_id from HGNC, go straight to sequence
-# Otherwise, map to sequence
-# alignment; get corresponding site on reference sequence; get priors associated
-# with that site on canonical protein.
+# id. If matches canonical up_id from HGNC, go straight to sequence Otherwise,
+# map to sequence alignment; get corresponding site on reference sequence; get
+# priors associated with that site on canonical protein.
 
+peptide_file = 'sources/retrospective_ova_phospho_sort_common_gene_10057.txt'
 
 def load_refseq_seqs():
     seq_file = 'sources/GRCh38_latest_protein.faa'
@@ -130,9 +129,9 @@ def run_msa(gene_dict, rs_data, problems):
                 for line in fasta_lines:
                     f.write(line)
             # Run the sequence alignment
-            #print("\tRunning sequence alignment.")
-            #subprocess.call(['./clustal-omega-1.2.3-macosx', '-i', in_file,
-            #                 '-o', out_file, '--force'])
+            print("\tRunning sequence alignment.")
+            subprocess.call(['./clustal-omega-1.2.3-macosx', '-i', in_file,
+                             '-o', out_file, '--force'])
     return aln_data
 
 
@@ -165,71 +164,75 @@ def get_mapped_sites(aln_data, rs_data, num_res=7):
         # Split out multiple site info
         rem = site_info
         site_list = []
+        hgnc_id = hgnc_client.get_hgnc_id(gene_sym)
+        up_id = ''
+        if hgnc_id:
+            up_id_main = hgnc_client.get_uniprot_id(hgnc_id)
+            if up_id_main:
+                up_id = up_id_main
+
         while rem:
             m = re.match('([sty][0-9]+)(.*)', rem)
             assert m.groups()[0]
             site_list.append(m.groups()[0])
             rem = m.groups()[1]
-        # Get the main Uniprot sequence from the gene symbol
-        #hgnc_id = hgnc_client.get_hgnc_id(gene_sym)
-        #up_id_main = hgnc_client.get_uniprot_id(hgnc_id)
-        #up_sequence = uniprot_client.get_sequence(up_id_main)
-        flanks = []
-        site_ixs = []
-        mapped_sites = []
         for site in site_list:
             res = site[0].upper()
             pos = int(site[1:])
-            try:
-                seq_info = rs_data[rs_id]
-            except KeyError:
-                flanks.append('')
-                site_ixs.append('')
-                continue
-            fasta_header, sequence = seq_info
-            start_ix = pos - num_res - 1
-            end_ix = pos + num_res
-            site_ix = num_res
-            if start_ix < 0:
-                site_ix = num_res + start_ix
-                start_ix = 0
-            if end_ix > len(sequence):
-                end_ix = len(sequence)
-            flanks.append(sequence[start_ix:end_ix])
-            site_ixs.append(str(site_ix))
-            # Now get the alignment info
-            aln_entry = aln_data.get(rs_id)
-            # If no alignment info, don't try to get mapped sites
-            if not aln_entry:
-                mapped_sites.append('')
+            seq_info = rs_data.get(rs_id)
+            if not seq_info:
+                flanking = ''
+                site_ix = ''
+                mapped_site = ''
             else:
-                (_, matched_seq, aln_file) = aln_entry
-                # Sequence was a match, no need to map site, copy over site info
-                if matched_seq:
-                    mapped_sites.append('%s%s' % (res, pos))
+                fasta_header, sequence = seq_info
+                start_ix = pos - num_res - 1
+                end_ix = pos + num_res
+                site_ix = num_res
+                if start_ix < 0:
+                    site_ix = num_res + start_ix
+                    start_ix = 0
+                if end_ix > len(sequence):
+                    end_ix = len(sequence)
+                flanking = sequence[start_ix:end_ix]
+                if site_ix != num_res:
+                    print("%s: site ix is %d" % (site_id, site_ix))
+                site_ix = str(site_ix)
+                # Now get the alignment info
+                aln_entry = aln_data.get(rs_id)
+                # If no alignment info, don't try to get mapped sites
+                if not aln_entry:
+                    mapped_site = ''
                 else:
-                    # Read the alignment file
-                    aln = AlignIO.read(aln_file, 'fasta')
-                    ix_map = _get_index_map(aln)
-                    aln_col_ix = ix_map[rs_id]['from'][pos-1]
-                    rs_row_ix = ix_map[rs_id]['ix']
-                    gene_row_ix = ix_map[gene_sym]['ix']
-                    assert aln[rs_row_ix][aln_col_ix] == res
-                    gene_pos = ix_map[gene_sym]['to'][aln_col_ix]
-                    if gene_pos is None or \
-                            not aln[gene_row_ix][aln_col_ix] == res:
-                        mapped_sites.append('')
-                        print("Site %s in %s not found in seq for %s" %
-                             (site, rs_id, gene_sym))
+                    (_, matched_seq, aln_file) = aln_entry
+                    # Sequence was a match, no need to map site, copy over
+                    # site info
+                    if matched_seq:
+                        mapped_site = site.upper()
                     else:
-                        mapped_sites.append('%s%s' % (res, gene_pos+1))
-
-        result = (site_id, rs_id, gene_sym,
-                  ','.join([s.upper() for s in site_list]),
-                  ','.join(flanks),
-                  ','.join(site_ixs),
-                  ','.join(mapped_sites))
-        results.append(result)
+                        # Read the alignment file
+                        aln = AlignIO.read(aln_file, 'fasta')
+                        ix_map = _get_index_map(aln)
+                        aln_col_ix = ix_map[rs_id]['from'][pos-1]
+                        rs_row_ix = ix_map[rs_id]['ix']
+                        gene_row_ix = ix_map[gene_sym]['ix']
+                        assert aln[rs_row_ix][aln_col_ix] == res
+                        gene_pos = ix_map[gene_sym]['to'][aln_col_ix]
+                        if gene_pos is None or \
+                                not aln[gene_row_ix][aln_col_ix] == res:
+                            mapped_site = ''
+                            print("Site %s in %s not found in seq for %s" %
+                                 (site, rs_id, gene_sym))
+                        else:
+                            mapped_site = '%s%s' % (res, gene_pos+1)
+            result = (site_id, rs_id, gene_sym, up_id, site.upper(), flanking,
+                      site_ix, mapped_site)
+            results.append(result)
+    header = [['SITE_ENTRY', 'REFSEQ_ID', 'GENE_NAME', 'UNIPROT_ID_REFERENCE',
+              'SITE', 'MOTIF', 'RESIDUE_MOTIF_POSITION',
+              'SITE_POS_IN_REFERENCE']]
+    write_unicode_csv('mapped_peptides.txt', header + results,
+                      delimiter='\t')
     return results
 
 
@@ -239,52 +242,4 @@ if __name__ == '__main__':
     gene_dict = get_genes_to_refseq_ids(problems)
     aln_data = run_msa(gene_dict, rs_data, problems)
     site_data = get_mapped_sites(aln_data, rs_data)
-
-    #write_unicode_csv('seq_match_ids.txt', matches)
-    #write_unicode_csv('problems.txt', problems)
-    """
-
-
-    id_map = load_refseq_up_map()
-
-        site_id = row[0]
-        print('%d: %s' % (row_ix, site_id))
-        gene_sym, rem = site_id.split('.', maxsplit=1)
-        refseq_id, site_info = rem.split(':')
-        res = site_info[0].upper()
-        pos = site_info[1:]
-        try:
-            pos = int(pos)
-        except ValueError:
-            print("\tSkipping double phosphosite %s" % site_id)
-            continue
-
-            if not sequence[pos-1] == res:
-                print("\tInvalid site: %s" % site_id)
-                continue
-
-        # Check whether the sequences are identical!
-        if sequence == up_sequence:
-            print("\tSequences are identical, no need for sequence alignment!")
-            continue
-
-    # Now pick a gene and collect the UP IDs for getting sequences
-    for gene in gene_dict.keys():
-        up_main = gene_dict[gene]['main']
-        refseq_up_ids = gene_dict[gene]['refseq']
-        seq_id_list = []
-        for refseq_up_id in refseq_up_ids:
-            if refseq_up_id + '-1' == up_main:
-                continue
-            seq_id_list.append(refseq_up_id)
-        if seq_id_list:
-            seq_id_list.append(up_main)
-
-
-    # Now collect, all uniprot IDs for each gene symbol, including the canonical
-    # one
-
-
-    write_unicode_csv('all_peptides_refseq.txt', ids)
-    """
 
