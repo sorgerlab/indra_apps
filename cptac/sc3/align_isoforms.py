@@ -1,6 +1,8 @@
+from Bio import AlignIO
 from indra.util import read_unicode_csv, write_unicode_csv
 from indra.databases import uniprot_client, hgnc_client
 import subprocess
+import re
 
 peptide_file = 'sources/retrospective_ova_phospho_sort_common_gene_10057.txt'
 
@@ -58,10 +60,7 @@ def load_refseq_up_map():
     return id_map
 
 
-if __name__ == '__main__':
-    rs_data = load_refseq_seqs()
-
-    problems = set([])
+def get_genes_to_refseq_ids(problems):
     # First, collect refseq IDs for each gene
     gene_dict = {}
     for row in read_unicode_csv(peptide_file, delimiter='\t', skiprows=1):
@@ -80,13 +79,17 @@ if __name__ == '__main__':
             gene_dict[gene_sym] = set([refseq_id])
         else:
             gene_dict[gene_sym].add(refseq_id)
+    return gene_dict
 
+
+def run_msa(gene_dict, rs_data, problems):
     # Next, get sequences and run alignments
     counter = 0
     matches = set()
+    aln_data = []
     for gene_sym, rs_ids in gene_dict.items():
         counter += 1
-        if counter >= 100:
+        if counter >= 20:
             break
         print("%s: %d of %d genes" % (gene_sym, counter, len(gene_dict)))
         fasta_lines = []
@@ -99,6 +102,11 @@ if __name__ == '__main__':
 
         # Now, iterate over the refseq ids and get the sequences
         seq_ids = []
+        # The filenames to use if we do an alignment
+        in_file = 'aln/in/%s.fasta' % gene_sym
+        out_file = 'aln/out/%s.fasta' % gene_sym
+        # Iterate over the Refseq IDs
+        aln_rows = []
         for rs_id in rs_ids:
             seq_info = rs_data.get(rs_id)
             if not seq_info:
@@ -107,34 +115,107 @@ if __name__ == '__main__':
             seq_ids.append(rs_id)
             fasta_header, sequence = seq_info
             fasta_lines.append('>%s\n%s\n' % (rs_id, sequence))
-
-        if len(seq_ids) == 0:
+            aln_row = [rs_id, gene_sym, False, out_file]
+            aln_rows.append(aln_row)
+        if len(seq_ids) == -1:
             continue
 
         if len(seq_ids) == 1 and sequence == up_sequence:
             print("\tSequences match, no alignment needed.")
             matches.add((rs_id, up_id_main))
+            aln_rows = [[rs_id, gene_sym, True, None]]
+            aln_data += aln_rows
             continue
+        else:
+            # Write the fasta file
+            with open(in_file, 'wt') as f:
+                for line in fasta_lines:
+                    f.write(line)
+            # Run the sequence alignment
+            print("\tRunning sequence alignment.")
+            subprocess.call(['./clustal-omega-1.2.3-macosx', '-i', in_file,
+                             '-o', out_file, '--force'])
+            aln_data += aln_rows
+    return aln_data
 
-        # Write the fasta file
-        in_file = 'aln/in/%s.fasta' % gene_sym
-        out_file = 'aln/out/%s.fasta' % gene_sym
-        with open(in_file, 'wt') as f:
-            for line in fasta_lines:
-                f.write(line)
 
-        # Run the sequence alignment
-        print("\tRunning sequence alignment.")
-        subprocess.call(['./clustal-omega-1.2.3-macosx', '-i', in_file,
-                         '-o', out_file, '--force'])
+def get_mapped_sites(aln_data, rs_data, num_res=6):
+    # For each peptide, get info, then get flanking sequence and site on refseq
+    results = []
+    for row in read_unicode_csv(peptide_file, delimiter='\t', skiprows=1):
+        site_id = row[0]
+        gene_sym, rem = site_id.split('.', maxsplit=1)
+        rs_id, site_info = rem.split(':')
+        # Split out multiple site info
+        rem = site_info
+        site_list = []
+        while rem:
+            m = re.match('([sty][0-9]+)(.*)', rem)
+            assert m.groups()[0]
+            site_list.append(m.groups()[0])
+            rem = m.groups()[1]
+        # Get the main Uniprot sequence from the gene symbol
+        #hgnc_id = hgnc_client.get_hgnc_id(gene_sym)
+        #up_id_main = hgnc_client.get_uniprot_id(hgnc_id)
+        #up_sequence = uniprot_client.get_sequence(up_id_main)
+        flanks = []
+        site_ixs = []
+        for site in site_list:
+            res = site[0]
+            pos = int(site[1:])
+            try:
+                seq_info = rs_data[rs_id]
+            except KeyError:
+                flanks.append('')
+                site_ixs.append('')
+                continue
+            fasta_header, sequence = seq_info
+            start_ix = pos - num_res - 1
+            end_ix = pos + num_res
+            site_ix = num_res
+            if start_ix < 0:
+                site_ix = num_res + start_ix
+                start_ix = 0
+            if end_ix > len(sequence):
+                end_ix = len(sequence)
+            flanks.append(sequence[start_ix:end_ix])
 
+        result = (site_id, rs_id, gene_sym,
+                  ','.join([s.upper() for s in site_list]),
+                  ','.join(flanks),
+                  ','.join(site_ixs))
+        results.append(result)
+    return results
+
+
+if __name__ == '__main__':
+    problems = set([])
+    rs_data = load_refseq_seqs()
+    gene_dict = get_genes_to_refseq_ids(problems)
+    aln_data = run_msa(gene_dict, rs_data, problems)
+    site_data = get_mapped_sites(aln_data, rs_data)
+
+    #write_unicode_csv('seq_match_ids.txt', matches)
+    #write_unicode_csv('problems.txt', problems)
+    """
+        def get_index_map(aln):
+            ix_map = {}
+            for aln_row in aln:
+                seq = aln_row.seq
+                seq_ix_map = []
+                for aa_ix, aa in enumerate(seq):
+                    if aa != '-':
+                        seq_ix_map.append(aa_ix)
+                ix_map[aln_row.id] = seq_ix_map
+            return ix_map
+
+        # Read the output
+        aln = AlignIO(out_file, 'fasta')
         # Write the seq to a file
         #peptide_info = (site_id, gene_sym, refseq_id, up_id_from_rs, site_info)
         #ids.add(peptide_info)
+        ix_map = get_index_map(aln)
 
-    write_unicode_csv('seq_match_ids.txt', matches)
-    write_unicode_csv('problems.txt', problems)
-    """
     id_map = load_refseq_up_map()
 
         site_id = row[0]
