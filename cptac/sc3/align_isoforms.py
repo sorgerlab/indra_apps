@@ -61,13 +61,82 @@ def load_refseq_up_map():
 if __name__ == '__main__':
     rs_data = load_refseq_seqs()
 
-    invalid_gene_syms = set([])
-    # Invalid refseq
-    no_seq = set([])
-    for row_ix, row in enumerate(
-                    read_unicode_csv(peptide_file, delimiter='\t', skiprows=1)):
-        if row_ix > 10:
+    problems = set([])
+    # First, collect refseq IDs for each gene
+    gene_dict = {}
+    for row in read_unicode_csv(peptide_file, delimiter='\t', skiprows=1):
+        site_id = row[0]
+        gene_sym, rem = site_id.split('.', maxsplit=1)
+        refseq_id, site_info = rem.split(':')
+        if gene_sym not in gene_dict:
+            hgnc_id = hgnc_client.get_hgnc_id(gene_sym)
+            if not hgnc_id:
+                problems.add((refseq_id, 'invalid gene symbol'))
+                continue
+            up_id_main = hgnc_client.get_uniprot_id(hgnc_id)
+            if not up_id_main or ', ' in up_id_main:
+                problems.add((refseq_id, 'could not get Uniprot ID from HGNC'))
+                continue
+            gene_dict[gene_sym] = set([refseq_id])
+        else:
+            gene_dict[gene_sym].add(refseq_id)
+
+    # Next, get sequences and run alignments
+    counter = 0
+    matches = set()
+    for gene_sym, rs_ids in gene_dict.items():
+        counter += 1
+        if counter >= 100:
             break
+        print("%s: %d of %d genes" % (gene_sym, counter, len(gene_dict)))
+        fasta_lines = []
+        # Get the main Uniprot sequence from the gene symbol
+        hgnc_id = hgnc_client.get_hgnc_id(gene_sym)
+        up_id_main = hgnc_client.get_uniprot_id(hgnc_id)
+        up_sequence = uniprot_client.get_sequence(up_id_main)
+        fasta_lines.append('>%s\n' % gene_sym)
+        fasta_lines.append('%s\n' % up_sequence)
+
+        # Now, iterate over the refseq ids and get the sequences
+        seq_ids = []
+        for rs_id in rs_ids:
+            seq_info = rs_data.get(rs_id)
+            if not seq_info:
+                problems.add((rs_id, 'no sequence in Refseq'))
+                continue
+            seq_ids.append(rs_id)
+            fasta_header, sequence = seq_info
+            fasta_lines.append('>%s\n%s\n' % (rs_id, sequence))
+
+        if len(seq_ids) == 0:
+            continue
+
+        if len(seq_ids) == 1 and sequence == up_sequence:
+            print("\tSequences match, no alignment needed.")
+            matches.add((rs_id, up_id_main))
+            continue
+
+        # Write the fasta file
+        in_file = 'aln/in/%s.fasta' % gene_sym
+        out_file = 'aln/out/%s.fasta' % gene_sym
+        with open(in_file, 'wt') as f:
+            for line in fasta_lines:
+                f.write(line)
+
+        # Run the sequence alignment
+        print("\tRunning sequence alignment.")
+        subprocess.call(['./clustal-omega-1.2.3-macosx', '-i', in_file,
+                         '-o', out_file, '--force'])
+
+        # Write the seq to a file
+        #peptide_info = (site_id, gene_sym, refseq_id, up_id_from_rs, site_info)
+        #ids.add(peptide_info)
+
+    write_unicode_csv('seq_match_ids.txt', matches)
+    write_unicode_csv('problems.txt', problems)
+    """
+    id_map = load_refseq_up_map()
+
         site_id = row[0]
         print('%d: %s' % (row_ix, site_id))
         gene_sym, rem = site_id.split('.', maxsplit=1)
@@ -79,87 +148,15 @@ if __name__ == '__main__':
         except ValueError:
             print("\tSkipping double phosphosite %s" % site_id)
             continue
-        seq_info = rs_data.get(refseq_id)
-        if not seq_info:
-            print("\tCouldn't get sequence for %s" % refseq_id)
-            no_seq.add(refseq_id)
-            continue
-        fasta_header, sequence = seq_info
-        if not sequence[pos-1] == res:
-            print("\tInvalid site: %s" % site_id)
-            continue
 
-        # Next, get the main Uniprot sequence
-        hgnc_id = hgnc_client.get_hgnc_id(gene_sym)
-        if not hgnc_id:
-            print("\tInvalid gene symbol %s" % gene_sym)
-            invalid_gene_syms.add(gene_sym)
-            continue
-        up_id_main = hgnc_client.get_uniprot_id(hgnc_id)
-        if not up_id_main or ', ' in up_id_main:
-            print("\tCouldn't get canonical Uniprot ID from HGNC.")
-            invalid_gene_syms.add(gene_sym)
-            continue
-        up_sequence = uniprot_client.get_sequence(up_id_main)
+            if not sequence[pos-1] == res:
+                print("\tInvalid site: %s" % site_id)
+                continue
 
         # Check whether the sequences are identical!
         if sequence == up_sequence:
             print("\tSequences are identical, no need for sequence alignment!")
             continue
-
-        in_file = 'aln/in/%s.fasta' % refseq_id
-        out_file = 'aln/out/%s.fasta' % refseq_id
-        with open(in_file, 'wt') as f:
-            f.write('>%s\n' % up_id_main)
-            f.write('%s\n' % up_sequence)
-            f.write('%s\n' % fasta_header)
-            f.write('%s\n' % sequence)
-
-        print("\tRunning sequence alignment.")
-        subprocess.call(['./clustal-omega-1.2.3-macosx', '-i', in_file,
-                         '-o', out_file, '--force'])
-
-        # Write the seq to a file
-        #peptide_info = (site_id, gene_sym, refseq_id, up_id_from_rs, site_info)
-        #ids.add(peptide_info)
-    
-    """
-    id_map = load_refseq_up_map()
-
-    # Invalid refseq
-    ids = set([])
-    invalid_rs = set([])
-    gene_dict = {}
-    for row in read_unicode_csv(peptide_file, delimiter='\t', skiprows=1):
-        site_id = row[0]
-        gene_sym, rem = site_id.split('.', maxsplit=1)
-        refseq_id, site_info = rem.split(':')
-        # Deal with the identifiers
-        #hgnc_id = hgnc_client.get_hgnc_id(gene_sym)
-        #if hgnc_id:
-        #    up_id_from_hgnc = hgnc_client.get_uniprot_id(hgnc_id)
-        up_id_from_rs = None
-        try:
-            up_id_from_rs = id_map[refseq_id][0]
-        except KeyError:
-            pass
-
-        peptide_info = (site_id, gene_sym, refseq_id, up_id_from_rs, site_info)
-        ids.add(peptide_info)
-
-        if gene_sym not in gene_dict:
-            hgnc_id = hgnc_client.get_hgnc_id(gene_sym)
-            if not hgnc_id:
-                invalid_gene_syms.add(gene_sym)
-                continue
-            up_id_main = hgnc_client.get_uniprot_id(hgnc_id)
-            if not up_id_main or ', ' in up_id_main:
-                invalid_gene_syms.add(gene_sym)
-                continue
-            gene_dict[gene_sym] = {'main': up_id_main,
-                                   'refseq': set([up_id_from_rs])
-        else:
-            gene_dict[gene_sym]['refseq'].add(up_id_from_rs)
 
     # Now pick a gene and collect the UP IDs for getting sequences
     for gene in gene_dict.keys():
