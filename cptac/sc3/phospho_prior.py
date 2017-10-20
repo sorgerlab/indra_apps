@@ -1,3 +1,4 @@
+import random
 import numpy as np
 from indra.tools import assemble_corpus as ac
 from itertools import chain
@@ -39,6 +40,7 @@ def load_ov_sites(use_mapped=True):
     print("%d mismatched sites of %d" % (mismatch_count, len(ov_sites)))
     return ov_sites
 
+
 def load_annotations_from_synapse(synapse_id='syn10998244'):
     syn = synapseclient.Synapse()
     syn.login()
@@ -59,7 +61,7 @@ def load_annotations_from_synapse(synapse_id='syn10998244'):
             stmts.append(stmt)
     stmts = ac.map_sequence(stmts)
     stmts = ac.filter_human_only(stmts)
-    #stmts = ac.filter_genes_only(stmts)
+    #stmts = ac.filter_genes_only(stmts, specific_only=True)
     return stmts
 
 
@@ -70,7 +72,7 @@ def get_omnipath_stmts():
     stmts = phos_stmts + dephos_stmts
     stmts = ac.map_sequence(stmts)
     stmts = ac.filter_human_only(stmts)
-    #stmts = ac.filter_genes_only(stmts)
+    #stmts = ac.filter_genes_only(stmts, specific_only=True)
     return stmts
 
 
@@ -84,7 +86,7 @@ def get_indra_phos_stmts():
     stmts = ac.run_preassembly(stmts, poolsize=4,
                                save='sources/indra_phos_stmts_pre.pkl')
     stmts = ac.filter_human_only(stmts)
-    stmts = ac.filter_genes_only(stmts)
+    stmts = ac.filter_genes_only(stmts, specific_only=True)
     stmts = [s for s in stmts if s.enz and s.sub and s.residue and s.position]
     ac.dump_statements(stmts, 'sources/indra_phos_stmts.pkl')
     return stmts
@@ -105,7 +107,7 @@ def get_indra_reg_act_stmts():
     stmts = ac.run_preassembly(stmts, poolsize=4,
                                save='sources/indra_reg_act_pre.pkl')
     stmts = ac.filter_human_only(stmts)
-    stmts = ac.filter_genes_only(stmts)
+    stmts = ac.filter_genes_only(stmts, specific_only=True)
     ac.dump_statements(stmts, 'sources/indra_reg_act_stmts.pkl')
     return stmts
 
@@ -113,7 +115,8 @@ def get_indra_reg_act_stmts():
 def get_pc_reg_act_stmts():
     pass
 
-def add_regulators(reg_stmts, prior):
+
+def add_regulators(reg_stmts, prior, max_features=100):
     # Build a dict of regulators for each gene
     reg_dict = {}
     for stmt_ix, stmt in enumerate(reg_stmts):
@@ -128,20 +131,30 @@ def add_regulators(reg_stmts, prior):
 
     ext_prior = {}
     for site, gene_set in prior.items():
-        ext_gene_set = set()
-        ext_gene_set |= gene_set
+        if len(gene_set) >= max_features:
+            ext_prior[site] = set(list(gene_set)[0:max_features])
+
+        reg_gene_set = set()
         for gene in gene_set:
             regs = reg_dict.get(gene)
             if regs:
-                ext_gene_set |= regs
-        ext_prior[site] = ext_gene_set
+                reg_gene_set |= regs
+        if not regs:
+            ext_prior[site] = gene_set
+        else:
+            cur_prior_length = len(gene_set)
+            num_remaining_features = max_features - cur_prior_length
+            shuffled_regs = list(regs)
+            random.shuffle(shuffled_regs)
+            added_features = set(shuffled_regs[0:num_remaining_features])
+            ext_prior[site] = gene_set | added_features
     return ext_prior
 
 
 def get_phosphosite_stmts():
     stmts = ac.load_statements('sources/phosphosite_stmts.pkl')
     stmts = ac.filter_human_only(stmts)
-    stmts = ac.filter_genes_only(stmts)
+    stmts = ac.filter_genes_only(stmts, specific_only=True)
     return stmts
 
 
@@ -187,8 +200,8 @@ def to_prior(stmts):
     return prior
 
 
-def save_prior(prior):
-    with open('phospho_prior_indra.tsv', 'wt') as f:
+def save_prior(prior, prior_name):
+    with open(prior_name, 'wt') as f:
         for gene_key in sorted(prior.keys()):
             enzyme_list = ','.join(prior[gene_key])
             f.write('%s\t%s\n' % (gene_key, enzyme_list))
@@ -223,14 +236,12 @@ if __name__ == '__main__':
     ov_sites = load_ov_sites(use_mapped=True)
     brca_sites = load_brca_sites()
 
-    """
     reg_stmts = get_indra_reg_act_stmts()
     act_stmts = ac.filter_by_type(reg_stmts, Activation)
     inh_stmts = ac.filter_by_type(reg_stmts, Inhibition)
     reg_stmts = act_stmts + inh_stmts
     reg_stmts = [s for s in reg_stmts if s.subj is not None]
-    """
-
+    reg_stmts = ac.filter_genes_only(reg_stmts, specific_only=True)
     """
     syn_stmts = load_annotations_from_synapse(synapse_id='syn10998244')
     omni_stmts = get_omnipath_stmts()
@@ -245,6 +256,16 @@ if __name__ == '__main__':
 
     db_stmts = syn_stmts + omni_stmts + phos_stmts
     all_stmts = syn_stmts + omni_stmts + phos_stmts + indra_stmts
+    all_stmts = ac.filter_genes_only(all_stmts, specific_only=True)
+
+    all_prior = to_prior(all_stmts)
+    ext_prior_100 = add_regulators(reg_stmts, all_prior, max_features=100)
+    save_prior(ext_prior_100, 'regulators_prior_100.txt')
+    ext_prior_200 = add_regulators(reg_stmts, all_prior, max_features=200)
+    save_prior(ext_prior_200, 'regulators_prior_200.txt')
+
+    import sys
+    sys.exit()
 
     print("Phosphosite: %d of %d peptides" %
           (coverage(ov_sites, get_stmt_sites(phos_stmts)), len(ov_sites)))
@@ -263,10 +284,7 @@ if __name__ == '__main__':
     print("Combined all: %d of %d peptides" %
           (coverage(ov_sites, all_sites), len(ov_sites)))
 
-    import sys; sys.exit()
-
     db_prior = to_prior(db_stmts)
-    all_prior = to_prior(all_stmts)
     # Get activators of kinases
     ext_db_prior = add_regulators(reg_stmts, db_prior)
     ext_prior = add_regulators(reg_stmts, all_prior)
