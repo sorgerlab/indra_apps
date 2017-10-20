@@ -232,8 +232,23 @@ def load_brca_sites():
     return sites
 
 
+def get_brca_corr_prior(site_list):
+    with open('brca_corr_prot_list.txt', 'rt') as f:
+        genes = [line.strip() for line in f]
+    prior = {}
+    for site in site_list:
+        site_key = '%s:%s' % (site[0], site[1])
+        prior[site_key] = genes
+    return prior
+
 if __name__ == '__main__':
     ov_sites = load_ov_sites(use_mapped=True)
+    brca_prior = get_brca_corr_prior(ov_sites)
+    save_prior(brca_prior, 'brca_prot_corr_100_prior.txt')
+
+    import sys
+    sys.exit()
+
     brca_sites = load_brca_sites()
 
     reg_stmts = get_indra_reg_act_stmts()
