@@ -3,7 +3,13 @@ import numpy as np
 from collections import Counter
 from indra.util import read_unicode_csv
 import scipy.stats
+from align_isoforms import load_refseq_up_map
+from indra.databases import uniprot_client
+from sklearn.preprocessing import Imputer
 
+from rpy2 import robjects as ro
+import rpy2.robjects.numpy2ri
+rpy2.robjects.numpy2ri.activate()
 
 cell_lines = [
  'BT20',
@@ -43,6 +49,16 @@ cell_lines = [
  'SUM159',
  'T47D',
 ]
+
+
+def get_mrna_list():
+    mrna_set = set()
+    for row in read_unicode_csv('sources/gene_types.csv', skiprows=1):
+        hgnc_id = row[2]
+        gene_type = row[4]
+        if gene_type == 'protein_coding':
+            mrna_set.add(hgnc_id)
+    return list(mrna_set)
 
 
 def get_cell_line_col_maps(pms_filename, ibaq_filename, rna_filename):
@@ -103,8 +119,12 @@ def load_data(pms_filename, ibaq_filename, rna_filename):
     for row_ix, row in enumerate(read_unicode_csv(pms_filename, skiprows=1)):
         values = []
         site_name = row[0]
+        site = site_name.split('_')[1]
         uniprot_id = row[-3]
+        uniprot_id_base = row[-1]
+        gene_name = uniprot_client.get_gene_name(uniprot_id_base)
         site_position = row[-5]
+        site_key = (gene_name, site)
         for cell_line in cell_lines:
             col_ix = pms_col_map[cell_line]
             if not row[col_ix]:
@@ -114,26 +134,34 @@ def load_data(pms_filename, ibaq_filename, rna_filename):
             float(val)
             values.append(val)
         values = np.array(values)
-        site_labels.append((site_name, uniprot_id, site_position))
+        site_labels.append((site_key, site_name, uniprot_id, uniprot_id_base,
+                            gene_name, site_position))
         site_rows.append(values)
 
     # Then get the RNA data
     rna_labels = []
     rna_rows = []
+    mrna_list = get_mrna_list()
+    zero_var = 0
     for row_ix, row in enumerate(read_unicode_csv(rna_filename, skiprows=1,
                                                   delimiter='\t')):
         values = []
         gene_name = row[0]
+        if gene_name not in mrna_list:
+            continue
         for cell_line in cell_lines:
             col_ix = rna_col_map[cell_line]
             val = float(row[col_ix])
             values.append(val)
         values = np.array(values)
+        if np.var(values) == 0:
+            zero_var += 1
+            continue
         rna_labels.append((gene_name,))
         rna_rows.append(values)
-
-    prot_arr = np.array(prot_rows)
+    print("%d RNA entries with zero variance" % zero_var)
     site_arr = np.array(site_rows)
+    prot_arr = np.array(prot_rows)
     rna_arr = np.array(rna_rows)
 
     return {'prot_labels': prot_labels, 'prot_arr': prot_arr,
@@ -147,8 +175,15 @@ def get_top_correlations(corrs, site_labels, pred_labels, max_corrs=100):
         label = site_labels[row_ix]
         corr_row = corrs[row_ix,:]
         sort_ixs = np.argsort(np.abs(corr_row))
-        corr_vec = [(pred_labels[ix], corr_row[ix])
-                    for ix in sort_ixs[:-max_corrs:-1]]
+        corr_vec = []
+        for ix in sort_ixs[::-1]:
+            if len(corr_vec) == max_corrs:
+                break
+            label = pred_labels[ix]
+            if label[0] is not None:
+                corr_vec.append((label, corr_row[ix]))
+        #corr_vec = [(pred_labels[ix], corr_row[ix])
+        #            for ix in sort_ixs[:-max_corrs:-1]]
         site_label = site_labels[row_ix]
         site_dict[site_label] = corr_vec
     return site_dict
@@ -167,8 +202,64 @@ def get_default_corrs(corr_dict, num_features=100):
     return genes
 
 
-def build_prior():
-    pass
+def get_site_map(site_labels):
+    # For each site in the SC3 phospho data, see if we have a matching site in
+    # the BRCA phospho data
+    site_map = {}
+    brca_site_keys = [t[0] for t in site_labels]
+    brca_ix_map = {}
+    for ix, brca_site in enumerate(brca_site_keys):
+        brca_ix_map[brca_site] = ix
+    for row in read_unicode_csv('mapped_peptides.txt', delimiter='\t',
+                                skiprows=1):
+        site_id = row[0]
+        gene_name = row[2]
+        orig_site = row[4]
+        mapped_site = row[7]
+        site_ixs = set()
+        for site in ((gene_name, orig_site), (gene_name, mapped_site)):
+            brca_ix = brca_ix_map.get(site)
+            if brca_ix:
+                site_ixs.add(brca_ix)
+        # If there's no mapping, don't add to the map
+        if not site_ixs:
+            continue
+        # Otherwise, add
+        if site_id in site_map:
+            site_map[site_id] |= site_ixs
+        else:
+            site_map[site_id] = site_ixs
+    site_map_list = {}
+    for k, v in site_map.items():
+        site_map_list[k] = list(v)
+    return site_map_list
+
+
+
+def build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
+                prot_default, rna_default):
+    peptide_file = \
+        'sources/retrospective_ova_phospho_sort_common_gene_10057.txt'
+    counter = 0
+    prior = {}
+    for row in read_unicode_csv(peptide_file, delimiter='\t', skiprows=1):
+        site_id = row[0]
+        gene_sym, rem = site_id.split('.', maxsplit=1)
+        rs_id, site_info = rem.split(':')
+        if site_id in site_map:
+            brca_site_ix_list = site_map[site_id]
+            if len(brca_site_ix_list) > 1:
+                print("More than one site for %s" % site_id)
+            brca_site_ix = brca_site_ix_list[0] # FIXME
+            brca_site = site_labels[brca_site_ix]
+            prot_prior = [t[0][0] for t in prot_corr_dict[brca_site]]
+            rna_prior = [t[0][0] for t in rna_corr_dict[brca_site]]
+            prior[site_id] = (prot_prior, rna_prior)
+            counter += 1
+        else:
+            prior[site_id] = (prot_default, rna_default)
+    print("%d ids found" % counter)
+    return prior
 
 
 if __name__ == '__main__':
@@ -177,34 +268,52 @@ if __name__ == '__main__':
     rna_filename = 'sources/RNAseq-rpkm.tsv'
 
     data = load_data(pms_filename, ibaq_filename, rna_filename)
+    site_labels = data['site_labels']
+    site_map = get_site_map(site_labels)
 
-    print("Calculating correlation coefficients")
-    #scipy.stats.spearmanr(site_arr, prot_arr, nan_policy='omit')
-    prot_corr_mat = scipy.stats.spearmanr(
-                    np.vstack([data['site_arr'], data['prot_arr']]),
-                    nan_policy='omit', axis=1)
-    prot_corrs = prot_corr_mat[0][0:len(data['site_arr']),
-                                  len(data['site_arr']):]
-    rna_corr_mat = scipy.stats.spearmanr(
-                    np.vstack([data['site_arr'], data['rna_arr']]),
-                    nan_policy='omit', axis=1)
-    rna_corrs = rna_corr_mat[0][0:len(data['site_arr']),
-                                  len(data['site_arr']):]
+    # Calculate the correlations
+    recalculate = False
+    if recalculate:
+        print("Imputing values")
+        imp = Imputer()
+        sa = imp.fit_transform(data['site_arr'].T)
+        pa = imp.fit_transform(data['prot_arr'].T)
+        ra = imp.fit_transform(data['rna_arr'].T)
 
-    #with open('brca_data.pkl', 'wb') as f:
-    #    pickle.dump(data, f)
-    #np.save('brca_spearman', corr)
+        print("Calculating protein correlation coefficients")
+        prot_corrs = np.array(ro.r.cor(sa, pa, method='spearman'))
+        np.save('brca_spearman_prot', prot_corrs)
 
+        print("Calculating RNA correlation coefficients")
+        rna_corrs = np.array(ro.r.cor(sa, ra, method='spearman'))
+        np.save('brca_spearman_rna', rna_corrs)
+    else:
+        print("Loading correlations")
+        prot_corrs = np.load('brca_spearman_prot.npy')
+        rna_corrs = np.load('brca_spearman_rna.npy')
+
+    print("Getting top correlations")
+    # Get the top correlations for each site
     prot_corr_dict = get_top_correlations(prot_corrs,
                                      data['site_labels'], data['prot_labels'])
+
     rna_corr_dict = get_top_correlations(rna_corrs,
                                      data['site_labels'], data['rna_labels'])
 
+    # Get the default priors
     prot_default = get_default_corrs(prot_corr_dict)
     rna_default = get_default_corrs(rna_corr_dict)
 
-    prior = build_prior(prot_corr_dict, rna_corr_dict, prot_default,
-                        rna_default)
+    # Build the prior
+    prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
+                        prot_default, rna_default)
+
+    with open('priors/brca_prot_rna_specific_corr100.txt', 'wt') as f:
+        for site_id, (prot_prior, rna_prior) in prior.items():
+            prot_prior_str = ','.join(prot_prior)
+            rna_prior_str = ','.join(rna_prior)
+            line = '%s\t%s\t%s\n' % (site_id, rna_prior, prot_prior)
+            f.write(line)
 
 """
 import sklearn
