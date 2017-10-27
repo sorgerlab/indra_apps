@@ -1,15 +1,27 @@
 import pickle
-import numpy as np
 from collections import Counter
+
 from indra.util import read_unicode_csv
-import scipy.stats
 from align_isoforms import load_refseq_up_map
 from indra.databases import uniprot_client
+
+import numpy as np
+from matplotlib import pyplot as plt
+import scipy.stats
+import scipy
+from scipy.cluster.hierarchy import dendrogram, linkage
+from scipy.cluster.hierarchy import cophenet
+from scipy.spatial.distance import pdist
+
+from sklearn.cross_decomposition import CCA
 from sklearn.preprocessing import Imputer
+
+import seaborn
 
 from rpy2 import robjects as ro
 import rpy2.robjects.numpy2ri
 rpy2.robjects.numpy2ri.activate()
+
 
 cell_lines = [
  'BT20',
@@ -169,7 +181,7 @@ def load_data(pms_filename, ibaq_filename, rna_filename):
             'rna_labels': rna_labels, 'rna_arr': rna_arr}
 
 
-def get_top_correlations(corrs, site_labels, pred_labels, max_corrs=100):
+def get_top_correlations(corrs, site_labels, pred_labels, max_corrs=200):
     site_dict = {}
     for row_ix in range(corrs.shape[0]):
         label = site_labels[row_ix]
@@ -189,7 +201,7 @@ def get_top_correlations(corrs, site_labels, pred_labels, max_corrs=100):
     return site_dict
 
 
-def get_default_corrs(corr_dict, num_features=100):
+def get_default_corrs(corr_dict, num_features=200):
     all_corrs = []
     # Add all the gene names
     for site, corr_list in corr_dict.items():
@@ -237,7 +249,8 @@ def get_site_map(site_labels):
 
 
 def build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
-                prot_default, rna_default):
+                prot_default, rna_default, peptide_specific=True,
+                num_features=100):
     peptide_file = \
         'sources/retrospective_ova_phospho_sort_common_gene_10057.txt'
     counter = 0
@@ -246,7 +259,7 @@ def build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
         site_id = row[0]
         gene_sym, rem = site_id.split('.', maxsplit=1)
         rs_id, site_info = rem.split(':')
-        if site_id in site_map:
+        if site_id in site_map and peptide_specific:
             brca_site_ix_list = site_map[site_id]
             if len(brca_site_ix_list) > 1:
                 print("More than one site for %s" % site_id)
@@ -254,71 +267,27 @@ def build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
             brca_site = site_labels[brca_site_ix]
             prot_prior = [t[0][0] for t in prot_corr_dict[brca_site]]
             rna_prior = [t[0][0] for t in rna_corr_dict[brca_site]]
-            prior[site_id] = (prot_prior, rna_prior)
+            prior[site_id] = (prot_prior[0:num_features],
+                              rna_prior[0:num_features])
             counter += 1
         else:
-            prior[site_id] = (prot_default, rna_default)
-    print("%d ids found" % counter)
+            prior[site_id] = (prot_default[0:num_features],
+                              rna_default[0:num_features])
+    print("%d peptide-specific priors used" % counter)
     return prior
 
 
-if __name__ == '__main__':
-    pms_filename = 'sources/Merged_dataset_normalized_subset.csv'
-    ibaq_filename = 'sources/ibaq_normalized.csv'
-    rna_filename = 'sources/RNAseq-rpkm.tsv'
-
-    data = load_data(pms_filename, ibaq_filename, rna_filename)
-    site_labels = data['site_labels']
-    site_map = get_site_map(site_labels)
-
-    # Calculate the correlations
-    recalculate = False
-    if recalculate:
-        print("Imputing values")
-        imp = Imputer()
-        sa = imp.fit_transform(data['site_arr'].T)
-        pa = imp.fit_transform(data['prot_arr'].T)
-        ra = imp.fit_transform(data['rna_arr'].T)
-
-        print("Calculating protein correlation coefficients")
-        prot_corrs = np.array(ro.r.cor(sa, pa, method='spearman'))
-        np.save('brca_spearman_prot', prot_corrs)
-
-        print("Calculating RNA correlation coefficients")
-        rna_corrs = np.array(ro.r.cor(sa, ra, method='spearman'))
-        np.save('brca_spearman_rna', rna_corrs)
-    else:
-        print("Loading correlations")
-        prot_corrs = np.load('brca_spearman_prot.npy')
-        rna_corrs = np.load('brca_spearman_rna.npy')
-
-    print("Getting top correlations")
-    # Get the top correlations for each site
-    prot_corr_dict = get_top_correlations(prot_corrs,
-                                     data['site_labels'], data['prot_labels'])
-
-    rna_corr_dict = get_top_correlations(rna_corrs,
-                                     data['site_labels'], data['rna_labels'])
-
-    # Get the default priors
-    prot_default = get_default_corrs(prot_corr_dict)
-    rna_default = get_default_corrs(rna_corr_dict)
-
-    # Build the prior
-    prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
-                        prot_default, rna_default)
-
-    with open('priors/brca_prot_rna_specific_corr100.txt', 'wt') as f:
+def save_prior(filename, prior, prot_only=False):
+    with open(filename, 'wt') as f:
         for site_id, (prot_prior, rna_prior) in prior.items():
             prot_prior_str = ','.join(prot_prior)
             rna_prior_str = ','.join(rna_prior)
-            line = '%s\t%s\t%s\n' % (site_id, rna_prior, prot_prior)
+            if prot_only:
+                line = '%s\t%s\n' % (site_id, prot_prior_str)
+            else:
+                line = '%s\t%s\t%s\n' % (site_id, rna_prior_str, prot_prior_str)
             f.write(line)
 
-"""
-import sklearn
-from sklearn.cross_decomposition import PLSRegression, CCA
-from sklearn.preprocessing import Imputer
 
 def vip(x, y, model):
     t = model.x_scores_
@@ -334,16 +303,190 @@ def vip(x, y, model):
     total_s = np.sum(s)
 
     for i in range(p):
-        weight = np.array([ (w[i,j] / np.linalg.norm(w[:,j]))**2
+        weight = np.array([ (w[i,j] / scipy.linalg.norm(w[:,j]))**2
                             for j in range(h) ])
+        #weight = np.array([ (w[i,j] / np.linalg.norm(w[:,j]))**2
+        #                    for j in range(h) ])
         vips[i] = np.sqrt(p*(s.T @ weight)/total_s)
-
     return vips
+
+
+def prior_from_scores(scores, labels, num_features=100):
+    sorted_scores = np.argsort(scores)
+    prior = set()
+    ind = []
+    for pred_ix in sorted_scores[::-1]:
+        if len(prior) == num_features:
+            break
+        pred_label = labels[pred_ix]
+        pred_gene = pred_label[0]
+        if not pred_gene:
+            continue
+        else:
+            prior.add(pred_gene)
+    return list(prior)
+
+
+if __name__ == '__main__':
+    pms_filename = 'sources/Merged_dataset_normalized_subset.csv'
+    ibaq_filename = 'sources/ibaq_normalized.csv'
+    rna_filename = 'sources/RNAseq-rpkm.tsv'
+
+    print("Loading data")
+    data = load_data(pms_filename, ibaq_filename, rna_filename)
+    site_labels = data['site_labels']
+    site_map = get_site_map(site_labels)
+
+    """
+    print("Clustering")
+    X = data['site_arr']
+    Z = linkage(X, method='ward')
+    dendrogram(Z, leaf_rotation=90., leaf_font_size=8.)
+    plt.show()
+    #c, coph_dists = cophenet(Z, pdist(X, metric='correlation'))
+    #print(c)
+    res = seaborn.clustermap(data=X, z_score=0)
+    plt.show()
+    """
+
+    print("Imputing values")
+    imp = Imputer()
+    sa = imp.fit_transform(data['site_arr'].T)
+    pa = imp.fit_transform(data['prot_arr'].T)
+    ra = imp.fit_transform(data['rna_arr'].T)
+
+    # Calculate the correlations
+    recalculate_corrs = False
+    if recalculate_corrs:
+        print("Calculating protein correlation coefficients")
+        prot_corrs = np.array(ro.r.cor(sa, pa, method='spearman'))
+        np.save('brca_spearman_prot', prot_corrs)
+
+        print("Calculating RNA correlation coefficients")
+        rna_corrs = np.array(ro.r.cor(sa, ra, method='spearman'))
+        np.save('brca_spearman_rna', rna_corrs)
+    else:
+        print("Loading correlations")
+        prot_corrs = np.load('brca_spearman_prot.npy')
+        rna_corrs = np.load('brca_spearman_rna.npy')
+
+    do_cca = True
+    if do_cca:
+        print("Running CCA on protein data")
+        prot_cca = CCA(n_components=33, scale=False)
+        prot_cca.fit(pa, sa)
+
+        print("Running CCA on RNA data")
+        rna_cca = CCA(n_components=33, scale=False)
+        rna_cca.fit(ra, sa)
+
+        prot_vips = vip(pa, sa, prot_cca)
+        prot_vip_prior = prior_from_scores(prot_vips, data['prot_labels'])
+        prot_wt_prior = prior_from_scores(np.mean(prot_cca.x_weights_, axis=1),
+                                          data['prot_labels'])
+        prot_ld_prior = prior_from_scores(np.mean(prot_cca.x_loadings_, axis=1),
+                                          data['prot_labels'])
+
+        rna_vips = vip(ra, sa, rna_cca)
+        rna_vip_prior = prior_from_scores(rna_vips, data['rna_labels'])
+        rna_wt_prior = prior_from_scores(np.mean(rna_cca.x_weights_, axis=1),
+                                         data['rna_labels'])
+        rna_ld_prior = prior_from_scores(np.mean(rna_cca.x_loadings_, axis=1),
+                                         data['rna_labels'])
+
+        # Build the CCA-VIP prior
+        prior = build_prior(site_map, site_labels, None,
+                            None, prot_vip_prior, rna_vip_prior,
+                            peptide_specific=False, num_features=100)
+        save_prior('priors/brca_prot_rna_cca_vips_corr100.txt', prior)
+
+        # Build the CCA-Weights prior
+        prior = build_prior(site_map, site_labels, None,
+                            None, prot_wt_prior, rna_wt_prior,
+                            peptide_specific=False, num_features=100)
+        save_prior('priors/brca_prot_rna_cca_avgwts_corr100.txt', prior)
+
+        # Build the CCA-Loadings prior
+        prior = build_prior(site_map, site_labels, None,
+                            None, prot_ld_prior, rna_ld_prior,
+                            peptide_specific=False, num_features=100)
+        save_prior('priors/brca_prot_rna_cca_avgloadings_corr100.txt', prior)
+
+    print("Getting top correlations")
+    # Get the top correlations for each site
+    prot_corr_dict = get_top_correlations(prot_corrs,
+                                     data['site_labels'], data['prot_labels'],
+                                     max_corrs=400)
+
+    rna_corr_dict = get_top_correlations(rna_corrs,
+                                     data['site_labels'], data['rna_labels'],
+                                     max_corrs=400)
+
+    # Get the default priors
+    prot_default = get_default_corrs(prot_corr_dict, num_features=400)
+    rna_default = get_default_corrs(rna_corr_dict, num_features=400)
+
+    # Build specific RNA+protein prior with 50 features
+    prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
+                        prot_default, rna_default, peptide_specific=True,
+                        num_features=50)
+    save_prior('priors/brca_prot_rna_specific_corr50.txt', prior)
+
+    # Build the peptide-specific prior
+    prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
+                        prot_default, rna_default, peptide_specific=True,
+                        num_features=100)
+    save_prior('priors/brca_prot_rna_specific_corr100.txt', prior)
+
+    # Build the peptide-specific prior with 200 features
+    prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
+                        prot_default, rna_default, peptide_specific=True,
+                        num_features=200)
+    save_prior('priors/brca_prot_rna_specific_corr200.txt', prior)
+
+    # Build the peptide-specific prior with 400 features
+    prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
+                        prot_default, rna_default, peptide_specific=True,
+                        num_features=400)
+    save_prior('priors/brca_prot_rna_specific_corr400.txt', prior)
+
+    # Build the default RNA+protein prior with 100 features
+    prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
+                        prot_default, rna_default, peptide_specific=False,
+                        num_features=100)
+    save_prior('priors/brca_prot_rna_default_corr100.txt', prior)
+
+    # Build protein-only default prior with 200 features
+    prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
+                        prot_default, rna_default, peptide_specific=False,
+                        num_features=200)
+    save_prior('priors/brca_prot_rna_default_corr200.txt', prior)
+
+    # Build protein-only default prior with 200 features
+    prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
+                        prot_default, rna_default, peptide_specific=False,
+                        num_features=400)
+    save_prior('priors/brca_prot_rna_default_corr400.txt', prior)
+
+"""
+brca_prot_default_corr100.txt
+brca_prot_default_corr200.txt
+brca_prot_specific_corr200.txt
+
+brca_prot_rna_specific_corr50.txt
+brca_prot_rna_default_corr100.txt 
+brca_prot_rna_default_corr50.txt
+"""
+
+"""
+import sklearn
+from sklearn.cross_decomposition import PLSRegression, CCA
+from sklearn.preprocessing import Imputer
 
 
 print("Running PLSR")
 #plsr = PLSRegression(n_components=100)
-plsr = CCA(n_components=36)
+plsr = CCA(n_components=33)
 imp = Imputer()
 prot_arr_nan = imp.fit_transform(prot_arr.T)
 site_arr_nan = imp.fit_transform(site_arr.T)
