@@ -22,6 +22,9 @@ from rpy2 import robjects as ro
 import rpy2.robjects.numpy2ri
 rpy2.robjects.numpy2ri.activate()
 
+import synapseclient
+syn = synapseclient.login()
+
 
 cell_lines = [
  'BT20',
@@ -327,6 +330,12 @@ def prior_from_scores(scores, labels, num_features=100):
     return list(prior)
 
 
+def save_and_upload(filename, prior):
+    save_prior(filename, prior)
+    syn_file = synapseclient.File(filename, parent='syn11272284')
+    syn.store(syn_file)
+
+
 if __name__ == '__main__':
     pms_filename = 'sources/Merged_dataset_normalized_subset.csv'
     ibaq_filename = 'sources/ibaq_normalized.csv'
@@ -398,19 +407,22 @@ if __name__ == '__main__':
         prior = build_prior(site_map, site_labels, None,
                             None, prot_vip_prior, rna_vip_prior,
                             peptide_specific=False, num_features=100)
-        save_prior('priors/brca_prot_rna_cca_vips_corr100.txt', prior)
+        filename = 'priors/brca_prot_rna_cca_vips_corr100.txt'
+        save_and_upload(filename, prior)
 
         # Build the CCA-Weights prior
         prior = build_prior(site_map, site_labels, None,
                             None, prot_wt_prior, rna_wt_prior,
                             peptide_specific=False, num_features=100)
-        save_prior('priors/brca_prot_rna_cca_avgwts_corr100.txt', prior)
+        filename = 'priors/brca_prot_rna_cca_avgwts_corr100.txt'
+        save_and_upload(filename, prior)
 
         # Build the CCA-Loadings prior
         prior = build_prior(site_map, site_labels, None,
                             None, prot_ld_prior, rna_ld_prior,
                             peptide_specific=False, num_features=100)
-        save_prior('priors/brca_prot_rna_cca_avgloadings_corr100.txt', prior)
+        filename = 'priors/brca_prot_rna_cca_avgloadings_corr100.txt'
+        save_and_upload(filename, prior)
 
     print("Getting top correlations")
     # Get the top correlations for each site
@@ -430,71 +442,48 @@ if __name__ == '__main__':
     prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
                         prot_default, rna_default, peptide_specific=True,
                         num_features=50)
-    save_prior('priors/brca_prot_rna_specific_corr50.txt', prior)
+    filename = 'priors/brca_prot_rna_specific_corr50.txt'
+    save_and_upload(filename, prior)
 
     # Build the peptide-specific prior
     prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
                         prot_default, rna_default, peptide_specific=True,
                         num_features=100)
-    save_prior('priors/brca_prot_rna_specific_corr100.txt', prior)
+    filename = 'priors/brca_prot_rna_specific_corr100.txt'
+    save_and_upload(filename, prior)
 
     # Build the peptide-specific prior with 200 features
     prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
                         prot_default, rna_default, peptide_specific=True,
                         num_features=200)
-    save_prior('priors/brca_prot_rna_specific_corr200.txt', prior)
+    filename = 'priors/brca_prot_rna_specific_corr200.txt'
+    save_and_upload(filename, prior)
 
     # Build the peptide-specific prior with 400 features
     prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
                         prot_default, rna_default, peptide_specific=True,
                         num_features=400)
-    save_prior('priors/brca_prot_rna_specific_corr400.txt', prior)
+    filename = 'priors/brca_prot_rna_specific_corr400.txt'
+    save_and_upload(filename, prior)
 
     # Build the default RNA+protein prior with 100 features
     prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
                         prot_default, rna_default, peptide_specific=False,
                         num_features=100)
-    save_prior('priors/brca_prot_rna_default_corr100.txt', prior)
+    filename = 'priors/brca_prot_rna_default_corr100.txt'
+    save_and_upload(filename, prior)
 
     # Build protein-only default prior with 200 features
     prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
                         prot_default, rna_default, peptide_specific=False,
                         num_features=200)
-    save_prior('priors/brca_prot_rna_default_corr200.txt', prior)
+    filename = 'priors/brca_prot_rna_default_corr200.txt'
+    save_and_upload(filename, prior)
 
     # Build protein-only default prior with 200 features
     prior = build_prior(site_map, site_labels, prot_corr_dict, rna_corr_dict,
                         prot_default, rna_default, peptide_specific=False,
                         num_features=400)
-    save_prior('priors/brca_prot_rna_default_corr400.txt', prior)
-
-"""
-brca_prot_default_corr100.txt
-brca_prot_default_corr200.txt
-brca_prot_specific_corr200.txt
-
-brca_prot_rna_specific_corr50.txt
-brca_prot_rna_default_corr100.txt 
-brca_prot_rna_default_corr50.txt
-"""
-
-"""
-import sklearn
-from sklearn.cross_decomposition import PLSRegression, CCA
-from sklearn.preprocessing import Imputer
-
-
-print("Running PLSR")
-#plsr = PLSRegression(n_components=100)
-plsr = CCA(n_components=33)
-imp = Imputer()
-prot_arr_nan = imp.fit_transform(prot_arr.T)
-site_arr_nan = imp.fit_transform(site_arr.T)
-plsr.fit(prot_arr_nan, site_arr_nan)
-
-vips = vip(prot_arr_nan, site_arr_nan, plsr)
-
-import sys
-sys.exit()
-"""
+    filename = 'priors/brca_prot_rna_default_corr400.txt'
+    save_and_upload(filename, prior)
 
