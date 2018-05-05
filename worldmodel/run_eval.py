@@ -11,17 +11,17 @@ from nltk import tokenize
 from fuzzywuzzy import fuzz, process
 from indra.belief import BeliefEngine
 import indra.tools.assemble_corpus as ac
-from indra.preassembler import Preassembler
+from indra.preassembler import Preassembler, render_stmt_graph
 from indra.statements import Influence, Concept
 from indra.assemblers import CAGAssembler, PysbAssembler
 from indra.explanation.model_checker import ModelChecker
 from indra.preassembler.hierarchy_manager import HierarchyManager
 
-# This is a mapping to MITRE's document IDs from our IDs
+# This is a mapping to MITRE's 10 document IDs from our file names
 ten_docs_map = {
     '2_IFPRI': '130035 excerpt BG',
     '6_FAO_news': 'CLiMIS_FAO_UNICEF_WFP_SouthSudanIPC_29June_FINAL BG',
-    '8_EA_Seasonal Monitor_2017_08_11': 'EA_Seasonal Monitor_2017_08_11',
+    '8_EA_Seasonal Monitor_2017_08_11': 'EA_Seasonal Monitor_2017_08_11 BG',
     '13_SSD_8': 'FAOGIEWSSouthSudanCountryBriefSept2017 BG',
     '15_FEWS NET South Sudan Famine Risk Alert_20170117':
         'FEWS NET South Sudan Famine Risk Alert_20170117 BG',
@@ -29,7 +29,7 @@ ten_docs_map = {
         'FEWSNET South Sudan Outlook January 2018 BG',
     '18_FFP Fact Sheet_South Sudan_2018.01.17':
         'FFP Fact Sheet_South Sudan_2018.01.17 BG',
-    '52_i8533en': 'i8533en.pdf',
+    '52_i8533en': 'i8533en',
     '32_sudantribune':
         'SudanTribune_1_5MillionSSudaneseRiskFacingFamineSaysUN BG',
     '34_Floods displace hundreds in war-torn in South Sudan - '
@@ -71,13 +71,10 @@ def extract_eidos_text(docnames):
             print('Reading %s' % fname)
             txt = fh.read()
         json_fname = 'eidos/%s.txt.jsonld' % docname
-        with open(json_fname, 'r') as fh:
-            jd = json.load(fh)
-            for ext in jd.get('extractions', []):
-                if ext.get('@type') == 'DirectedRelation':
-                    text = ext.get('text')
-                    if text and text not in texts[key]:
-                        texts[key].append(text)
+        ep = eidos.process_json_ld_file(json_fname)
+        for stmt in ep.statements:
+            for ev in stmt.evidence:
+                texts[key].append(ev.text)
     # Now clean up all the texts to remove redundancies
     for key, sentences in texts.items():
         cleaned_sentences = copy.copy(sentences)
@@ -115,14 +112,28 @@ def make_eidos_tsv(statements, fname):
                          ev.text]
             fh.write('%s\n' % '\t'.join(elements))
 
-def read_bbn():
-    fname = 'bbn/bbn_hume_cag_10doc_iteration2_v1/bbn_hume_cat_10doc.json-ld'
-    bp = bbn.process_json_file(fname)
+
+def annotate_concept_texts(stmts):
+    for stmt in stmts:
+        for concept, ann in zip((stmt.subj, stmt.obj),
+                                ('subj_text', 'obj_text')):
+            txt = concept.name
+            stmt.evidence[0].annotations[ann] = txt
+        print(stmt.evidence[0].annotations)
+
+
+def read_bbn(fname, version):
+    if version == 'new':
+        bp = bbn.process_jsonld_file(fname)
+        # Remap doc names
+        for stmt in bp.statements:
+            stmt.evidence[0].pmid = stmt.evidence[0].pmid[:-4]
+    else:
+        bp = bbn.process_json_file_old(fname)
     return bp.statements
 
 
-def read_sofia():
-    fname = 'cmu/SOFIA_output_debugging.xlsx'
+def read_sofia(fname):
     sp = sofia.process_table(fname, 'Events')
     return sp.statements
 
@@ -164,6 +175,10 @@ def read_cwms_sentences(text_dict, read=True):
             print('%d stmts from %s %d' %
                   (len(cp.statements), ekb_fname, j))
             stmts += cp.statements
+            # Set the PMID on these statements so that we can get the document ID
+            # during assembly
+            for stmt in cp.statements:
+                stmt.evidence[0].pmid = doc
     return stmts
 
 
@@ -281,7 +296,7 @@ def get_joint_hierarchies():
 def run_preassembly(statements, hierarchies):
     print('%d total statements' % len(statements))
     # Filter to grounded only
-    statements = ac.filter_grounded_only(statements, score_threshold=0.5)
+    statements = ac.filter_grounded_only(statements, score_threshold=0.4)
     # Make a Preassembler with the Eidos and TRIPS ontology
     pa = Preassembler(hierarchies, statements)
     # Make a BeliefEngine and run combine duplicates
@@ -328,26 +343,42 @@ def remap_pmids(stmts):
                 evidence.pmid = ten_docs_map[evidence.pmid]
 
 
+def make_mitre_tsv(stmts, fname):
+    ca = CAGAssembler(stmts)
+    ca.make_model()
+    ca.print_tsv(fname)
+
+
+def plot_assembly(stmts, fname):
+    g = render_stmt_graph(stmts, reduce=False, rankdir='TB')
+    print(g.nodes())
+    g.draw(fname, prog='dot')
+    return g
+
 if __name__ == '__main__':
-    # All documents
+    # Get the IDs of all the documents in the docs folder
     docnames = sorted(['.'.join(os.path.basename(f).split('.')[:-1])
                        for f in glob.glob('docs/*.txt')],
                        key=lambda x: int(x.split('_')[0]))
+
+    # Or rather get just the IDs ot the 10 documents for preliminary analysis
     docnames = list(ten_docs_map.keys())
-    texts = extract_eidos_text(docnames)
 
     # Gather input from sources
-    #cwms_stmts = read_cwms_sentences(texts, read=True)
     eidos_stmts = read_eidos(docnames)
-    #make_eidos_tsv(eidos_stmts, 'moveFiltering_may3.tsv')
-    remap_pmids(eidos_stmts)
-    #bbn_stmts = read_bbn()
+    texts = extract_eidos_text(docnames)
+    cwms_stmts = read_cwms_sentences(texts, read=False)
 
-    from indra.assemblers import CAGAssembler
-    ca = CAGAssembler(eidos_stmts)
-    ca.make_model()
-    ca.print_tsv('mitre_table.tsv')
-    #sofia_stmts = read_sofia()
+    # Read BBN output old and new
+    bbn_stmts_new = \
+        read_bbn('bbn/bbn_hume_cag_10doc_iteration2_v1/bbn_hume_cat_10doc.json-ld',
+                 'new')
+    bbn_stmts_old = \
+        read_bbn('bbn/bbn-m6-cag.v0.3/cag.json-ld',
+                 'old')
+
+    # Read SOFIA output
+    sofia_stmts = read_sofia('sofia/SOFIA_output_debugging.xlsx')
 
     # Align ontologies
     #matches_eb = align_entities({'EIDOS': eidos_stmts, 'BBN': bbn_stmts},
@@ -361,6 +392,10 @@ if __name__ == '__main__':
     #dump_alignment(matches_bc, 'BBN_CWMS_alignment.csv')
 
     # Collect all statements and assemble
-    all_stmts = eidos_stmts + bbn_stmts + cwms_stmts + sofia_stmts
+    all_stmts = eidos_stmts + cwms_stmts + bbn_stmts_old + sofia_stmts
+    annotate_concept_texts(all_stmts)
+    remap_pmids(all_stmts)
     hierarchies = get_joint_hierarchies()
     top_stmts = run_preassembly(all_stmts, hierarchies)
+    make_mitre_tsv(top_stmts, 'indra_cag_table.tsv')
+    g = plot_assembly(top_stmts, 'indra_cag_assembly.pdf')
