@@ -1,6 +1,7 @@
 from indra.sources import eidos, bbn, cwms, sofia
 from indra.util import _require_python3
 import os
+import sys
 import glob
 import math
 import copy
@@ -16,6 +17,8 @@ from indra.statements import Influence, Concept
 from indra.assemblers import CAGAssembler, PysbAssembler
 from indra.explanation.model_checker import ModelChecker
 from indra.preassembler.hierarchy_manager import HierarchyManager
+from indra.assemblers.bmi_wrapper import BMIModel
+
 
 # This is a mapping to MITRE's 10 document IDs from our file names
 ten_docs_map = {
@@ -74,7 +77,9 @@ def extract_eidos_text(docnames):
         ep = eidos.process_json_ld_file(json_fname)
         for stmt in ep.statements:
             for ev in stmt.evidence:
-                texts[key].append(ev.text)
+                txt = ev.text
+                txt = txt.replace('\n', ' ')
+                texts[key].append(txt)
     # Now clean up all the texts to remove redundancies
     for key, sentences in texts.items():
         cleaned_sentences = copy.copy(sentences)
@@ -122,25 +127,36 @@ def annotate_concept_texts(stmts):
         print(stmt.evidence[0].annotations)
 
 
-def read_bbn(fname, version):
+def read_bbn(fname, version='new'):
     if version == 'new':
         bp = bbn.process_jsonld_file(fname)
-        # Remap doc names
-        for stmt in bp.statements:
-            stmt.evidence[0].pmid = stmt.evidence[0].pmid[:-4]
+        # Remap doc names - only needed if original doc names should be
+        # reconstructed
+        # for stmt in bp.statements:
+        #     stmt.evidence[0].pmid = stmt.evidence[0].pmid[:-4]
     else:
         bp = bbn.process_json_file_old(fname)
     return bp.statements
 
 
 def read_sofia(fname):
-    sp = sofia.process_table(fname, 'Events')
+    sp = sofia.process_table(fname)
     return sp.statements
 
 
 def preprocess_cwms(txt):
-    # Replace FF character
-    txt = txt.replace('\u000c', '\n')
+    # Make some specific replacement choices
+    # for common unicode characters
+    unicode_map = {'\u000c', ' ',
+                   '\u2018', '\'',
+                   '\u2019', '\'',
+                   '\u2022', ' ',
+                   '\ufb01', 'fi',
+                   '\ufb02', 'fl',
+                   '\ufb03', 'ffi',
+                   '\ufb00', 'ff',
+                   '\u2003', ' ',
+                   '\u2014', ' '}
     # Replace parentheses
     txt = txt.replace('-lrb-', '(')
     txt = txt.replace('-LRB-', '(')
@@ -169,6 +185,7 @@ def read_cwms_sentences(text_dict, read=True):
                 with open(ekb_fname, 'r') as fh:
                     cp = cwms.process_ekb(fh.read())
             elif read:
+                print('Reading into %s' % ekb_fname)
                 cp = cwms.process_text(block_txt, save_xml=ekb_fname)
             else:
                 continue
@@ -296,7 +313,7 @@ def get_joint_hierarchies():
 def run_preassembly(statements, hierarchies):
     print('%d total statements' % len(statements))
     # Filter to grounded only
-    statements = ac.filter_grounded_only(statements, score_threshold=0.4)
+    statements = ac.filter_grounded_only(statements, score_threshold=0.7)
     # Make a Preassembler with the Eidos and TRIPS ontology
     pa = Preassembler(hierarchies, statements)
     # Make a BeliefEngine and run combine duplicates
@@ -362,23 +379,27 @@ if __name__ == '__main__':
                        key=lambda x: int(x.split('_')[0]))
 
     # Or rather get just the IDs ot the 10 documents for preliminary analysis
-    docnames = list(ten_docs_map.keys())
+    # docnames = list(ten_docs_map.keys())
 
     # Gather input from sources
     eidos_stmts = read_eidos(docnames)
     texts = extract_eidos_text(docnames)
-    cwms_stmts = read_cwms_sentences(texts, read=False)
+    with open('cwms_read_texts.json', 'w') as fh:
+        json.dump(texts, fh, indent=1)
+    sys.exit()
+    cwms_stmts = read_cwms_sentences(texts, read=True)
 
     # Read BBN output old and new
-    bbn_stmts_new = \
-        read_bbn('bbn/bbn_hume_cag_10doc_iteration2_v1/bbn_hume_cat_10doc.json-ld',
-                 'new')
-    bbn_stmts_old = \
-        read_bbn('bbn/bbn-m6-cag.v0.3/cag.json-ld',
-                 'old')
+    bbn_stmts = read_bbn('bbn/wm_m6_0626.json-ld')
+    #bbn_stmts_new = \
+    #    read_bbn('bbn/bbn_hume_cag_10doc_iteration2_v1/bbn_hume_cat_10doc.json-ld',
+    #             'new')
+    #bbn_stmts_old = \
+    #    read_bbn('bbn/bbn-m6-cag.v0.3/cag.json-ld',
+    #             'old')
 
     # Read SOFIA output
-    sofia_stmts = read_sofia('sofia/SOFIA_output_debugging.xlsx')
+    sofia_stmts = read_sofia('sofia/MITRE_June18_v1.xlsx')
 
     # Align ontologies
     #matches_eb = align_entities({'EIDOS': eidos_stmts, 'BBN': bbn_stmts},
@@ -392,10 +413,15 @@ if __name__ == '__main__':
     #dump_alignment(matches_bc, 'BBN_CWMS_alignment.csv')
 
     # Collect all statements and assemble
-    all_stmts = eidos_stmts + cwms_stmts + bbn_stmts_old + sofia_stmts
+    all_stmts = eidos_stmts + cwms_stmts + bbn_stmts + sofia_stmts
     annotate_concept_texts(all_stmts)
     remap_pmids(all_stmts)
     hierarchies = get_joint_hierarchies()
     top_stmts = run_preassembly(all_stmts, hierarchies)
-    make_mitre_tsv(top_stmts, 'indra_cag_table.tsv')
+    with open('eval52_top_stmts.pkl', 'wb') as fh:
+        pickle.dump(top_stmts, fh)
+    #make_mitre_tsv(top_stmts, 'indra_cag_table.tsv')
     g = plot_assembly(top_stmts, 'indra_cag_assembly.pdf')
+    #mc = get_model_checker(top_stmts)
+    #bmi_model = BMIModel(mc.model)
+    #bmi_model.model.name = 'eval_model'
