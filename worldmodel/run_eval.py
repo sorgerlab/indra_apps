@@ -364,6 +364,7 @@ def run_preassembly(statements, hierarchies):
     # Run combine related
     related_stmts = pa.combine_related(return_toplevel=False)
     be.set_hierarchy_probs(related_stmts)
+    related_stmts = ac.filter_belief(related_stmts, 0.8)
     # Filter to top-level Statements
     top_stmts = ac.filter_top_level(related_stmts)
     print('%d top-level statements' % len(top_stmts))
