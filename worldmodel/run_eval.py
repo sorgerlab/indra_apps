@@ -348,7 +348,8 @@ def run_preassembly(statements, hierarchies):
     statements = ac.filter_grounded_only(statements, score_threshold=0.7)
 
     statements = map_onto(statements)
-    statements = filter_concept_of_interest(statements, ['food_security'])
+    statements = filter_concept_of_interest(statements,
+        ['conflict', 'food_security', 'precipitation'])
     assume_polarity(statements)
     statements = filter_has_polarity(statements)
 
