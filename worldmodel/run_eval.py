@@ -310,24 +310,51 @@ def get_joint_hierarchies():
     return hierarchies
 
 
+def map_onto(statements):
+    om = ontology_mapper.OntologyMapper(statements, ontology_mapper.wm_ontomap,
+                                        symmetric=False)
+    om.map_statements()
+    return om.statements
+
+
+def filter_concept_of_interest(statements, concepts):
+    relevant_stmts = []
+    for stmt in statements:
+        if ('UN' in stmt.subj.db_refs and stmt.subj.db_refs['UN'][0][0].split('/')[-1] in concepts) or \
+            ('UN' in stmt.obj.db_refs and stmt.obj.db_refs['UN'][0][0].split('/')[-1] in concepts):
+            relevant_stmts.append(stmt)
+    return relevant_stmts
+
+
+def assume_polarity(statements):
+    # Assume positive subject polarity
+    for stmt in statements:
+        if stmt.subj_delta['polarity'] is None:
+            stmt.subj_delta['polarity'] = 1
+
+
+def filter_has_polarity(statements):
+    pol_stmts = []
+    for stmt in statements:
+        if stmt.subj_delta['polarity'] is not None and \
+            stmt.obj_delta['polarity'] is not None:
+            pol_stmts.append(stmt)
+    return pol_stmts
+
+
 def run_preassembly(statements, hierarchies):
     print('%d total statements' % len(statements))
     # Filter to grounded only
     statements = ac.filter_grounded_only(statements, score_threshold=0.7)
 
-    om = ontology_mapper.OntologyMapper(statements, ontology_mapper.wm_ontomap,
-                                        symmetric=False)
-    om.map_statements()
+    statements = map_onto(statements)
+    statements = filter_concept_of_interest(statements, ['food_security'])
+    assume_polarity(statements)
+    statements = filter_has_polarity(statements)
 
-    relevant_stmts = []
-    relevant_concepts = ['conflict', 'food_security', 'precipitation']
-    for stmt in om.statements:
-        if ('UN' in stmt.subj.db_refs and stmt.subj.db_refs['UN'][0][0].split('/')[-1] in relevant_concepts) or \
-            ('UN' in stmt.obj.db_refs and stmt.obj.db_refs['UN'][0][0].split('/')[-1] in relevant_concepts):
-            relevant_stmts.append(stmt)
 
     # Make a Preassembler with the Eidos and TRIPS ontology
-    pa = Preassembler(hierarchies, relevant_stmts)
+    pa = Preassembler(hierarchies, statements)
     # Make a BeliefEngine and run combine duplicates
     be = BeliefEngine()
     unique_stmts = pa.combine_duplicates()
