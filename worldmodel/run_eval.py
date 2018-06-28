@@ -12,7 +12,7 @@ from nltk import tokenize
 from fuzzywuzzy import fuzz, process
 from indra.belief import BeliefEngine
 import indra.tools.assemble_corpus as ac
-from indra.preassembler import Preassembler, render_stmt_graph
+from indra.preassembler import Preassembler, render_stmt_graph, ontology_mapper
 from indra.statements import Influence, Concept
 from indra.assemblers import CAGAssembler, PysbAssembler
 from indra.explanation.model_checker import ModelChecker
@@ -314,8 +314,20 @@ def run_preassembly(statements, hierarchies):
     print('%d total statements' % len(statements))
     # Filter to grounded only
     statements = ac.filter_grounded_only(statements, score_threshold=0.7)
+
+    om = ontology_mapper.OntologyMapper(statements, ontology_mapper.wm_ontomap,
+                                        symmetric=False)
+    om.map_statements()
+
+    relevant_stmts = []
+    relevant_concepts = ['conflict', 'food_security', 'precipitation']
+    for stmt in om.statements:
+        if ('UN' in stmt.subj.db_refs and stmt.subj.db_refs['UN'][0][0].split('/')[-1] in relevant_concepts) or \
+            ('UN' in stmt.obj.db_refs and stmt.obj.db_refs['UN'][0][0].split('/')[-1] in relevant_concepts):
+            relevant_stmts.append(stmt)
+
     # Make a Preassembler with the Eidos and TRIPS ontology
-    pa = Preassembler(hierarchies, statements)
+    pa = Preassembler(hierarchies, relevant_stmts)
     # Make a BeliefEngine and run combine duplicates
     be = BeliefEngine()
     unique_stmts = pa.combine_duplicates()
@@ -386,8 +398,7 @@ if __name__ == '__main__':
     texts = extract_eidos_text(docnames)
     with open('cwms_read_texts.json', 'w') as fh:
         json.dump(texts, fh, indent=1)
-    sys.exit()
-    cwms_stmts = read_cwms_sentences(texts, read=True)
+    cwms_stmts = read_cwms_sentences(texts, read=False)
 
     # Read BBN output old and new
     bbn_stmts = read_bbn('bbn/wm_m6_0626.json-ld')
@@ -416,12 +427,13 @@ if __name__ == '__main__':
     all_stmts = eidos_stmts + cwms_stmts + bbn_stmts + sofia_stmts
     annotate_concept_texts(all_stmts)
     remap_pmids(all_stmts)
+
     hierarchies = get_joint_hierarchies()
     top_stmts = run_preassembly(all_stmts, hierarchies)
-    with open('eval52_top_stmts.pkl', 'wb') as fh:
-        pickle.dump(top_stmts, fh)
+    #with open('eval52_top_stmts.pkl', 'wb') as fh:
+    #    pickle.dump(top_stmts, fh)
     #make_mitre_tsv(top_stmts, 'indra_cag_table.tsv')
-    g = plot_assembly(top_stmts, 'indra_cag_assembly.pdf')
+    #g = plot_assembly(top_stmts, 'indra_cag_assembly.pdf')
     #mc = get_model_checker(top_stmts)
     #bmi_model = BMIModel(mc.model)
     #bmi_model.model.name = 'eval_model'
