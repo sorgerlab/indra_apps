@@ -124,7 +124,6 @@ def annotate_concept_texts(stmts):
                                 ('subj_text', 'obj_text')):
             txt = concept.name
             stmt.evidence[0].annotations[ann] = txt
-        print(stmt.evidence[0].annotations)
 
 
 def read_bbn(fname, version='new'):
@@ -147,16 +146,19 @@ def read_sofia(fname):
 def preprocess_cwms(txt):
     # Make some specific replacement choices
     # for common unicode characters
-    unicode_map = {'\u000c', ' ',
-                   '\u2018', '\'',
-                   '\u2019', '\'',
-                   '\u2022', ' ',
-                   '\ufb01', 'fi',
-                   '\ufb02', 'fl',
-                   '\ufb03', 'ffi',
-                   '\ufb00', 'ff',
-                   '\u2003', ' ',
-                   '\u2014', ' '}
+    unicode_map = {'\u000c': ' ',
+                   '\u2018': '\'',
+                   '\u2019': '\'',
+                   '\u2022': ' ',
+                   '\ufb01': 'fi',
+                   '\ufb02': 'fl',
+                   '\ufb03': 'ffi',
+                   '\ufb00': 'ff',
+                   '\u2003': ' ',
+                   '\u2014': ' ',
+                   '\f': ' '}
+    for k, v in unicode_map.items():
+        txt = txt.replace(k, v)
     # Replace parentheses
     txt = txt.replace('-lrb-', '(')
     txt = txt.replace('-LRB-', '(')
@@ -177,6 +179,9 @@ def read_cwms_sentences(text_dict, read=True):
         for j, block in enumerate(blocks):
             block_txt = '.\n'.join(t.capitalize() for t in block)
             block_txt = preprocess_cwms(block_txt)
+            print('==================')
+            print(block_txt)
+            print('==================')
             if len(blocks) == 1:
                 ekb_fname = 'cwms/%s_sentences.ekb' % doc
             else:
@@ -339,6 +344,7 @@ def filter_has_polarity(statements):
         if stmt.subj_delta['polarity'] is not None and \
             stmt.obj_delta['polarity'] is not None:
             pol_stmts.append(stmt)
+    print('%d statements after polarity filter' % len(pol_stmts))
     return pol_stmts
 
 
@@ -348,8 +354,9 @@ def run_preassembly(statements, hierarchies):
     statements = ac.filter_grounded_only(statements, score_threshold=0.7)
 
     statements = map_onto(statements)
-    statements = filter_concept_of_interest(statements,
-        ['conflict', 'food_security', 'precipitation'])
+    statements = ac.filter_by_db_refs(statements, 'UN',
+        ['conflict', 'food_security', 'precipitation'], policy='one',
+        match_suffix=True)
     assume_polarity(statements)
     statements = filter_has_polarity(statements)
 
@@ -427,7 +434,7 @@ if __name__ == '__main__':
     texts = extract_eidos_text(docnames)
     with open('cwms_read_texts.json', 'w') as fh:
         json.dump(texts, fh, indent=1)
-    cwms_stmts = read_cwms_sentences(texts, read=False)
+    cwms_stmts = read_cwms_sentences(texts, read=True)
 
     # Read BBN output old and new
     bbn_stmts = read_bbn('bbn/wm_m6_0626.json-ld')
