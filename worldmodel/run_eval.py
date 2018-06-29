@@ -8,6 +8,7 @@ import copy
 import json
 import pickle
 import itertools
+from collections import Counter
 from nltk import tokenize
 from fuzzywuzzy import fuzz, process
 from indra.belief import BeliefEngine
@@ -135,7 +136,14 @@ def read_bbn(fname, version='new'):
         #     stmt.evidence[0].pmid = stmt.evidence[0].pmid[:-4]
     else:
         bp = bbn.process_json_file_old(fname)
-    return bp.statements
+    # We need to filter out a duplicate document to avoid
+    # artifactual duplicates
+    ret_stmts = []
+    for stmt in bp.statements:
+        doc = stmt.evidence[0].annotations['provenance'][0]['document']['@id']
+        if doc != 'ENG_NW_20171205':
+            ret_stmts.append(stmt)
+    return ret_stmts
 
 
 def read_sofia(fname):
@@ -414,6 +422,27 @@ def make_mitre_tsv(stmts, fname):
     ca.print_tsv(fname)
 
 
+def print_statement_sources(stmts):
+    sources = []
+    for stmt in stmts:
+        for ev in stmt.evidence:
+            sources.append(ev.source_api)
+    counts = Counter(sources)
+    print('Number of individual Evidences from each source')
+    for k, v in counts.items():
+        print('%s: %d' % (k, v))
+
+    joint_sources = []
+    for stmt in stmts:
+        source_apis = tuple(sorted(list(set([e.source_api for e in stmt.evidence]))))
+        joint_sources.append(source_apis)
+    counts = Counter(joint_sources)
+    print('Number of Statements with the given combination of sources')
+    for k, v in counts.items():
+        print('%s: %d' % (k, v))
+
+
+
 def plot_assembly(stmts, fname):
     g = render_stmt_graph(stmts, reduce=False, rankdir='TB')
     print(g.nodes())
@@ -425,6 +454,9 @@ if __name__ == '__main__':
     docnames = sorted(['.'.join(os.path.basename(f).split('.')[:-1])
                        for f in glob.glob('docs/*.txt')],
                        key=lambda x: int(x.split('_')[0]))
+    exclude = '31_South_Sudan_2018_Humanitarian_Needs_Overview'
+    docnames = [d for d in docnames if d != exclude]
+    print('Using %d documents' % len(docnames))
 
     # Or rather get just the IDs ot the 10 documents for preliminary analysis
     # docnames = list(ten_docs_map.keys())
