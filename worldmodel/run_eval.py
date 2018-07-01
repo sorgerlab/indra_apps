@@ -317,8 +317,11 @@ def get_joint_hierarchies():
                              'eidos_ontology.rdf')
     trips_ont = os.path.join(os.path.abspath(cwms.__path__[0]),
                              'trips_ontology.rdf')
+    bbn_ont = os.path.join(os.path.abspath(bbn.__path__[0]),
+                           'bbn_ontology.rdf')
     hm = HierarchyManager(eidos_ont, True, True)
     hm.extend_with(trips_ont)
+    hm.extend_with(bbn_ont)
     hierarchies = {'entity': hm}
     return hierarchies
 
@@ -328,15 +331,6 @@ def map_onto(statements):
                                         symmetric=False)
     om.map_statements()
     return om.statements
-
-
-def filter_concept_of_interest(statements, concepts):
-    relevant_stmts = []
-    for stmt in statements:
-        if ('UN' in stmt.subj.db_refs and stmt.subj.db_refs['UN'][0][0].split('/')[-1] in concepts) or \
-            ('UN' in stmt.obj.db_refs and stmt.obj.db_refs['UN'][0][0].split('/')[-1] in concepts):
-            relevant_stmts.append(stmt)
-    return relevant_stmts
 
 
 def assume_polarity(statements):
@@ -441,6 +435,22 @@ def print_statement_sources(stmts):
     for k, v in counts.items():
         print('%s: %d' % (k, v))
 
+
+def standardize_names(stmts):
+    """Standardize the names of Concepts with respect to an ontology."""
+    for stmt in stmts:
+        for concept in stmt.agent_list():
+            db_ns, db_id = concept.get_grounding()
+            if db_id is not None:
+                if isinstance(db_id, list):
+                    db_id = db_id[0][0].split('/')[-1]
+                else:
+                    db_id = db_id.split('/')[-1]
+                db_id = db_id.replace('|', ' ')
+                db_id = db_id.replace('_', ' ')
+                db_id = db_id.replace('ONT::', '')
+                db_id = db_id.capitalize()
+                concept.name = db_id
 
 
 def plot_assembly(stmts, fname):
