@@ -393,11 +393,15 @@ def display_delphi(statements):
     app.run()
 
 
-def get_model_checker(statements):
+def make_pysb_model(statements):
     pa = PysbAssembler()
     pa.add_statements(statements)
     model = pa.make_model()
-    stmt = Influence(Concept('crop_production'), Concept('food_security'))
+    return model
+
+
+def get_model_checker(model):
+    stmt = Influence(Concept('Crop_production'), Concept('Food_security'))
     mc = ModelChecker(model, [stmt])
     mc.prune_influence_map()
     return mc
@@ -503,8 +507,8 @@ if __name__ == '__main__':
 
     # Collect all statements and assemble
     all_stmts = eidos_stmts + cwms_stmts + bbn_stmts + sofia_stmts
-    annotate_concept_texts(all_stmts)
-    remap_pmids(all_stmts)
+    #annotate_concept_texts(all_stmts)
+    #remap_pmids(all_stmts)
 
     hierarchies = get_joint_hierarchies()
     top_stmts = run_preassembly(all_stmts, hierarchies)
@@ -512,6 +516,8 @@ if __name__ == '__main__':
     #    pickle.dump(top_stmts, fh)
     #make_mitre_tsv(top_stmts, 'indra_cag_table.tsv')
     #g = plot_assembly(top_stmts, 'indra_cag_assembly.pdf')
-    #mc = get_model_checker(top_stmts)
+    standardize_names(top_stmts)
+    model = make_pysb_model(top_stmts)
+    mc = get_model_checker(model)
     #bmi_model = BMIModel(mc.model)
     #bmi_model.model.name = 'eval_model'
