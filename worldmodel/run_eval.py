@@ -1,21 +1,25 @@
 from indra.sources import eidos, bbn, cwms, sofia
 from indra.util import _require_python3
 import os
+import sys
 import glob
 import math
 import copy
 import json
 import pickle
 import itertools
+from collections import Counter
 from nltk import tokenize
 from fuzzywuzzy import fuzz, process
 from indra.belief import BeliefEngine
 import indra.tools.assemble_corpus as ac
-from indra.preassembler import Preassembler, render_stmt_graph
+from indra.preassembler import Preassembler, render_stmt_graph, ontology_mapper
 from indra.statements import Influence, Concept
 from indra.assemblers import CAGAssembler, PysbAssembler
 from indra.explanation.model_checker import ModelChecker
 from indra.preassembler.hierarchy_manager import HierarchyManager
+from indra.assemblers.bmi_wrapper import BMIModel
+
 
 # This is a mapping to MITRE's 10 document IDs from our file names
 ten_docs_map = {
@@ -74,7 +78,9 @@ def extract_eidos_text(docnames):
         ep = eidos.process_json_ld_file(json_fname)
         for stmt in ep.statements:
             for ev in stmt.evidence:
-                texts[key].append(ev.text)
+                txt = ev.text
+                txt = txt.replace('\n', ' ')
+                texts[key].append(txt)
     # Now clean up all the texts to remove redundancies
     for key, sentences in texts.items():
         cleaned_sentences = copy.copy(sentences)
@@ -119,28 +125,48 @@ def annotate_concept_texts(stmts):
                                 ('subj_text', 'obj_text')):
             txt = concept.name
             stmt.evidence[0].annotations[ann] = txt
-        print(stmt.evidence[0].annotations)
 
 
-def read_bbn(fname, version):
+def read_bbn(fname, version='new'):
     if version == 'new':
         bp = bbn.process_jsonld_file(fname)
-        # Remap doc names
-        for stmt in bp.statements:
-            stmt.evidence[0].pmid = stmt.evidence[0].pmid[:-4]
+        # Remap doc names - only needed if original doc names should be
+        # reconstructed
+        # for stmt in bp.statements:
+        #     stmt.evidence[0].pmid = stmt.evidence[0].pmid[:-4]
     else:
         bp = bbn.process_json_file_old(fname)
-    return bp.statements
+    # We need to filter out a duplicate document to avoid
+    # artifactual duplicates
+    ret_stmts = []
+    for stmt in bp.statements:
+        doc = stmt.evidence[0].annotations['provenance'][0]['document']['@id']
+        if doc != 'ENG_NW_20171205':
+            ret_stmts.append(stmt)
+    return ret_stmts
 
 
 def read_sofia(fname):
-    sp = sofia.process_table(fname, 'Events')
+    sp = sofia.process_table(fname)
     return sp.statements
 
 
 def preprocess_cwms(txt):
-    # Replace FF character
-    txt = txt.replace('\u000c', '\n')
+    # Make some specific replacement choices
+    # for common unicode characters
+    unicode_map = {'\u000c': ' ',
+                   '\u2018': '\'',
+                   '\u2019': '\'',
+                   '\u2022': ' ',
+                   '\ufb01': 'fi',
+                   '\ufb02': 'fl',
+                   '\ufb03': 'ffi',
+                   '\ufb00': 'ff',
+                   '\u2003': ' ',
+                   '\u2014': ' ',
+                   '\f': ' '}
+    for k, v in unicode_map.items():
+        txt = txt.replace(k, v)
     # Replace parentheses
     txt = txt.replace('-lrb-', '(')
     txt = txt.replace('-LRB-', '(')
@@ -161,6 +187,9 @@ def read_cwms_sentences(text_dict, read=True):
         for j, block in enumerate(blocks):
             block_txt = '.\n'.join(t.capitalize() for t in block)
             block_txt = preprocess_cwms(block_txt)
+            print('==================')
+            print(block_txt)
+            print('==================')
             if len(blocks) == 1:
                 ekb_fname = 'cwms/%s_sentences.ekb' % doc
             else:
@@ -169,6 +198,7 @@ def read_cwms_sentences(text_dict, read=True):
                 with open(ekb_fname, 'r') as fh:
                     cp = cwms.process_ekb(fh.read())
             elif read:
+                print('Reading into %s' % ekb_fname)
                 cp = cwms.process_text(block_txt, save_xml=ekb_fname)
             else:
                 continue
@@ -287,16 +317,52 @@ def get_joint_hierarchies():
                              'eidos_ontology.rdf')
     trips_ont = os.path.join(os.path.abspath(cwms.__path__[0]),
                              'trips_ontology.rdf')
+    bbn_ont = os.path.join(os.path.abspath(bbn.__path__[0]),
+                           'bbn_ontology.rdf')
     hm = HierarchyManager(eidos_ont, True, True)
     hm.extend_with(trips_ont)
+    hm.extend_with(bbn_ont)
     hierarchies = {'entity': hm}
     return hierarchies
+
+
+def map_onto(statements):
+    om = ontology_mapper.OntologyMapper(statements, ontology_mapper.wm_ontomap,
+                                        symmetric=False)
+    om.map_statements()
+    return om.statements
+
+
+def assume_polarity(statements):
+    # Assume positive subject polarity
+    for stmt in statements:
+        if stmt.subj_delta['polarity'] is None:
+            stmt.subj_delta['polarity'] = 1
+
+
+def filter_has_polarity(statements):
+    pol_stmts = []
+    for stmt in statements:
+        if stmt.subj_delta['polarity'] is not None and \
+            stmt.obj_delta['polarity'] is not None:
+            pol_stmts.append(stmt)
+    print('%d statements after polarity filter' % len(pol_stmts))
+    return pol_stmts
 
 
 def run_preassembly(statements, hierarchies):
     print('%d total statements' % len(statements))
     # Filter to grounded only
-    statements = ac.filter_grounded_only(statements, score_threshold=0.4)
+    statements = ac.filter_grounded_only(statements, score_threshold=0.7)
+
+    statements = map_onto(statements)
+    statements = ac.filter_by_db_refs(statements, 'UN',
+        ['conflict', 'food_security', 'precipitation'], policy='one',
+        match_suffix=True)
+    assume_polarity(statements)
+    statements = filter_has_polarity(statements)
+
+
     # Make a Preassembler with the Eidos and TRIPS ontology
     pa = Preassembler(hierarchies, statements)
     # Make a BeliefEngine and run combine duplicates
@@ -307,6 +373,7 @@ def run_preassembly(statements, hierarchies):
     # Run combine related
     related_stmts = pa.combine_related(return_toplevel=False)
     be.set_hierarchy_probs(related_stmts)
+    related_stmts = ac.filter_belief(related_stmts, 0.8)
     # Filter to top-level Statements
     top_stmts = ac.filter_top_level(related_stmts)
     print('%d top-level statements' % len(top_stmts))
@@ -326,11 +393,15 @@ def display_delphi(statements):
     app.run()
 
 
-def get_model_checker(statements):
+def make_pysb_model(statements):
     pa = PysbAssembler()
     pa.add_statements(statements)
     model = pa.make_model()
-    stmt = Influence(Concept('crop_production'), Concept('food_security'))
+    return model
+
+
+def get_model_checker(model):
+    stmt = Influence(Concept('Crop_production'), Concept('Food_security'))
     mc = ModelChecker(model, [stmt])
     mc.prune_influence_map()
     return mc
@@ -349,6 +420,43 @@ def make_mitre_tsv(stmts, fname):
     ca.print_tsv(fname)
 
 
+def print_statement_sources(stmts):
+    sources = []
+    for stmt in stmts:
+        for ev in stmt.evidence:
+            sources.append(ev.source_api)
+    counts = Counter(sources)
+    print('Number of individual Evidences from each source')
+    for k, v in counts.items():
+        print('%s: %d' % (k, v))
+
+    joint_sources = []
+    for stmt in stmts:
+        source_apis = tuple(sorted(list(set([e.source_api for e in stmt.evidence]))))
+        joint_sources.append(source_apis)
+    counts = Counter(joint_sources)
+    print('Number of Statements with the given combination of sources')
+    for k, v in counts.items():
+        print('%s: %d' % (k, v))
+
+
+def standardize_names(stmts):
+    """Standardize the names of Concepts with respect to an ontology."""
+    for stmt in stmts:
+        for concept in stmt.agent_list():
+            db_ns, db_id = concept.get_grounding()
+            if db_id is not None:
+                if isinstance(db_id, list):
+                    db_id = db_id[0][0].split('/')[-1]
+                else:
+                    db_id = db_id.split('/')[-1]
+                db_id = db_id.replace('|', ' ')
+                db_id = db_id.replace('_', ' ')
+                db_id = db_id.replace('ONT::', '')
+                db_id = db_id.capitalize()
+                concept.name = db_id
+
+
 def plot_assembly(stmts, fname):
     g = render_stmt_graph(stmts, reduce=False, rankdir='TB')
     print(g.nodes())
@@ -360,25 +468,31 @@ if __name__ == '__main__':
     docnames = sorted(['.'.join(os.path.basename(f).split('.')[:-1])
                        for f in glob.glob('docs/*.txt')],
                        key=lambda x: int(x.split('_')[0]))
+    exclude = '31_South_Sudan_2018_Humanitarian_Needs_Overview'
+    docnames = [d for d in docnames if d != exclude]
+    print('Using %d documents' % len(docnames))
 
     # Or rather get just the IDs ot the 10 documents for preliminary analysis
-    docnames = list(ten_docs_map.keys())
+    # docnames = list(ten_docs_map.keys())
 
     # Gather input from sources
     eidos_stmts = read_eidos(docnames)
     texts = extract_eidos_text(docnames)
-    cwms_stmts = read_cwms_sentences(texts, read=False)
+    with open('cwms_read_texts.json', 'w') as fh:
+        json.dump(texts, fh, indent=1)
+    cwms_stmts = read_cwms_sentences(texts, read=True)
 
     # Read BBN output old and new
-    bbn_stmts_new = \
-        read_bbn('bbn/bbn_hume_cag_10doc_iteration2_v1/bbn_hume_cat_10doc.json-ld',
-                 'new')
-    bbn_stmts_old = \
-        read_bbn('bbn/bbn-m6-cag.v0.3/cag.json-ld',
-                 'old')
+    bbn_stmts = read_bbn('bbn/wm_m6_0626.json-ld')
+    #bbn_stmts_new = \
+    #    read_bbn('bbn/bbn_hume_cag_10doc_iteration2_v1/bbn_hume_cat_10doc.json-ld',
+    #             'new')
+    #bbn_stmts_old = \
+    #    read_bbn('bbn/bbn-m6-cag.v0.3/cag.json-ld',
+    #             'old')
 
     # Read SOFIA output
-    sofia_stmts = read_sofia('sofia/SOFIA_output_debugging.xlsx')
+    sofia_stmts = read_sofia('sofia/MITRE_June18_v1.xlsx')
 
     # Align ontologies
     #matches_eb = align_entities({'EIDOS': eidos_stmts, 'BBN': bbn_stmts},
@@ -392,10 +506,18 @@ if __name__ == '__main__':
     #dump_alignment(matches_bc, 'BBN_CWMS_alignment.csv')
 
     # Collect all statements and assemble
-    all_stmts = eidos_stmts + cwms_stmts + bbn_stmts_old + sofia_stmts
-    annotate_concept_texts(all_stmts)
-    remap_pmids(all_stmts)
+    all_stmts = eidos_stmts + cwms_stmts + bbn_stmts + sofia_stmts
+    #annotate_concept_texts(all_stmts)
+    #remap_pmids(all_stmts)
+
     hierarchies = get_joint_hierarchies()
     top_stmts = run_preassembly(all_stmts, hierarchies)
-    make_mitre_tsv(top_stmts, 'indra_cag_table.tsv')
-    g = plot_assembly(top_stmts, 'indra_cag_assembly.pdf')
+    #with open('eval52_top_stmts.pkl', 'wb') as fh:
+    #    pickle.dump(top_stmts, fh)
+    #make_mitre_tsv(top_stmts, 'indra_cag_table.tsv')
+    #g = plot_assembly(top_stmts, 'indra_cag_assembly.pdf')
+    standardize_names(top_stmts)
+    model = make_pysb_model(top_stmts)
+    mc = get_model_checker(model)
+    #bmi_model = BMIModel(mc.model)
+    #bmi_model.model.name = 'eval_model'
