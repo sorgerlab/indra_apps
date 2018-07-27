@@ -1,4 +1,4 @@
-from indra.sources import eidos, bbn, cwms, sofia
+from indra.sources import eidos, hume, cwms, sofia
 from indra.util import _require_python3
 import os
 import sys
@@ -127,15 +127,15 @@ def annotate_concept_texts(stmts):
             stmt.evidence[0].annotations[ann] = txt
 
 
-def read_bbn(fname, version='new'):
+def read_hume(fname, version='new'):
     if version == 'new':
-        bp = bbn.process_jsonld_file(fname)
+        bp = hume.process_jsonld_file(fname)
         # Remap doc names - only needed if original doc names should be
         # reconstructed
         # for stmt in bp.statements:
         #     stmt.evidence[0].pmid = stmt.evidence[0].pmid[:-4]
     else:
-        bp = bbn.process_json_file_old(fname)
+        bp = hume.process_json_file_old(fname)
     # We need to filter out a duplicate document to avoid
     # artifactual duplicates
     ret_stmts = []
@@ -187,9 +187,6 @@ def read_cwms_sentences(text_dict, read=True):
         for j, block in enumerate(blocks):
             block_txt = '.\n'.join(t.capitalize() for t in block)
             block_txt = preprocess_cwms(block_txt)
-            print('==================')
-            print(block_txt)
-            print('==================')
             if len(blocks) == 1:
                 ekb_fname = 'cwms/%s_sentences.ekb' % doc
             else:
@@ -202,8 +199,8 @@ def read_cwms_sentences(text_dict, read=True):
                 cp = cwms.process_text(block_txt, save_xml=ekb_fname)
             else:
                 continue
-            print('%d stmts from %s %d' %
-                  (len(cp.statements), ekb_fname, j))
+            #print('%d stmts from %s %d' %
+            #      (len(cp.statements), ekb_fname, j))
             stmts += cp.statements
             # Set the PMID on these statements so that we can get the document ID
             # during assembly
@@ -317,11 +314,11 @@ def get_joint_hierarchies():
                              'eidos_ontology.rdf')
     trips_ont = os.path.join(os.path.abspath(cwms.__path__[0]),
                              'trips_ontology.rdf')
-    bbn_ont = os.path.join(os.path.abspath(bbn.__path__[0]),
-                           'bbn_ontology.rdf')
+    hume_ont = os.path.join(os.path.abspath(hume.__path__[0]),
+                            'hume_ontology.rdf')
     hm = HierarchyManager(eidos_ont, True, True)
     hm.extend_with(trips_ont)
-    hm.extend_with(bbn_ont)
+    hm.extend_with(hume_ont)
     hierarchies = {'entity': hm}
     return hierarchies
 
@@ -480,16 +477,16 @@ if __name__ == '__main__':
     texts = extract_eidos_text(docnames)
     with open('cwms_read_texts.json', 'w') as fh:
         json.dump(texts, fh, indent=1)
-    cwms_stmts = read_cwms_sentences(texts, read=True)
+    cwms_stmts = read_cwms_sentences(texts, read=False)
 
     # Read BBN output old and new
-    bbn_stmts = read_bbn('bbn/wm_m6_0626.json-ld')
+    bbn_stmts = read_hume('bbn/wm_m6_0628.json-ld')
+    # hume_stmts = read_hume('bbn/wm_m6_0626.json-ld')
     #bbn_stmts_new = \
-    #    read_bbn('bbn/bbn_hume_cag_10doc_iteration2_v1/bbn_hume_cat_10doc.json-ld',
-    #             'new')
+    #    read_hume('bbn/bbn_hume_cag_10doc_iteration2_v1/bbn_hume_cat_10doc.json-ld',
+    #              'new')
     #bbn_stmts_old = \
-    #    read_bbn('bbn/bbn-m6-cag.v0.3/cag.json-ld',
-    #             'old')
+    #    read_hume('bbn/bbn-m6-cag.v0.3/cag.json-ld', 'old')
 
     # Read SOFIA output
     sofia_stmts = read_sofia('sofia/MITRE_June18_v1.xlsx')
