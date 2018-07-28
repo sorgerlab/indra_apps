@@ -361,9 +361,9 @@ def filter_has_polarity(statements):
 def run_preassembly(statements, hierarchies):
     print('%d total statements' % len(statements))
     # Filter to grounded only
+    statements = map_onto(statements)
     statements = ac.filter_grounded_only(statements, score_threshold=0.7)
 
-    statements = map_onto(statements)
     statements = ac.filter_by_db_refs(statements, 'UN',
         ['conflict', 'food_security', 'precipitation'], policy='one',
         match_suffix=True)
