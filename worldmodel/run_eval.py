@@ -46,6 +46,7 @@ def read_eidos(docnames):
     for docname in docnames:
         fname = os.path.join('docs', '%s.txt' % docname)
         jsonname = os.path.join('eidos', '%s.txt.jsonld' % docname)
+        #jsonname = os.path.join('eidos/eidos_06262018', '%s.txt.jsonld' % docname)
         if os.path.exists(jsonname):
             ep = eidos.process_json_ld_file(jsonname)
         else:
@@ -175,6 +176,16 @@ def preprocess_cwms(txt):
     # Turn into ascii
     txt = txt.encode('ascii', errors='ignore').decode('ascii')
     return txt
+
+
+def read_cwms_ekbs(docnames):
+    stmts = []
+    for docname in docnames:
+        for fname in glob.glob('cwms/%s_sentences*.ekb' % docname):
+            with open(fname, 'r') as fh:
+                cp = cwms.process_ekb(fh.read())
+                stmts += cp.statements
+    return stmts
 
 
 def read_cwms_sentences(text_dict, read=True):
@@ -469,15 +480,19 @@ if __name__ == '__main__':
     docnames = [d for d in docnames if d != exclude]
     print('Using %d documents' % len(docnames))
 
+
     # Or rather get just the IDs ot the 10 documents for preliminary analysis
     # docnames = list(ten_docs_map.keys())
 
     # Gather input from sources
     eidos_stmts = read_eidos(docnames)
-    texts = extract_eidos_text(docnames)
-    with open('cwms_read_texts.json', 'w') as fh:
-        json.dump(texts, fh, indent=1)
-    cwms_stmts = read_cwms_sentences(texts, read=False)
+
+    #texts = extract_eidos_text(docnames)
+    #with open('cwms_read_texts.json', 'w') as fh:
+    #    json.dump(texts, fh, indent=1)
+    #cwms_stmts = read_cwms_sentences(texts, read=False)
+    cwms_stmts = read_cwms_ekbs(docnames)
+
 
     # Read BBN output old and new
     bbn_stmts = read_hume('bbn/wm_m6_0628.json-ld')
