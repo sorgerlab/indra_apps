@@ -336,7 +336,7 @@ def get_joint_hierarchies():
 
 def map_onto(statements):
     om = ontology_mapper.OntologyMapper(statements, ontology_mapper.wm_ontomap,
-                                        symmetric=False)
+                                        symmetric=False, scored=True)
     om.map_statements()
     return om.statements
 
@@ -362,11 +362,17 @@ def run_preassembly(statements, hierarchies):
     print('%d total statements' % len(statements))
     # Filter to grounded only
     statements = map_onto(statements)
+    ac.dump_statements(statements, 'pi_mtg_demo_unfiltered.pkl')
     statements = ac.filter_grounded_only(statements, score_threshold=0.7)
 
+    #statements = ac.filter_by_db_refs(statements, 'UN',
+    #    ['conflict', 'food_security', 'precipitation'], policy='one',
+    #    match_suffix=True)
     statements = ac.filter_by_db_refs(statements, 'UN',
-        ['conflict', 'food_security', 'precipitation'], policy='one',
-        match_suffix=True)
+        ['conflict', 'food_security', 'flooding',
+         'food_production', 'human_migration', 'drought',
+         'food_availability', 'market', 'food_insecurity'],
+        policy='all', match_suffix=True)
     assume_polarity(statements)
     statements = filter_has_polarity(statements)
 
@@ -381,11 +387,26 @@ def run_preassembly(statements, hierarchies):
     # Run combine related
     related_stmts = pa.combine_related(return_toplevel=False)
     be.set_hierarchy_probs(related_stmts)
-    related_stmts = ac.filter_belief(related_stmts, 0.8)
+    #related_stmts = ac.filter_belief(related_stmts, 0.8)
     # Filter to top-level Statements
     top_stmts = ac.filter_top_level(related_stmts)
+
+    pa.stmts = top_stmts
     print('%d top-level statements' % len(top_stmts))
+    conflicts = pa.find_contradicts()
+    top_stmts = remove_contradicts(top_stmts, conflicts)
+
+    ac.dump_statements(top_stmts, 'pi_mtg_demo.pkl')
+
     return top_stmts
+
+def remove_contradicts(stmts, conflicts):
+    remove_stmts = []
+    for s1, s2 in conflicts:
+        remove_stmts.append(s1.uuid if s1.belief < s2.belief else s2.uuid)
+    stmts = ac.filter_uuid_list(stmts, remove_stmts, invert=True)
+    return stmts
+
 
 
 def display_delphi(statements):
