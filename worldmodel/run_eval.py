@@ -46,6 +46,7 @@ def read_eidos(docnames):
     for docname in docnames:
         fname = os.path.join('docs', '%s.txt' % docname)
         jsonname = os.path.join('eidos', '%s.txt.jsonld' % docname)
+        #jsonname = os.path.join('eidos/eidos_06262018', '%s.txt.jsonld' % docname)
         if os.path.exists(jsonname):
             ep = eidos.process_json_ld_file(jsonname)
         else:
@@ -175,6 +176,16 @@ def preprocess_cwms(txt):
     # Turn into ascii
     txt = txt.encode('ascii', errors='ignore').decode('ascii')
     return txt
+
+
+def read_cwms_ekbs(docnames):
+    stmts = []
+    for docname in docnames:
+        for fname in glob.glob('cwms/%s_sentences*.ekb' % docname):
+            with open(fname, 'r') as fh:
+                cp = cwms.process_ekb(fh.read())
+                stmts += cp.statements
+    return stmts
 
 
 def read_cwms_sentences(text_dict, read=True):
@@ -325,7 +336,7 @@ def get_joint_hierarchies():
 
 def map_onto(statements):
     om = ontology_mapper.OntologyMapper(statements, ontology_mapper.wm_ontomap,
-                                        symmetric=False)
+                                        symmetric=False, scored=True)
     om.map_statements()
     return om.statements
 
@@ -350,12 +361,18 @@ def filter_has_polarity(statements):
 def run_preassembly(statements, hierarchies):
     print('%d total statements' % len(statements))
     # Filter to grounded only
+    statements = map_onto(statements)
+    ac.dump_statements(statements, 'pi_mtg_demo_unfiltered.pkl')
     statements = ac.filter_grounded_only(statements, score_threshold=0.7)
 
-    statements = map_onto(statements)
+    #statements = ac.filter_by_db_refs(statements, 'UN',
+    #    ['conflict', 'food_security', 'precipitation'], policy='one',
+    #    match_suffix=True)
     statements = ac.filter_by_db_refs(statements, 'UN',
-        ['conflict', 'food_security', 'precipitation'], policy='one',
-        match_suffix=True)
+        ['conflict', 'food_security', 'flooding',
+         'food_production', 'human_migration', 'drought',
+         'food_availability', 'market', 'food_insecurity'],
+        policy='all', match_suffix=True)
     assume_polarity(statements)
     statements = filter_has_polarity(statements)
 
@@ -370,11 +387,26 @@ def run_preassembly(statements, hierarchies):
     # Run combine related
     related_stmts = pa.combine_related(return_toplevel=False)
     be.set_hierarchy_probs(related_stmts)
-    related_stmts = ac.filter_belief(related_stmts, 0.8)
+    #related_stmts = ac.filter_belief(related_stmts, 0.8)
     # Filter to top-level Statements
     top_stmts = ac.filter_top_level(related_stmts)
+
+    pa.stmts = top_stmts
     print('%d top-level statements' % len(top_stmts))
+    conflicts = pa.find_contradicts()
+    top_stmts = remove_contradicts(top_stmts, conflicts)
+
+    ac.dump_statements(top_stmts, 'pi_mtg_demo.pkl')
+
     return top_stmts
+
+def remove_contradicts(stmts, conflicts):
+    remove_stmts = []
+    for s1, s2 in conflicts:
+        remove_stmts.append(s1.uuid if s1.belief < s2.belief else s2.uuid)
+    stmts = ac.filter_uuid_list(stmts, remove_stmts, invert=True)
+    return stmts
+
 
 
 def display_delphi(statements):
@@ -469,15 +501,19 @@ if __name__ == '__main__':
     docnames = [d for d in docnames if d != exclude]
     print('Using %d documents' % len(docnames))
 
+
     # Or rather get just the IDs ot the 10 documents for preliminary analysis
     # docnames = list(ten_docs_map.keys())
 
     # Gather input from sources
     eidos_stmts = read_eidos(docnames)
-    texts = extract_eidos_text(docnames)
-    with open('cwms_read_texts.json', 'w') as fh:
-        json.dump(texts, fh, indent=1)
-    cwms_stmts = read_cwms_sentences(texts, read=False)
+
+    #texts = extract_eidos_text(docnames)
+    #with open('cwms_read_texts.json', 'w') as fh:
+    #    json.dump(texts, fh, indent=1)
+    #cwms_stmts = read_cwms_sentences(texts, read=False)
+    cwms_stmts = read_cwms_ekbs(docnames)
+
 
     # Read BBN output old and new
     bbn_stmts = read_hume('bbn/wm_m6_0628.json-ld')
