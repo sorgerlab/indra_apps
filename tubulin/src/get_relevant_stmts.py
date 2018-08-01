@@ -1,5 +1,5 @@
 import csv
-from collections import defaultdict
+from collections import defaultdict, Counter
 from indra.db import client
 from indra.databases import hgnc_client
 from indra.statements import *
@@ -45,7 +45,8 @@ def get_stmt_subject_object(stmts, type):
         # currently ignored
         # TODO: Include ungrounded agents (with only 'TEXT' in db_refs)
         if 'HGNC' in ag.db_refs:
-            stmt_agents.add(('HGNC', ag.db_refs['HGNC']))
+            stmt_agents.add(('HGNC',
+                             hgnc_client.get_hgnc_name(ag.db_refs['HGNC'])))
         elif 'FPLX' in ag.db_refs:
             stmt_agents.add(('FPLX', ag.db_refs['FPLX']))
     return stmt_agents
@@ -55,17 +56,36 @@ def get_network_stmts(source_list, target_list, max_depth):
     # Look at successors first
     f_level = {0: set(source_list)}
     b_level = {0: set(target_list)}
+    fwd_stmts = []
     for i in range(1, max_depth+1):
-        reachable_set = set()
+        import ipdb; ipdb.set_trace()
+        reachable_agents = set()
         for ag_ns, ag_id in f_level[i-1]:
+            if ag_ns == 'HGNC':
+                ag_ns = 'HGNC-SYMBOL'
             succ_stmts = client.get_statements_by_gene_role_type(
-                    agent_ns=ag_ns, agent_id=ag_id, role='OBJECT')
+                    agent_ns=ag_ns, agent_id=ag_id, role='SUBJECT')
             succ_stmts = ac.filter_by_type(succ_stmts, Complex, invert=True)
             succ_stmts = ac.filter_by_type(succ_stmts, SelfModification,
                                                 invert=True)
+            fwd_stmts.extend(succ_stmts)
             # Get succ nodes
             succ_agents = get_stmt_subject_object(succ_stmts, 'OBJECT')
-            reachable_set |= succ_agents
+            reachable_agents |= succ_agents
+            # For the next level we only need to include the agents that we
+            # didn't already have at this level
+        f_level[i] = reachable_agents.difference(f_level[i-1])
+    return f_level, fwd_stmts
+
+
+def get_kinase_counts(stmts):
+    """Given a set of Phosphorylation statements returns the list of kinases.
+    """
+    kinases = [s.enz.name for s in stmts]
+    kin_ctr = Counter(kinases)
+    kin_ctr = sorted([(k, v) for k, v in kin_ctr.items()],
+                     key=lambda x: x[1], reverse=True)
+    return kin_ctr
 
 
 if __name__ == '__main__':
@@ -77,6 +97,10 @@ if __name__ == '__main__':
     else:
         phos_stmts = ac.load_statements('phospho_stmts.pkl')
 
+    kinases = get_kinase_counts(phos_stmts)
+
+    import sys; sys.exit()
+
     target_list = get_stmt_subject_object(phos_stmts, 'SUBJECT')
 
     # Get all Tubulin child nodes as the source list
@@ -84,8 +108,8 @@ if __name__ == '__main__':
     tubulin_ag = Agent('Tubulin', db_refs={'FPLX': 'Tubulin'})
     ex = Expander(hierarchies)
     for ag_ns, ag_id in ex.get_children(tubulin_ag, ns_filter=None):
-        if ag_ns == 'HGNC':
-            ag_id = hgnc_client.get_hgnc_id(ag_id)
+        #if ag_ns == 'HGNC':
+        #    ag_id = hgnc_client.get_hgnc_id(ag_id)
         source_list.append((ag_ns, ag_id))
 
-    result = get_network_stmts(source_list, target_list, max_depth=1)
+    result = get_network_stmts(source_list, target_list, max_depth=2)
