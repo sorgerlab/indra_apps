@@ -129,9 +129,9 @@ if __name__ == '__main__':
     if reload:
         phos_stmts = \
                 get_phosphorylation_stmts('../work/genes_with_residues.csv')
-        ac.dump_statements(phos_stmts, 'phospho_stmts.pkl')
+        ac.dump_statements(phos_stmts, '../work/phospho_stmts.pkl')
     else:
-        phos_stmts = ac.load_statements('phospho_stmts.pkl')
+        phos_stmts = ac.load_statements('../work/phospho_stmts.pkl')
 
     #kinases = get_kinase_counts(phos_stmts)
 
