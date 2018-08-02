@@ -1,12 +1,15 @@
 import csv
 from collections import defaultdict, Counter
+import networkx as nx
 from indra.db import client
 from indra.databases import hgnc_client
 from indra.statements import *
 from indra.tools import assemble_corpus as ac
 from indra.tools.expand_families import Expander
 from indra.preassembler.hierarchy_manager import hierarchies
+from paths_graph import PathsGraph, CombinedPathsGraph, get_reachable_sets
 
+from matplotlib import pyplot as plt
 
 def get_phosphorylation_stmts(residue_file):
     # Load the sites from the file
@@ -88,6 +91,39 @@ def get_kinase_counts(stmts):
     return kin_ctr
 
 
+def load_stmt_graph(filename):
+    # Load edges from the graph file
+    raw_edges = defaultdict(list)
+    with open(filename, 'rt') as f:
+        csvreader = csv.reader(f, delimiter='\t')
+        for subject, object, type, stmt_hash in csvreader:
+            raw_edges[(subject, object)].append(stmt_hash)
+    # Flatten the edge list into a data dictionary
+    edges = []
+    for edge, hash_list in raw_edges.items():
+        u, v = edge
+        edges.append((u, v, {'hash_list': hash_list}))
+    # Add edges to graph
+    graph = nx.DiGraph()
+    graph.add_edges_from(edges)
+    return graph
+
+
+def draw(g, filename):
+    ag = nx.nx_agraph.to_agraph(g)
+    ag.draw(filename, prog='dot')
+
+
+def get_stmt_hashes_from_pg(graph, pg):
+    stmt_hashes = set()
+    for u, v in pg.graph.edges():
+        _, u_name = u
+        _, v_name = v
+        if u_name == 'SOURCE' or v_name == 'TARGET':
+            continue
+        stmt_hashes |= set(graph[u_name][v_name]['hash_list'])
+    return stmt_hashes
+
 if __name__ == '__main__':
     reload = False
     if reload:
@@ -97,9 +133,7 @@ if __name__ == '__main__':
     else:
         phos_stmts = ac.load_statements('phospho_stmts.pkl')
 
-    kinases = get_kinase_counts(phos_stmts)
-
-    import sys; sys.exit()
+    #kinases = get_kinase_counts(phos_stmts)
 
     target_list = get_stmt_subject_object(phos_stmts, 'SUBJECT')
 
@@ -112,4 +146,31 @@ if __name__ == '__main__':
         #    ag_id = hgnc_client.get_hgnc_id(ag_id)
         source_list.append((ag_ns, ag_id))
 
-    result = get_network_stmts(source_list, target_list, max_depth=2)
+    # Add a dummy source
+    graph_file = '../input/july_2018_pa_HGNC_FPLX_typed_directional_pairs.tsv'
+    graph = load_stmt_graph(graph_file)
+    dummy_edges = [('SOURCE', src[1]) for src in source_list]
+    dummy_edges += [(tgt[1], 'TARGET') for tgt in target_list]
+    graph.add_edges_from(dummy_edges)
+
+    #result = get_network_stmts(source_list, target_list, max_depth=2)
+
+    max_depth = 8
+    pg_list = []
+    lengths = []
+    stmt_counts = []
+    f_level, b_level = get_reachable_sets(graph, 'SOURCE', 'TARGET', max_depth)
+    for length in range(3, max_depth+1):
+        pg = PathsGraph.from_graph(graph, 'SOURCE', 'TARGET', length,
+                                   fwd_reachset=f_level, back_reachset=b_level)
+
+        stmt_hashes = get_stmt_hashes_from_pg(graph, pg)
+        print("%d stmts for paths of length %d" %
+              (len(stmt_hashes), length - 2))
+        pg_list.append(pg)
+        lengths.append(length - 2)
+        stmt_counts.append(len(stmt_hashes))
+    plt.ion()
+    plt.plot(lengths, stmt_hashes)
+    ax = plt.gca()
+    ax.set_yscale('log')
