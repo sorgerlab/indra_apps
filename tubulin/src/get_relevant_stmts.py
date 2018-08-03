@@ -55,32 +55,6 @@ def get_stmt_subject_object(stmts, type):
     return stmt_agents
 
 
-def get_network_stmts(source_list, target_list, max_depth):
-    # Look at successors first
-    f_level = {0: set(source_list)}
-    b_level = {0: set(target_list)}
-    fwd_stmts = []
-    for i in range(1, max_depth+1):
-        import ipdb; ipdb.set_trace()
-        reachable_agents = set()
-        for ag_ns, ag_id in f_level[i-1]:
-            if ag_ns == 'HGNC':
-                ag_ns = 'HGNC-SYMBOL'
-            succ_stmts = client.get_statements_by_gene_role_type(
-                    agent_ns=ag_ns, agent_id=ag_id, role='SUBJECT')
-            succ_stmts = ac.filter_by_type(succ_stmts, Complex, invert=True)
-            succ_stmts = ac.filter_by_type(succ_stmts, SelfModification,
-                                                invert=True)
-            fwd_stmts.extend(succ_stmts)
-            # Get succ nodes
-            succ_agents = get_stmt_subject_object(succ_stmts, 'OBJECT')
-            reachable_agents |= succ_agents
-            # For the next level we only need to include the agents that we
-            # didn't already have at this level
-        f_level[i] = reachable_agents.difference(f_level[i-1])
-    return f_level, fwd_stmts
-
-
 def get_kinase_counts(stmts):
     """Given a set of Phosphorylation statements returns the list of kinases.
     """
@@ -124,6 +98,9 @@ def get_stmt_hashes_from_pg(graph, pg):
         stmt_hashes |= set(graph[u_name][v_name]['hash_list'])
     return stmt_hashes
 
+
+
+
 if __name__ == '__main__':
     reload = False
     if reload:
@@ -152,8 +129,6 @@ if __name__ == '__main__':
     dummy_edges = [('SOURCE', src[1]) for src in source_list]
     dummy_edges += [(tgt[1], 'TARGET') for tgt in target_list]
     graph.add_edges_from(dummy_edges)
-
-    #result = get_network_stmts(source_list, target_list, max_depth=2)
 
     max_depth = 8
     pg_list = []
