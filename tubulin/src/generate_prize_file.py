@@ -3,7 +3,8 @@
 import pandas as pd
 import numpy as np
 import networkx as nx
-
+from msda import preprocessing, phospho_network as pn, \
+                 process_phospho_ms as ppm
 
 def p(x):
     """Process the Protein Id string in the df_24hr
@@ -61,19 +62,19 @@ if __name__ == '__main__':
     filename_24hr  = "Mature_Neuron_MT_pMS_destabilzer_stablizer_24hr_ys.xlsx"
 
     df_24hr = pd.read_excel("../input/" + filename_24hr)
-    df_tc = pd.read_excel("../input/" + filename_tc,
-                          dtype={'Site Position': str, 'Max Score': str})
+
+    # Use MSDA to read and preprocess the dataset
+    df_tc = preprocessing.read_dataset("../input/" + filename_tc)
+    # Some columns have to be renamed because the data does not conform
+    # to the expectations of the latest MSDA
+    df_tc = df_tc.rename(columns={'Max Score': 'max_score',
+                                  'Protein Id': 'Uniprot_Id'})
 
     # Short aliases to help keep everything under 80 columns
     EpoB0 = "DIV 14 EpoB 0 (stabilizer 1)"
     EpoB60 = "DIV 14 EpoB 60 min (stabilizer 1)"
     EpoB60FC = "EpoB 60 min FC"
     EpoB60lFC = "EpoB60 abs(logFC)"
-
-    # Filter the timecourse data to entries with Max Score > 20
-    #df_tc['Max Score'] = df_tc['Max Score'].apply(safe_tofloat)
-    df_tc = df_tc[df_tc['Max Score'].apply(
-                    lambda x: safe_maxscore_cutoff(x, 20.0))]
 
     # Create a column for absolute log fold change
     df_tc[EpoB60FC] = df_tc[EpoB60]/df_tc[EpoB0]
@@ -86,18 +87,33 @@ if __name__ == '__main__':
     uniprot_genename = ident_df[ident_df["ID_type"]=="Gene_Name"]
     uniprot_genename = uniprot_genename[['UniProtKB-AC', 'ID']]
 
-
     p = lambda x: x.split("|")[1].split('-')[0]
-    df_tc["UniProtKB-AC"] = df_tc["Protein Id"].apply(p)
+    df_tc["UniProtKB-AC"] = df_tc["Uniprot_Id"].apply(p)
 
     df_tc = pd.merge(left=df_tc, right=uniprot_genename,
                      how="inner", on="UniProtKB-AC")
 
     x = df_tc[df_tc['gene_symbol'] != df_tc['ID']]
-    # There were 91 genes with mismatch between UniProtKB-AC and gene_symbol
+    # x gives the set of 91 genes with mismatch between UniProtKB-AC and
+    # gene_symbol
 
-    # Save the prizes for the individual sites
-    dump_site_prizes(df_tc)
+    # Now, use MSDA to filter sites to a max score of 13
+    df_tc = ppm.filter_max_score(df_tc, max_score_cutoff=13.0)
+    # Split compound sites into separate rows
+    df_tc = pn.split_sites(df_tc)
+    # Get the largest fold change for sites (which may appear
+    df_tc = df_tc.sort_values(EpoB60lFC, ascending=False).drop_duplicates(
+                                             ['Gene_Symbol', 'Site'])
+
+    # Dump a formatted list of sites as GENE_S111 for KEA analysis
+    kea_sites = df_tc['Identifier'].apply(lambda x: x.rsplit('_', 1)[0])
+    kea_sites.to_csv('../work/sorted_site_list.txt', header=False, index=False)
+
+    # Dump sites with fold changes for GSEA
+    gsea_sites = df_tc[['Identifier', 'EpoB60 abs(logFC)']]
+    gsea_sites['Identifier'] = gsea_sites['Identifier'].apply(
+                                    lambda x: x.rsplit('_', 1)[0])
+    gsea_sites.to_csv('../work/gsea_sites.txt', header=False, index=False)
 
     # -----------
     input_df = df_tc[["ID", "EpoB60 abs(logFC)"]]
