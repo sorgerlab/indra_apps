@@ -105,12 +105,16 @@ def regulons_from_stmts(stmts, filename):
     stmts = ac.filter_human_only(stmts)
     for stmt in stmts:
         kinase = stmt.enz.name
+        # Blacklist annoying stmts from NCI-PID
+        if (kinase == 'BRAF' or kinase == 'RAF1') and \
+           (stmt.sub.name == 'MAPK1' or stmt.sub.name == 'MAPK3'):
+               continue
         if stmt.residue and stmt.position:
             site = '%s_%s%s' % (stmt.sub.name, stmt.residue, stmt.position)
             regulons[kinase].add(site)
     rows = []
     for kinase, sites in regulons.items():
-        rows.append([kinase] + [s for s in sites])
+        rows.append([kinase, 'Description'] + [s for s in sites])
     with open(filename, 'wt') as f:
         csvwriter = csv.writer(f, delimiter='\t')
         csvwriter.writerows(rows)
