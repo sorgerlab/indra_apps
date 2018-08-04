@@ -99,7 +99,21 @@ def get_stmt_hashes_from_pg(graph, pg):
     return stmt_hashes
 
 
-
+def regulons_from_stmts(stmts, filename):
+    regulons = defaultdict(set)
+    stmts = ac.filter_genes_only(stmts)
+    stmts = ac.filter_human_only(stmts)
+    for stmt in stmts:
+        kinase = stmt.enz.name
+        if stmt.residue and stmt.position:
+            site = '%s_%s%s' % (stmt.sub.name, stmt.residue, stmt.position)
+            regulons[kinase].add(site)
+    rows = []
+    for kinase, sites in regulons.items():
+        rows.append([kinase] + [s for s in sites])
+    with open(filename, 'wt') as f:
+        csvwriter = csv.writer(f, delimiter='\t')
+        csvwriter.writerows(rows)
 
 if __name__ == '__main__':
     reload = False
@@ -110,6 +124,9 @@ if __name__ == '__main__':
     else:
         phos_stmts = ac.load_statements('../work/phospho_stmts.pkl')
 
+    regulons_from_stmts(phos_stmts, '../work/kinase_regulons.gmt')
+
+    import sys; sys.exit()
     #kinases = get_kinase_counts(phos_stmts)
 
     target_list = get_stmt_subject_object(phos_stmts, 'SUBJECT')

@@ -74,11 +74,12 @@ if __name__ == '__main__':
     EpoB0 = "DIV 14 EpoB 0 (stabilizer 1)"
     EpoB60 = "DIV 14 EpoB 60 min (stabilizer 1)"
     EpoB60FC = "EpoB 60 min FC"
-    EpoB60lFC = "EpoB60 abs(logFC)"
-
+    EpoB60lFC = "EpoB60 log2(FC)"
+    EpoB60abslFC = "EpoB60 abs(log2(FC))"
     # Create a column for absolute log fold change
     df_tc[EpoB60FC] = df_tc[EpoB60]/df_tc[EpoB0]
-    df_tc[EpoB60lFC] = df_tc[EpoB60FC].apply(lambda x: abs(np.log2(x)))
+    df_tc[EpoB60lFC] = df_tc[EpoB60FC].apply(lambda x: np.log2(x))
+    df_tc[EpoB60abslFC] = df_tc[EpoB60lFC].apply(lambda x: np.abs(x))
 
     # File contains matching of UniprotKB-AC ID's and other identifiers. We use
     # this because we do not trust the HGNC ID's in the original files. 
@@ -102,7 +103,7 @@ if __name__ == '__main__':
     # Split compound sites into separate rows
     df_tc = pn.split_sites(df_tc)
     # Get the largest fold change for sites (which may appear
-    df_tc = df_tc.sort_values(EpoB60lFC, ascending=False).drop_duplicates(
+    df_tc = df_tc.sort_values(EpoB60abslFC, ascending=False).drop_duplicates(
                                              ['Gene_Symbol', 'Site'])
 
     # Dump a formatted list of sites as GENE_S111 for KEA analysis
@@ -110,13 +111,14 @@ if __name__ == '__main__':
     kea_sites.to_csv('../work/sorted_site_list.txt', header=False, index=False)
 
     # Dump sites with fold changes for GSEA
-    gsea_sites = df_tc[['Identifier', 'EpoB60 abs(logFC)']]
+    gsea_sites = df_tc[['Identifier', EpoB60lFC]]
     gsea_sites['Identifier'] = gsea_sites['Identifier'].apply(
                                     lambda x: x.rsplit('_', 1)[0])
-    gsea_sites.to_csv('../work/gsea_sites.txt', header=False, index=False)
+    gsea_sites.to_csv('../work/gsea_sites.rnk', header=False, index=False,
+                      sep='\t')
 
     # -----------
-    input_df = df_tc[["ID", "EpoB60 abs(logFC)"]]
+    input_df = df_tc[["ID", EpoB60abslFC]]
     input_df.columns = ["name", "prize"]
     input_df = input_df.sort_values("prize", ascending=False)
 
