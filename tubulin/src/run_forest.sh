@@ -7,7 +7,7 @@
 #########################################################
 
 # Change to the path to your own forest.py script
-forestpath=/home/albert/.local/lib/OmicsIntegrator-0.3.1/scripts/forest.py
+forestpath=/home/ubuntu/albert/OmicsIntegrator-0.3.1/scripts/forest.py
 msgpath=$(which msgsteiner)
 
 # Default parameters
@@ -39,12 +39,16 @@ mkdir -p $outpath
 conf=$(mktemp -d "$TMPDIR/$(basename $0).XXXXXXXXXXXXX")
 cat <<EOF>> $conf/forest_cfg
 w = $w
-b = $b
 D = $d
+b = $b
 mu = $u
 EOF
 
-python $forest --msgpath=$msgpath --prize=$prize --edge=$edge --outpath=$outpath --conf=$conf/forest_cfg
+python $forestpath --msgpath=$msgpath --prize=$prize --edge=$edge --outpath=$outpath --conf=$conf/forest_cfg
+
+# Add the generated conf file to the output folder so we can recover
+# the parameters later
+cp -r $conf/forest_cfg $outpath
 
 # cleanup temporary files on exit
 trap "{ rm -rf $conf; }" EXIT

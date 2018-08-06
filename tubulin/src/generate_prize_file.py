@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import pandas as pd
 import numpy as np
 import networkx as nx
@@ -11,7 +13,6 @@ def p(x):
 
 filename_tc  = "Mature_Neuron_MT_pMS_Stabilizer1_2_time_course_ys.xlsx"
 
-df_24hr = pd.read_excel("../input/" + filename_24hr)
 df_tc = pd.read_excel("../input/" + filename_tc)
 
 # Short aliases to help keep everything under 80 columns
