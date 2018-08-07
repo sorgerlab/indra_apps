@@ -6,11 +6,13 @@
 ###############################################################################
 # Config. Edit for your own uses
 # Path to prize file
-prize=../input/bak_prizes.txt
+
+repo_path=/home/albert/indra_apps/tubulin
+prize=$(repo_path)/input/bak_prizes.txt
 # Path to interactome
-edge=../input/iref_mitab_miscore_2013_08_12_interactome.txt
+edge=$(repo_path)/input/iref_mitab_miscore_2013_08_12_interactome.txt
 # Directory for output file. It will be created if it does not already exist
-outpath=../result/bak_prize_search1/output_w{1}_b{2}_D{3}_mu{4}
+outpath=$(repo_path)/result/bak_prize_search1/output_w{1}_b{2}_D{3}_mu{4}
 # Number of parallel jobs to perform
 njobs=8
 
