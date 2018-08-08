@@ -15,7 +15,8 @@ def get_phosphorylation_stmts(residue_file):
     sites = defaultdict(list)
     with open(residue_file, 'rt') as f:
         csvreader = csv.reader(f, delimiter=',')
-        for gene, site in csvreader:
+        next(csvreader) # Skip the header row
+        for gene, site, _ in csvreader:
             sites[gene].append(site)
     # Get phosphorylation stmts for the sites
     stmts = []
@@ -122,7 +123,7 @@ if __name__ == '__main__':
     reload = False
     if reload:
         phos_stmts = \
-                get_phosphorylation_stmts('../work/genes_with_residues.csv')
+                get_phosphorylation_stmts('../work/site_prizes.csv')
         ac.dump_statements(phos_stmts, '../work/phospho_stmts.pkl')
     else:
         phos_stmts = ac.load_statements('../work/phospho_stmts.pkl')
