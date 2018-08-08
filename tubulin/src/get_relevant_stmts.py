@@ -9,7 +9,6 @@ from indra.tools.expand_families import Expander
 from indra.preassembler.hierarchy_manager import hierarchies
 from paths_graph import PathsGraph, CombinedPathsGraph, get_reachable_sets
 
-from matplotlib import pyplot as plt
 
 def get_phosphorylation_stmts(residue_file):
     # Load the sites from the file
