@@ -38,13 +38,14 @@ for key, interaction in network.items():
     except KeyError:
         evidence_count = 1
     confidence = fermi_confidence(evidence_count)
+    cost = 1 - confidence
     directed = "D"
     type_ = interaction["type"]
 
-    output.append([subj, obj, confidence, directed])
+    output.append([subj, obj, cost, directed])
 
 interactome = pd.DataFrame(output, columns=["Subject", "Object",
-                                            "Confidence", "Type"])
+                                            "Cost", "Type"])
 
 interactome.to_csv("../work/directed_interactome.tsv", sep="\t", header=False, index=False)
     

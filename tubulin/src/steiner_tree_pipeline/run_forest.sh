@@ -8,7 +8,7 @@
 
 # Change to the path to your own forest.py script
 forestpath=/home/ubuntu/albert/OmicsIntegrator-0.3.1/scripts/forest.py
-msgpath=$(which msgsteiner)
+msgpath=/home/ubuntu/albert/bin/msgsteiner
 
 # Default parameters
 w=5 # controls the number of trees in output
