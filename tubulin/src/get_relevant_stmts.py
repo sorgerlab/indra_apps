@@ -14,7 +14,7 @@ def get_phosphorylation_stmts(residue_file):
     # Load the sites from the file
     sites = defaultdict(list)
     with open(residue_file, 'rt') as f:
-        csvreader = csv.reader(f, delimiter=',')
+        csvreader = csv.reader(f, delimiter='\t')
         next(csvreader) # Skip the header row
         for gene_site, _ in csvreader:
             gene, site = gene_site.split('_')
