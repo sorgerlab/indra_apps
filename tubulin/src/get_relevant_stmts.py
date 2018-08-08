@@ -9,15 +9,18 @@ from indra.tools.expand_families import Expander
 from indra.preassembler.hierarchy_manager import hierarchies
 from paths_graph import PathsGraph, CombinedPathsGraph, get_reachable_sets
 
-from matplotlib import pyplot as plt
 
 def get_phosphorylation_stmts(residue_file):
     # Load the sites from the file
     sites = defaultdict(list)
     with open(residue_file, 'rt') as f:
-        csvreader = csv.reader(f, delimiter=',')
-        for gene, site in csvreader:
-            sites[gene].append(site)
+        csvreader = csv.reader(f, delimiter='\t')
+        next(csvreader) # Skip the header row
+        for gene_site, _ in csvreader:
+            gene, site = gene_site.split('_')
+            residue = site[0]
+            position = site[1:]
+            sites[gene].append(position)
     # Get phosphorylation stmts for the sites
     stmts = []
     counter = 0
@@ -123,7 +126,7 @@ if __name__ == '__main__':
     reload = False
     if reload:
         phos_stmts = \
-                get_phosphorylation_stmts('../work/genes_with_residues.csv')
+                get_phosphorylation_stmts('../work/gsea_sites.rnk')
         ac.dump_statements(phos_stmts, '../work/phospho_stmts.pkl')
     else:
         phos_stmts = ac.load_statements('../work/phospho_stmts.pkl')
