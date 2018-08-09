@@ -43,7 +43,8 @@ def read_site_file(filename):
             site_data[gene].append((residue, position, prize, sign))
     return site_data
 
-def dump_steiner_files(signed_graph, site_data):
+def dump_steiner_files(signed_graph, site_data,
+                       prize_outpath, interactome_outpath):
     # Helper function to rewrite node names in an OmicsIntegrator-friendly way
     def _format_node(n):
         node_str = str(n)
@@ -77,40 +78,43 @@ def dump_steiner_files(signed_graph, site_data):
             prize_str = _format_node(prize_node)
             prize_rows.append([prize_str, prize])
     # Write files
-    with open('pybel_interactome.tsv', 'wt') as f:
+    with open(interactome_outpath, 'wt') as f:
         csvwriter = csv.writer(f, delimiter='\t')
         csvwriter.writerows(interactome_rows)
-    with open('pybel_prizes.tsv', 'wt') as f:
+    with open(prize_outpath, 'wt') as f:
         csvwriter = csv.writer(f, delimiter='\t')
         csvwriter.writerows(prize_rows)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("stmts")
     parser.add_argument("--grounded", action="store_true")
     parser.add_argument("--human", action="store_true")
     parser.add_argument("--gene", action="store_true")
-    
+    parser.add_argument("--stmts")
+    parser.add_argument("--prize_outpath")
+    parser.add_argument("--interactome_outpath")
+    parser.add_argument("--site_file")
     args = parser.parse_args()
     stmts = args.stmts
     # Load the statements linking kinases/regulators to phospho sites in the data
     stmts = ac.load_statements(stmts)
-    if grounded:
+    if args.grounded:
         stmts = ac.filter_grounded_only(stmts)
-    if human:
+    if args.human:
         stmts = ac.filter_human_only(stmts)
-    if gene:
+    if args.gene:
         stmts = ac.filter_genes_only(stmts)
     
 
     # Assemble a PyBEL graph from the stmts
-    pba = PybelAssembler(phos_stmts)
+    pba = PybelAssembler(stmts)
     pb_graph = pba.make_model()
 
     signed_graph = to_signed_nodes(pb_graph)
     gn_dict = get_gene_node_dict(signed_graph)
     # Next we have to load the data file and assign values to
 
-    site_data = read_site_file('../work/gsea_sites.rnk')
+    site_data = read_site_file(args.site_file)
 
-    dump_steiner_files(signed_graph, site_data)
+    dump_steiner_files(signed_graph, site_data,
+                       args.prize_outpath, args.interactome_outpath)
