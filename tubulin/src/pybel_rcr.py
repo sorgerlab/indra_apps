@@ -1,4 +1,6 @@
+#! /usr/bin/env python3
 import csv
+import argparse
 from collections import defaultdict
 import networkx as nx
 import pybel
@@ -61,7 +63,7 @@ def dump_steiner_files(signed_graph, site_data):
     # Compile the interactome rows
     interactome_rows = []
     for u, v in signed_graph.edges_iter():
-        row = [_format_node(u), _format_node(v), '0', 'D']
+        row = [_format_node(u), _format_node(v), '0.99', 'D']
         interactome_rows.append(row)
     # Generate the prize file
     prize_rows = [['name', 'prize']]
@@ -83,9 +85,23 @@ def dump_steiner_files(signed_graph, site_data):
         csvwriter.writerows(prize_rows)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("stmts")
+    parser.add_argument("--grounded", action="store_true")
+    parser.add_argument("--human", action="store_true")
+    parser.add_argument("--gene", action="store_true")
+    
+    args = parser.parse_args()
+    stmts = args.stmts
     # Load the statements linking kinases/regulators to phospho sites in the data
-    phos_stmts = ac.load_statements('../work/phospho_stmts.pkl')
-    phos_stmts = ac.filter_grounded_only(phos_stmts)
+    stmts = ac.load_statements(stmts)
+    if grounded:
+        stmts = ac.filter_grounded_only(stmts)
+    if human:
+        stmts = ac.filter_human_only(stmts)
+    if gene:
+        stmts = ac.filter_genes_only(stmts)
+    
 
     # Assemble a PyBEL graph from the stmts
     pba = PybelAssembler(phos_stmts)
