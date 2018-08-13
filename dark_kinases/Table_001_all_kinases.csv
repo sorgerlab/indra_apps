@@ -1,0 +1,576 @@
+gene_id,gene_symbol,name,in_manning,in_kinmap,in_uniprot_kinasedomain,in_IDG_darkkinases,n_pubmed_citations_2013to2018,pharos_designation
+25,ABL1,"ABL proto-oncogene 1, non-receptor tyrosine kinase",TRUE,TRUE,TRUE,FALSE,1368,Tclin
+27,ABL2,"ABL proto-oncogene 2, non-receptor tyrosine kinase",TRUE,TRUE,TRUE,FALSE,68,Tchem
+29,ABR,"ABR, RhoGEF and GTPase activating protein",FALSE,TRUE,FALSE,FALSE,2588,Tbio
+90,ACVR1,activin A receptor type 1,TRUE,TRUE,TRUE,FALSE,214,Tchem
+91,ACVR1B,activin A receptor type 1B,TRUE,TRUE,TRUE,FALSE,62,Tchem
+92,ACVR2A,activin A receptor type 2A,TRUE,TRUE,TRUE,FALSE,66,Tchem
+93,ACVR2B,activin A receptor type 2B,TRUE,TRUE,TRUE,FALSE,70,Tchem
+94,ACVRL1,activin A receptor like type 1,TRUE,TRUE,TRUE,FALSE,267,Tchem
+156,GRK2,G protein-coupled receptor kinase 2,TRUE,TRUE,TRUE,FALSE,321,Tchem
+157,GRK3,G protein-coupled receptor kinase 3,TRUE,TRUE,TRUE,FALSE,29,Tchem
+207,AKT1,AKT serine/threonine kinase 1,TRUE,TRUE,TRUE,FALSE,2237,Tchem
+208,AKT2,AKT serine/threonine kinase 2,TRUE,TRUE,TRUE,FALSE,683,Tchem
+238,ALK,ALK receptor tyrosine kinase,TRUE,TRUE,TRUE,FALSE,4433,Tclin
+269,AMHR2,anti-Mullerian hormone receptor type 2,TRUE,TRUE,TRUE,FALSE,103,Tbio
+369,ARAF,"A-Raf proto-oncogene, serine/threonine kinase",TRUE,TRUE,TRUE,FALSE,239,Tchem
+472,ATM,ATM serine/threonine kinase,TRUE,TRUE,TRUE,FALSE,7036,Tchem
+545,ATR,ATR serine/threonine kinase,TRUE,TRUE,TRUE,FALSE,5060,Tchem
+558,AXL,AXL receptor tyrosine kinase,TRUE,TRUE,TRUE,FALSE,831,Tchem
+613,BCR,"BCR, RhoGEF and GTPase activating protein",TRUE,TRUE,FALSE,FALSE,11526,Tclin
+640,BLK,"BLK proto-oncogene, Src family tyrosine kinase",TRUE,TRUE,TRUE,FALSE,342,Tchem
+644,BLVRA,biliverdin reductase A,FALSE,TRUE,FALSE,FALSE,20,Tbio
+657,BMPR1A,bone morphogenetic protein receptor type 1A,TRUE,TRUE,TRUE,FALSE,240,Tchem
+658,BMPR1B,bone morphogenetic protein receptor type 1B,TRUE,TRUE,TRUE,FALSE,143,Tchem
+659,BMPR2,bone morphogenetic protein receptor type 2,TRUE,TRUE,TRUE,FALSE,606,Tchem
+660,BMX,BMX non-receptor tyrosine kinase,TRUE,TRUE,TRUE,FALSE,125,Tchem
+673,BRAF,"B-Raf proto-oncogene, serine/threonine kinase",TRUE,TRUE,TRUE,FALSE,8547,Tclin
+676,BRDT,bromodomain testis associated,TRUE,TRUE,FALSE,FALSE,77,Tchem
+695,BTK,Bruton tyrosine kinase,TRUE,TRUE,TRUE,FALSE,1021,Tclin
+699,BUB1,BUB1 mitotic checkpoint serine/threonine kinase,TRUE,TRUE,TRUE,FALSE,316,Tchem
+701,BUB1B,BUB1 mitotic checkpoint serine/threonine kinase B,TRUE,TRUE,TRUE,FALSE,111,Tbio
+780,DDR1,discoidin domain receptor tyrosine kinase 1,TRUE,TRUE,TRUE,FALSE,171,Tchem
+814,CAMK4,calcium/calmodulin dependent protein kinase IV,TRUE,TRUE,TRUE,FALSE,74,Tbio
+815,CAMK2A,calcium/calmodulin dependent protein kinase II alpha,TRUE,TRUE,TRUE,FALSE,131,Tchem
+816,CAMK2B,calcium/calmodulin dependent protein kinase II beta,TRUE,TRUE,TRUE,FALSE,29,Tchem
+817,CAMK2D,calcium/calmodulin dependent protein kinase II delta,TRUE,TRUE,TRUE,FALSE,51,Tchem
+818,CAMK2G,calcium/calmodulin dependent protein kinase II gamma,TRUE,TRUE,TRUE,FALSE,23,Tchem
+983,CDK1,cyclin dependent kinase 1,TRUE,TRUE,TRUE,FALSE,1693,Tchem
+984,CDK11B,cyclin dependent kinase 11B,FALSE,TRUE,TRUE,TRUE,3,Tchem
+1017,CDK2,cyclin dependent kinase 2,TRUE,TRUE,TRUE,FALSE,1712,Tchem
+1018,CDK3,cyclin dependent kinase 3,TRUE,TRUE,TRUE,FALSE,25,Tchem
+1019,CDK4,cyclin dependent kinase 4,TRUE,TRUE,TRUE,FALSE,2347,Tclin
+1020,CDK5,cyclin dependent kinase 5,TRUE,TRUE,TRUE,FALSE,834,Tchem
+1021,CDK6,cyclin dependent kinase 6,TRUE,TRUE,TRUE,FALSE,948,Tclin
+1022,CDK7,cyclin dependent kinase 7,TRUE,TRUE,TRUE,FALSE,151,Tchem
+1024,CDK8,cyclin dependent kinase 8,TRUE,TRUE,TRUE,FALSE,191,Tchem
+1025,CDK9,cyclin dependent kinase 9,TRUE,TRUE,TRUE,FALSE,359,Tchem
+1111,CHEK1,checkpoint kinase 1,TRUE,TRUE,TRUE,FALSE,511,Tchem
+1147,CHUK,conserved helix-loop-helix ubiquitous kinase,TRUE,TRUE,TRUE,FALSE,199,Tchem
+1152,CKB,creatine kinase B,FALSE,FALSE,TRUE,FALSE,81,Tbio
+1158,CKM,"creatine kinase, M-type",FALSE,FALSE,TRUE,FALSE,88,Tbio
+1159,CKMT1B,"creatine kinase, mitochondrial 1B",FALSE,FALSE,TRUE,FALSE,1,Tbio
+1160,CKMT2,"creatine kinase, mitochondrial 2",FALSE,FALSE,TRUE,FALSE,16,Tbio
+1195,CLK1,CDC like kinase 1,TRUE,TRUE,TRUE,FALSE,59,Tchem
+1196,CLK2,CDC like kinase 2,TRUE,TRUE,TRUE,FALSE,33,Tchem
+1198,CLK3,CDC like kinase 3,TRUE,TRUE,TRUE,TRUE,9,Tchem
+1263,PLK3,polo like kinase 3,TRUE,TRUE,TRUE,FALSE,81,Tchem
+1326,MAP3K8,mitogen-activated protein kinase kinase kinase 8,TRUE,TRUE,TRUE,FALSE,111,Tchem
+1432,MAPK14,mitogen-activated protein kinase 14,TRUE,TRUE,TRUE,FALSE,391,Tchem
+1436,CSF1R,colony stimulating factor 1 receptor,TRUE,TRUE,TRUE,FALSE,352,Tclin
+1445,CSK,C-terminal Src kinase,TRUE,TRUE,TRUE,FALSE,823,Tchem
+1452,CSNK1A1,casein kinase 1 alpha 1,TRUE,TRUE,TRUE,FALSE,40,Tchem
+1453,CSNK1D,casein kinase 1 delta,TRUE,TRUE,TRUE,FALSE,19,Tchem
+1454,CSNK1E,casein kinase 1 epsilon,TRUE,TRUE,TRUE,FALSE,38,Tchem
+1455,CSNK1G2,casein kinase 1 gamma 2,TRUE,TRUE,TRUE,TRUE,1,Tdark
+1456,CSNK1G3,casein kinase 1 gamma 3,TRUE,TRUE,TRUE,TRUE,3,Tbio
+1457,CSNK2A1,casein kinase 2 alpha 1,TRUE,TRUE,TRUE,FALSE,30,Tchem
+1459,CSNK2A2,casein kinase 2 alpha 2,TRUE,TRUE,TRUE,TRUE,12,Tchem
+1606,DGKA,diacylglycerol kinase alpha,FALSE,FALSE,TRUE,FALSE,25,Tbio
+1607,DGKB,diacylglycerol kinase beta,FALSE,FALSE,TRUE,FALSE,22,Tbio
+1608,DGKG,diacylglycerol kinase gamma,FALSE,FALSE,TRUE,FALSE,7,Tbio
+1609,DGKQ,diacylglycerol kinase theta,FALSE,FALSE,TRUE,FALSE,9,Tbio
+1612,DAPK1,death associated protein kinase 1,TRUE,TRUE,TRUE,FALSE,228,Tchem
+1613,DAPK3,death associated protein kinase 3,TRUE,TRUE,TRUE,FALSE,35,Tchem
+1760,DMPK,DM1 protein kinase,TRUE,TRUE,TRUE,FALSE,1192,Tchem
+1859,DYRK1A,dual specificity tyrosine phosphorylation regulated kinase 1A,TRUE,TRUE,TRUE,FALSE,271,Tchem
+1956,EGFR,epidermal growth factor receptor,TRUE,TRUE,TRUE,FALSE,26974,Tclin
+1969,EPHA2,EPH receptor A2,TRUE,TRUE,TRUE,FALSE,458,Tclin
+2011,MARK2,microtubule affinity regulating kinase 2,TRUE,TRUE,TRUE,FALSE,85,Tchem
+2041,EPHA1,EPH receptor A1,TRUE,TRUE,TRUE,FALSE,83,Tchem
+2042,EPHA3,EPH receptor A3,TRUE,TRUE,TRUE,FALSE,102,Tchem
+2043,EPHA4,EPH receptor A4,TRUE,TRUE,TRUE,FALSE,215,Tchem
+2044,EPHA5,EPH receptor A5,TRUE,TRUE,TRUE,FALSE,70,Tchem
+2045,EPHA7,EPH receptor A7,TRUE,TRUE,TRUE,FALSE,70,Tchem
+2046,EPHA8,EPH receptor A8,TRUE,TRUE,TRUE,FALSE,16,Tchem
+2047,EPHB1,EPH receptor B1,TRUE,TRUE,TRUE,FALSE,69,Tchem
+2048,EPHB2,EPH receptor B2,TRUE,TRUE,TRUE,FALSE,210,Tchem
+2049,EPHB3,EPH receptor B3,TRUE,TRUE,TRUE,FALSE,63,Tchem
+2050,EPHB4,EPH receptor B4,TRUE,TRUE,TRUE,FALSE,247,Tchem
+2051,EPHB6,EPH receptor B6,TRUE,TRUE,TRUE,FALSE,40,Tchem
+2064,ERBB2,erb-b2 receptor tyrosine kinase 2,TRUE,TRUE,TRUE,FALSE,9219,Tclin
+2065,ERBB3,erb-b2 receptor tyrosine kinase 3,TRUE,TRUE,TRUE,FALSE,797,Tchem
+2066,ERBB4,erb-b2 receptor tyrosine kinase 4,TRUE,TRUE,TRUE,FALSE,608,Tclin
+2081,ERN1,endoplasmic reticulum to nucleus signaling 1,TRUE,TRUE,TRUE,FALSE,423,Tchem
+2185,PTK2B,protein tyrosine kinase 2 beta,TRUE,TRUE,TRUE,FALSE,123,Tchem
+2241,FER,FER tyrosine kinase,TRUE,TRUE,TRUE,FALSE,731,Tchem
+2242,FES,"FES proto-oncogene, tyrosine kinase",TRUE,TRUE,TRUE,FALSE,2600,Tchem
+2260,FGFR1,fibroblast growth factor receptor 1,TRUE,TRUE,TRUE,FALSE,1439,Tclin
+2261,FGFR3,fibroblast growth factor receptor 3,TRUE,TRUE,TRUE,FALSE,873,Tclin
+2263,FGFR2,fibroblast growth factor receptor 2,TRUE,TRUE,TRUE,FALSE,1000,Tclin
+2264,FGFR4,fibroblast growth factor receptor 4,TRUE,TRUE,TRUE,FALSE,300,Tclin
+2268,FGR,"FGR proto-oncogene, Src family tyrosine kinase",TRUE,TRUE,TRUE,FALSE,675,Tchem
+2321,FLT1,fms related tyrosine kinase 1,TRUE,TRUE,TRUE,FALSE,785,Tclin
+2322,FLT3,fms related tyrosine kinase 3,TRUE,TRUE,TRUE,FALSE,1965,Tclin
+2324,FLT4,fms related tyrosine kinase 4,TRUE,TRUE,TRUE,FALSE,209,Tclin
+2444,FRK,fyn related Src family tyrosine kinase,TRUE,TRUE,TRUE,FALSE,66,Tchem
+2475,MTOR,mechanistic target of rapamycin kinase,TRUE,TRUE,TRUE,FALSE,17129,Tclin
+2534,FYN,"FYN proto-oncogene, Src family tyrosine kinase",TRUE,TRUE,TRUE,FALSE,673,Tclin
+2580,GAK,cyclin G associated kinase,TRUE,TRUE,TRUE,FALSE,80,Tchem
+2645,GCK,glucokinase,FALSE,FALSE,TRUE,FALSE,407,Tchem
+2868,GRK4,G protein-coupled receptor kinase 4,TRUE,TRUE,TRUE,FALSE,38,Tchem
+2869,GRK5,G protein-coupled receptor kinase 5,TRUE,TRUE,TRUE,FALSE,112,Tbio
+2870,GRK6,G protein-coupled receptor kinase 6,TRUE,TRUE,TRUE,FALSE,56,Tbio
+2872,MKNK2,MAP kinase interacting serine/threonine kinase 2,TRUE,TRUE,TRUE,TRUE,44,Tchem
+2931,GSK3A,glycogen synthase kinase 3 alpha,TRUE,TRUE,TRUE,FALSE,27,Tclin
+2932,GSK3B,glycogen synthase kinase 3 beta,TRUE,TRUE,TRUE,FALSE,1847,Tclin
+2962,GTF2F1,general transcription factor IIF subunit 1,FALSE,TRUE,FALSE,FALSE,1,Tbio
+2984,GUCY2C,guanylate cyclase 2C,TRUE,TRUE,FALSE,FALSE,49,Tclin
+2986,GUCY2F,"guanylate cyclase 2F, retinal",TRUE,TRUE,FALSE,FALSE,5,Tbio
+3000,GUCY2D,"guanylate cyclase 2D, retinal",TRUE,TRUE,FALSE,FALSE,61,Tbio
+3055,HCK,"HCK proto-oncogene, Src family tyrosine kinase",TRUE,TRUE,TRUE,FALSE,196,Tclin
+3098,HK1,hexokinase 1,FALSE,FALSE,TRUE,FALSE,190,Tchem
+3099,HK2,hexokinase 2,FALSE,FALSE,TRUE,FALSE,607,Tchem
+3101,HK3,hexokinase 3,FALSE,FALSE,TRUE,FALSE,24,Tbio
+3480,IGF1R,insulin like growth factor 1 receptor,TRUE,TRUE,TRUE,FALSE,2237,Tclin
+3551,IKBKB,inhibitor of nuclear factor kappa B kinase subunit beta,TRUE,TRUE,TRUE,FALSE,1460,Tchem
+3611,ILK,integrin linked kinase,TRUE,TRUE,TRUE,FALSE,510,Tchem
+3643,INSR,insulin receptor,TRUE,TRUE,TRUE,FALSE,527,Tclin
+3645,INSRR,insulin receptor related receptor,TRUE,TRUE,TRUE,FALSE,16,Tchem
+3654,IRAK1,interleukin 1 receptor associated kinase 1,TRUE,TRUE,TRUE,FALSE,419,Tchem
+3656,IRAK2,interleukin 1 receptor associated kinase 2,TRUE,TRUE,TRUE,FALSE,482,Tbio
+3702,ITK,IL2 inducible T cell kinase,TRUE,TRUE,TRUE,FALSE,296,Tclin
+3716,JAK1,Janus kinase 1,TRUE,TRUE,TRUE,FALSE,1099,Tclin
+3717,JAK2,Janus kinase 2,TRUE,TRUE,TRUE,FALSE,3915,Tclin
+3718,JAK3,Janus kinase 3,TRUE,TRUE,TRUE,FALSE,512,Tclin
+3791,KDR,kinase insert domain receptor,TRUE,TRUE,TRUE,FALSE,1775,Tclin
+3815,KIT,KIT proto-oncogene receptor tyrosine kinase,TRUE,TRUE,TRUE,FALSE,22304,Tclin
+3932,LCK,"LCK proto-oncogene, Src family tyrosine kinase",TRUE,TRUE,TRUE,FALSE,463,Tclin
+3984,LIMK1,LIM domain kinase 1,TRUE,TRUE,TRUE,FALSE,220,Tchem
+3985,LIMK2,LIM domain kinase 2,TRUE,TRUE,TRUE,FALSE,71,Tchem
+4058,LTK,leukocyte receptor tyrosine kinase,TRUE,TRUE,TRUE,TRUE,34,Tchem
+4067,LYN,"LYN proto-oncogene, Src family tyrosine kinase",TRUE,TRUE,TRUE,FALSE,775,Tclin
+4117,MAK,male germ cell associated kinase,TRUE,TRUE,TRUE,FALSE,3065,Tchem
+4139,MARK1,microtubule affinity regulating kinase 1,TRUE,TRUE,TRUE,TRUE,31,Tchem
+4140,MARK3,microtubule affinity regulating kinase 3,TRUE,TRUE,TRUE,TRUE,24,Tchem
+4145,MATK,megakaryocyte-associated tyrosine kinase,TRUE,TRUE,TRUE,FALSE,402,Tdark
+4214,MAP3K1,mitogen-activated protein kinase kinase kinase 1,TRUE,TRUE,TRUE,FALSE,134,Tbio
+4215,MAP3K3,mitogen-activated protein kinase kinase kinase 3,TRUE,TRUE,TRUE,FALSE,47,Tchem
+4216,MAP3K4,mitogen-activated protein kinase kinase kinase 4,TRUE,TRUE,TRUE,FALSE,24,Tbio
+4217,MAP3K5,mitogen-activated protein kinase kinase kinase 5,TRUE,TRUE,TRUE,FALSE,218,Tchem
+4233,MET,"MET proto-oncogene, receptor tyrosine kinase",TRUE,TRUE,TRUE,FALSE,68759,Tclin
+4293,MAP3K9,mitogen-activated protein kinase kinase kinase 9,TRUE,TRUE,TRUE,FALSE,17,Tchem
+4294,MAP3K10,mitogen-activated protein kinase kinase kinase 10,TRUE,TRUE,TRUE,TRUE,17,Tchem
+4296,MAP3K11,mitogen-activated protein kinase kinase kinase 11,TRUE,TRUE,TRUE,FALSE,14,Tchem
+4342,MOS,"MOS proto-oncogene, serine/threonine kinase",TRUE,TRUE,TRUE,FALSE,2526,Tbio
+4486,MST1R,macrophage stimulating 1 receptor,TRUE,TRUE,TRUE,FALSE,42,Tchem
+4593,MUSK,muscle associated receptor tyrosine kinase,TRUE,TRUE,TRUE,FALSE,1101,Tchem
+4638,MYLK,myosin light chain kinase,TRUE,TRUE,TRUE,FALSE,86,Tchem
+4750,NEK1,NIMA related kinase 1,TRUE,TRUE,TRUE,TRUE,42,Tchem
+4751,NEK2,NIMA related kinase 2,TRUE,TRUE,TRUE,FALSE,140,Tchem
+4752,NEK3,NIMA related kinase 3,TRUE,TRUE,TRUE,TRUE,4,Tbio
+4881,NPR1,natriuretic peptide receptor 1,TRUE,TRUE,FALSE,FALSE,303,Tclin
+4882,NPR2,natriuretic peptide receptor 2,TRUE,TRUE,FALSE,FALSE,113,Tbio
+4914,NTRK1,neurotrophic receptor tyrosine kinase 1,TRUE,TRUE,TRUE,FALSE,224,Tclin
+4915,NTRK2,neurotrophic receptor tyrosine kinase 2,TRUE,TRUE,TRUE,FALSE,191,Tchem
+4916,NTRK3,neurotrophic receptor tyrosine kinase 3,TRUE,TRUE,TRUE,FALSE,229,Tchem
+4919,ROR1,receptor tyrosine kinase like orphan receptor 1,TRUE,TRUE,TRUE,FALSE,136,Tbio
+4920,ROR2,receptor tyrosine kinase like orphan receptor 2,TRUE,TRUE,TRUE,FALSE,204,Tbio
+4921,DDR2,discoidin domain receptor tyrosine kinase 2,TRUE,TRUE,TRUE,FALSE,203,Tchem
+5058,PAK1,p21 (RAC1) activated kinase 1,TRUE,TRUE,TRUE,FALSE,531,Tchem
+5062,PAK2,p21 (RAC1) activated kinase 2,TRUE,TRUE,TRUE,FALSE,128,Tchem
+5063,PAK3,p21 (RAC1) activated kinase 3,TRUE,TRUE,TRUE,TRUE,51,Tchem
+5127,CDK16,cyclin dependent kinase 16,TRUE,TRUE,TRUE,TRUE,21,Tchem
+5128,CDK17,cyclin dependent kinase 17,TRUE,TRUE,TRUE,TRUE,2,Tdark
+5129,CDK18,cyclin dependent kinase 18,TRUE,TRUE,TRUE,TRUE,12,Tchem
+5156,PDGFRA,platelet derived growth factor receptor alpha,TRUE,TRUE,TRUE,FALSE,929,Tclin
+5159,PDGFRB,platelet derived growth factor receptor beta,TRUE,TRUE,TRUE,FALSE,1383,Tclin
+5163,PDK1,pyruvate dehydrogenase kinase 1,TRUE,TRUE,TRUE,FALSE,710,Tchem
+5164,PDK2,pyruvate dehydrogenase kinase 2,TRUE,TRUE,TRUE,FALSE,54,Tchem
+5165,PDK3,pyruvate dehydrogenase kinase 3,TRUE,TRUE,TRUE,FALSE,18,Tbio
+5166,PDK4,pyruvate dehydrogenase kinase 4,TRUE,TRUE,TRUE,FALSE,264,Tbio
+5170,PDPK1,3-phosphoinositide dependent protein kinase 1,TRUE,TRUE,TRUE,FALSE,138,Tchem
+5218,CDK14,cyclin dependent kinase 14,TRUE,TRUE,TRUE,TRUE,32,Tchem
+5260,PHKG1,phosphorylase kinase catalytic subunit gamma 1,TRUE,TRUE,TRUE,TRUE,5,Tchem
+5261,PHKG2,phosphorylase kinase catalytic subunit gamma 2,TRUE,TRUE,TRUE,TRUE,14,Tchem
+5286,PIK3C2A,phosphatidylinositol-4-phosphate 3-kinase catalytic subunit type 2 alpha,FALSE,FALSE,TRUE,FALSE,37,Tchem
+5287,PIK3C2B,phosphatidylinositol-4-phosphate 3-kinase catalytic subunit type 2 beta,FALSE,FALSE,TRUE,TRUE,29,Tchem
+5288,PIK3C2G,phosphatidylinositol-4-phosphate 3-kinase catalytic subunit type 2 gamma,FALSE,FALSE,TRUE,TRUE,12,Tchem
+5289,PIK3C3,phosphatidylinositol 3-kinase catalytic subunit type 3,FALSE,FALSE,TRUE,FALSE,104,Tchem
+5290,PIK3CA,"phosphatidylinositol-4,5-bisphosphate 3-kinase catalytic subunit alpha",FALSE,FALSE,TRUE,FALSE,2787,Tclin
+5291,PIK3CB,"phosphatidylinositol-4,5-bisphosphate 3-kinase catalytic subunit beta",FALSE,FALSE,TRUE,FALSE,337,Tchem
+5292,PIM1,"Pim-1 proto-oncogene, serine/threonine kinase",TRUE,TRUE,TRUE,FALSE,270,Tchem
+5293,PIK3CD,"phosphatidylinositol-4,5-bisphosphate 3-kinase catalytic subunit delta",FALSE,FALSE,TRUE,FALSE,210,Tdark
+5294,PIK3CG,"phosphatidylinositol-4,5-bisphosphate 3-kinase catalytic subunit gamma",FALSE,FALSE,TRUE,FALSE,125,Tchem
+5297,PI4KA,phosphatidylinositol 4-kinase alpha,FALSE,FALSE,TRUE,TRUE,27,Tchem
+5298,PI4KB,phosphatidylinositol 4-kinase beta,FALSE,FALSE,TRUE,FALSE,33,Tchem
+5347,PLK1,polo like kinase 1,TRUE,TRUE,TRUE,FALSE,854,Tchem
+5562,PRKAA1,protein kinase AMP-activated catalytic subunit alpha 1,TRUE,TRUE,TRUE,FALSE,156,Tchem
+5563,PRKAA2,protein kinase AMP-activated catalytic subunit alpha 2,TRUE,TRUE,TRUE,FALSE,90,Tchem
+5566,PRKACA,protein kinase cAMP-activated catalytic subunit alpha,TRUE,TRUE,TRUE,FALSE,138,Tchem
+5567,PRKACB,protein kinase cAMP-activated catalytic subunit beta,TRUE,TRUE,TRUE,TRUE,36,Tchem
+5568,PRKACG,protein kinase cAMP-activated catalytic subunit gamma,TRUE,TRUE,TRUE,TRUE,9,Tbio
+5578,PRKCA,protein kinase C alpha,TRUE,TRUE,TRUE,FALSE,225,Tbio
+5579,PRKCB,protein kinase C beta,TRUE,TRUE,TRUE,FALSE,73,Tchem
+5580,PRKCD,protein kinase C delta,TRUE,TRUE,TRUE,FALSE,154,Tclin
+5581,PRKCE,protein kinase C epsilon,TRUE,TRUE,TRUE,FALSE,109,Tchem
+5582,PRKCG,protein kinase C gamma,TRUE,TRUE,TRUE,FALSE,137,Tchem
+5583,PRKCH,protein kinase C eta,TRUE,TRUE,TRUE,FALSE,29,Tchem
+5584,PRKCI,protein kinase C iota,TRUE,TRUE,TRUE,FALSE,35,Tchem
+5585,PKN1,protein kinase N1,TRUE,TRUE,TRUE,FALSE,29,Tchem
+5586,PKN2,protein kinase N2,TRUE,TRUE,TRUE,FALSE,19,Tdark
+5587,PRKD1,protein kinase D1,TRUE,TRUE,TRUE,FALSE,46,Tchem
+5588,PRKCQ,protein kinase C theta,TRUE,TRUE,TRUE,TRUE,152,Tchem
+5590,PRKCZ,protein kinase C zeta,TRUE,TRUE,TRUE,FALSE,37,Tchem
+5591,PRKDC,"protein kinase, DNA-activated, catalytic polypeptide",TRUE,TRUE,TRUE,FALSE,354,Tchem
+5592,PRKG1,protein kinase cGMP-dependent 1,TRUE,TRUE,TRUE,FALSE,71,Tchem
+5593,PRKG2,protein kinase cGMP-dependent 2,TRUE,TRUE,TRUE,FALSE,29,Tchem
+5594,MAPK1,mitogen-activated protein kinase 1,TRUE,TRUE,TRUE,FALSE,1339,Tdark
+5595,MAPK3,mitogen-activated protein kinase 3,TRUE,TRUE,TRUE,FALSE,203,Tbio
+5596,MAPK4,mitogen-activated protein kinase 4,TRUE,TRUE,TRUE,TRUE,15,Tbio
+5597,MAPK6,mitogen-activated protein kinase 6,TRUE,TRUE,TRUE,FALSE,67,Tbio
+5598,MAPK7,mitogen-activated protein kinase 7,TRUE,TRUE,TRUE,FALSE,98,Tbio
+5599,MAPK8,mitogen-activated protein kinase 8,TRUE,TRUE,TRUE,FALSE,426,Tdark
+5600,MAPK11,mitogen-activated protein kinase 11,TRUE,TRUE,TRUE,FALSE,29,Tchem
+5601,MAPK9,mitogen-activated protein kinase 9,TRUE,TRUE,TRUE,FALSE,34,Tchem
+5602,MAPK10,mitogen-activated protein kinase 10,TRUE,TRUE,TRUE,FALSE,40,Tchem
+5603,MAPK13,mitogen-activated protein kinase 13,TRUE,TRUE,TRUE,FALSE,34,Tchem
+5604,MAP2K1,mitogen-activated protein kinase kinase 1,TRUE,TRUE,TRUE,FALSE,495,Tdark
+5605,MAP2K2,mitogen-activated protein kinase kinase 2,TRUE,TRUE,TRUE,FALSE,197,Tclin
+5606,MAP2K3,mitogen-activated protein kinase kinase 3,TRUE,TRUE,TRUE,FALSE,74,Tchem
+5607,MAP2K5,mitogen-activated protein kinase kinase 5,TRUE,TRUE,TRUE,FALSE,73,Tchem
+5608,MAP2K6,mitogen-activated protein kinase kinase 6,TRUE,TRUE,TRUE,FALSE,74,Tchem
+5609,MAP2K7,mitogen-activated protein kinase kinase 7,TRUE,TRUE,TRUE,FALSE,61,Tchem
+5610,EIF2AK2,eukaryotic translation initiation factor 2 alpha kinase 2,TRUE,TRUE,TRUE,FALSE,74,Tbio
+5613,PRKX,"protein kinase, X-linked",TRUE,TRUE,TRUE,FALSE,20,Tchem
+5616,PRKY,"protein kinase, Y-linked, pseudogene",TRUE,TRUE,TRUE,FALSE,4,Tdark
+5681,PSKH1,protein serine kinase H1,TRUE,TRUE,TRUE,TRUE,1,Tdark
+5747,PTK2,protein tyrosine kinase 2,TRUE,TRUE,TRUE,FALSE,769,Tdark
+5753,PTK6,protein tyrosine kinase 6,TRUE,TRUE,TRUE,FALSE,74,Tchem
+5754,PTK7,protein tyrosine kinase 7 (inactive),TRUE,TRUE,FALSE,FALSE,94,Tbio
+5871,MAP4K2,mitogen-activated protein kinase kinase kinase kinase 2,TRUE,TRUE,TRUE,FALSE,8,Tchem
+5891,MOK,MOK protein kinase,TRUE,TRUE,TRUE,FALSE,1758,Tbio
+5894,RAF1,"Raf-1 proto-oncogene, serine/threonine kinase",TRUE,TRUE,TRUE,FALSE,349,Tclin
+5979,RET,ret proto-oncogene,TRUE,TRUE,TRUE,FALSE,2578,Tclin
+6011,GRK1,G protein-coupled receptor kinase 1,TRUE,TRUE,TRUE,FALSE,52,Tchem
+6041,RNASEL,ribonuclease L,TRUE,TRUE,TRUE,TRUE,48,Tchem
+6046,BRD2,bromodomain containing 2,TRUE,TRUE,FALSE,FALSE,184,Tchem
+6093,ROCK1,Rho associated coiled-coil containing protein kinase 1,TRUE,TRUE,TRUE,FALSE,653,Tclin
+6098,ROS1,"ROS proto-oncogene 1, receptor tyrosine kinase",TRUE,TRUE,TRUE,FALSE,797,Tchem
+6195,RPS6KA1,ribosomal protein S6 kinase A1,TRUE,TRUE,TRUE,FALSE,136,Tchem
+6196,RPS6KA2,ribosomal protein S6 kinase A2,TRUE,TRUE,TRUE,FALSE,21,Tchem
+6197,RPS6KA3,ribosomal protein S6 kinase A3,TRUE,TRUE,TRUE,FALSE,47,Tchem
+6198,RPS6KB1,ribosomal protein S6 kinase B1,TRUE,TRUE,TRUE,FALSE,73,Tchem
+6199,RPS6KB2,ribosomal protein S6 kinase B2,TRUE,TRUE,TRUE,FALSE,14,Tbio
+6259,RYK,receptor-like tyrosine kinase,TRUE,TRUE,TRUE,FALSE,88,Tbio
+6300,MAPK12,mitogen-activated protein kinase 12,TRUE,TRUE,TRUE,FALSE,20,Tchem
+6416,MAP2K4,mitogen-activated protein kinase kinase 4,TRUE,TRUE,TRUE,FALSE,112,Tchem
+6446,SGK1,serum/glucocorticoid regulated kinase 1,TRUE,TRUE,TRUE,FALSE,405,Tchem
+6714,SRC,"SRC proto-oncogene, non-receptor tyrosine kinase",TRUE,TRUE,TRUE,FALSE,8184,Tclin
+6725,SRMS,src-related kinase lacking C-terminal regulatory tyrosine and N-terminal myristylation sites,TRUE,TRUE,TRUE,FALSE,327,Tchem
+6732,SRPK1,SRSF protein kinase 1,TRUE,TRUE,TRUE,FALSE,88,Tchem
+6733,SRPK2,SRSF protein kinase 2,TRUE,TRUE,TRUE,FALSE,22,Tchem
+6787,NEK4,NIMA related kinase 4,TRUE,TRUE,TRUE,TRUE,9,Tbio
+6788,STK3,serine/threonine kinase 3,TRUE,TRUE,TRUE,TRUE,69,Tchem
+6789,STK4,serine/threonine kinase 4,TRUE,TRUE,TRUE,FALSE,108,Tchem
+6790,AURKA,aurora kinase A,TRUE,TRUE,TRUE,FALSE,847,Tchem
+6792,CDKL5,cyclin dependent kinase like 5,TRUE,TRUE,TRUE,TRUE,178,Tchem
+6793,STK10,serine/threonine kinase 10,TRUE,TRUE,TRUE,FALSE,9,Tchem
+6794,STK11,serine/threonine kinase 11,TRUE,TRUE,TRUE,FALSE,782,Tchem
+6795,AURKC,aurora kinase C,TRUE,TRUE,TRUE,FALSE,45,Tchem
+6850,SYK,spleen associated tyrosine kinase,TRUE,TRUE,TRUE,FALSE,1356,Tchem
+6872,TAF1,TATA-box binding protein associated factor 1,TRUE,TRUE,TRUE,FALSE,72,Tbio
+6885,MAP3K7,mitogen-activated protein kinase kinase kinase 7,TRUE,TRUE,TRUE,FALSE,79,Tchem
+7006,TEC,tec protein tyrosine kinase,TRUE,TRUE,TRUE,FALSE,1190,Tchem
+7010,TEK,TEK receptor tyrosine kinase,TRUE,TRUE,TRUE,FALSE,443,Tclin
+7016,TESK1,testis associated actin remodelling kinase 1,TRUE,TRUE,TRUE,TRUE,10,Tbio
+7046,TGFBR1,transforming growth factor beta receptor 1,TRUE,TRUE,TRUE,FALSE,296,Tchem
+7048,TGFBR2,transforming growth factor beta receptor 2,TRUE,TRUE,TRUE,FALSE,423,Tchem
+7075,TIE1,tyrosine kinase with immunoglobulin like and EGF like domains 1,TRUE,TRUE,TRUE,FALSE,70,Tchem
+7204,TRIO,trio Rho guanine nucleotide exchange factor,TRUE,TRUE,TRUE,FALSE,1106,Tbio
+7272,TTK,TTK protein kinase,TRUE,TRUE,TRUE,FALSE,703,Tchem
+7273,TTN,titin,TRUE,TRUE,TRUE,FALSE,414,Tbio
+7294,TXK,TXK tyrosine kinase,TRUE,TRUE,TRUE,FALSE,13,Tchem
+7297,TYK2,tyrosine kinase 2,TRUE,TRUE,TRUE,FALSE,291,Tclin
+7301,TYRO3,TYRO3 protein tyrosine kinase,TRUE,TRUE,TRUE,FALSE,188,Tchem
+7443,VRK1,vaccinia related kinase 1,TRUE,TRUE,TRUE,FALSE,58,Tbio
+7444,VRK2,vaccinia related kinase 2,TRUE,TRUE,TRUE,TRUE,29,Tbio
+7465,WEE1,WEE1 G2 checkpoint kinase,TRUE,TRUE,TRUE,FALSE,427,Tchem
+7525,YES1,"YES proto-oncogene 1, Src family tyrosine kinase",TRUE,TRUE,TRUE,FALSE,54,Tclin
+7535,ZAP70,zeta chain of T cell receptor associated protein kinase 70,TRUE,TRUE,TRUE,FALSE,380,Tchem
+7786,MAP3K12,mitogen-activated protein kinase kinase kinase 12,TRUE,TRUE,TRUE,FALSE,19,Tchem
+7867,MAPKAPK3,mitogen-activated protein kinase-activated protein kinase 3,TRUE,TRUE,TRUE,FALSE,26,Tbio
+8019,BRD3,bromodomain containing 3,TRUE,TRUE,FALSE,FALSE,118,Tchem
+8295,TRRAP,transformation/transcription domain associated protein,TRUE,TRUE,TRUE,FALSE,54,Tbio
+8317,CDC7,cell division cycle 7,TRUE,TRUE,TRUE,FALSE,129,Tchem
+8394,PIP5K1A,phosphatidylinositol-4-phosphate 5-kinase type 1 alpha,FALSE,FALSE,FALSE,TRUE,9,Tdark
+8395,PIP5K1B,phosphatidylinositol-4-phosphate 5-kinase type 1 beta,FALSE,FALSE,FALSE,TRUE,9,Tbio
+8408,ULK1,unc-51 like autophagy activating kinase 1,TRUE,TRUE,TRUE,FALSE,696,Tchem
+8428,STK24,serine/threonine kinase 24,TRUE,TRUE,TRUE,FALSE,30,Tchem
+8444,DYRK3,dual specificity tyrosine phosphorylation regulated kinase 3,TRUE,TRUE,TRUE,TRUE,12,Tchem
+8445,DYRK2,dual specificity tyrosine phosphorylation regulated kinase 2,TRUE,TRUE,TRUE,TRUE,54,Tchem
+8476,CDC42BPA,CDC42 binding protein kinase alpha,TRUE,TRUE,TRUE,TRUE,21,Tchem
+8491,MAP4K3,mitogen-activated protein kinase kinase kinase kinase 3,TRUE,TRUE,TRUE,FALSE,31,Tchem
+8525,DGKZ,diacylglycerol kinase zeta,FALSE,FALSE,TRUE,FALSE,6,Tbio
+8526,DGKE,diacylglycerol kinase epsilon,FALSE,FALSE,TRUE,FALSE,36,Tbio
+8527,DGKD,diacylglycerol kinase delta,FALSE,FALSE,TRUE,FALSE,8,Tbio
+8536,CAMK1,calcium/calmodulin dependent protein kinase I,TRUE,TRUE,TRUE,FALSE,30,Tchem
+8550,MAPKAPK5,mitogen-activated protein kinase-activated protein kinase 5,TRUE,TRUE,TRUE,FALSE,27,Tdark
+8558,CDK10,cyclin dependent kinase 10,TRUE,TRUE,TRUE,TRUE,30,Tbio
+8569,MKNK1,MAP kinase interacting serine/threonine kinase 1,TRUE,TRUE,TRUE,TRUE,75,Tchem
+8573,CASK,calcium/calmodulin dependent serine protein kinase,TRUE,TRUE,TRUE,FALSE,138,Tchem
+8576,STK16,serine/threonine kinase 16,TRUE,TRUE,TRUE,FALSE,9,Tchem
+8621,CDK13,cyclin dependent kinase 13,TRUE,TRUE,TRUE,TRUE,23,Tchem
+8711,TNK1,tyrosine kinase non receptor 1,TRUE,TRUE,TRUE,FALSE,7,Tchem
+8737,RIPK1,receptor interacting serine/threonine kinase 1,TRUE,TRUE,TRUE,FALSE,514,Tchem
+8767,RIPK2,receptor interacting serine/threonine kinase 2,TRUE,TRUE,TRUE,FALSE,164,Tchem
+8780,RIOK3,RIO kinase 3,TRUE,TRUE,TRUE,TRUE,10,Tchem
+8798,DYRK4,dual specificity tyrosine phosphorylation regulated kinase 4,TRUE,TRUE,TRUE,TRUE,3,Tdark
+8805,TRIM24,tripartite motif containing 24,TRUE,TRUE,FALSE,FALSE,63,Tchem
+8814,CDKL1,cyclin dependent kinase like 1,TRUE,TRUE,TRUE,TRUE,5,Tchem
+8844,KSR1,kinase suppressor of ras 1,TRUE,TRUE,TRUE,FALSE,45,Tbio
+8859,STK19,serine/threonine kinase 19,TRUE,TRUE,FALSE,TRUE,8,Tbio
+8899,PRPF4B,pre-mRNA processing factor 4B,TRUE,TRUE,TRUE,TRUE,8,Tchem
+8986,RPS6KA4,ribosomal protein S6 kinase A4,TRUE,TRUE,TRUE,FALSE,20,Tchem
+8997,KALRN,kalirin RhoGEF kinase,TRUE,TRUE,TRUE,FALSE,41,Tbio
+8999,CDKL2,cyclin dependent kinase like 2,TRUE,TRUE,TRUE,TRUE,7,Tchem
+9020,MAP3K14,mitogen-activated protein kinase kinase kinase 14,TRUE,TRUE,TRUE,TRUE,39,Tchem
+9024,BRSK2,BR serine/threonine kinase 2,TRUE,TRUE,TRUE,TRUE,20,Tchem
+9031,BAZ1B,bromodomain adjacent to zinc finger domain 1B,FALSE,TRUE,FALSE,FALSE,32,Tbio
+9064,MAP3K6,mitogen-activated protein kinase kinase kinase 6,TRUE,TRUE,TRUE,FALSE,8,Tbio
+9088,PKMYT1,"protein kinase, membrane associated tyrosine/threonine 1",TRUE,TRUE,TRUE,TRUE,21,Tchem
+9113,LATS1,large tumor suppressor kinase 1,TRUE,TRUE,TRUE,FALSE,324,Tbio
+9149,DYRK1B,dual specificity tyrosine phosphorylation regulated kinase 1B,TRUE,TRUE,TRUE,TRUE,58,Tchem
+9162,DGKI,diacylglycerol kinase iota,FALSE,FALSE,TRUE,FALSE,7,Tbio
+9175,MAP3K13,mitogen-activated protein kinase kinase kinase 13,TRUE,TRUE,TRUE,FALSE,9,Tchem
+9201,DCLK1,doublecortin like kinase 1,TRUE,TRUE,TRUE,FALSE,146,Tchem
+9212,AURKB,aurora kinase B,TRUE,TRUE,TRUE,FALSE,327,Tchem
+9238,TBRG4,transforming growth factor beta regulator 4,FALSE,FALSE,TRUE,FALSE,5,Tbio
+9252,RPS6KA5,ribosomal protein S6 kinase A5,TRUE,TRUE,TRUE,FALSE,9,Tchem
+9261,MAPKAPK2,mitogen-activated protein kinase-activated protein kinase 2,TRUE,TRUE,TRUE,FALSE,189,Tchem
+9262,STK17B,serine/threonine kinase 17b,TRUE,TRUE,TRUE,TRUE,10,Tchem
+9263,STK17A,serine/threonine kinase 17a,TRUE,TRUE,TRUE,TRUE,9,Tchem
+9344,TAOK2,TAO kinase 2,TRUE,TRUE,TRUE,TRUE,12,Tchem
+9448,MAP4K4,mitogen-activated protein kinase kinase kinase kinase 4,TRUE,TRUE,TRUE,FALSE,102,Tchem
+9451,EIF2AK3,eukaryotic translation initiation factor 2 alpha kinase 3,TRUE,TRUE,TRUE,FALSE,290,Tchem
+9475,ROCK2,Rho associated coiled-coil containing protein kinase 2,TRUE,TRUE,TRUE,FALSE,492,Tclin
+9578,CDC42BPB,CDC42 binding protein kinase beta,TRUE,TRUE,TRUE,TRUE,10,Tbio
+9625,AATK,apoptosis associated tyrosine kinase,TRUE,TRUE,TRUE,FALSE,12,Tbio
+9641,IKBKE,inhibitor of nuclear factor kappa B kinase subunit epsilon,TRUE,TRUE,TRUE,FALSE,55,Tchem
+9706,ULK2,unc-51 like autophagy activating kinase 2,TRUE,TRUE,TRUE,FALSE,48,Tchem
+9748,SLK,STE20 like kinase,TRUE,TRUE,TRUE,FALSE,253,Tchem
+9833,MELK,maternal embryonic leucine zipper kinase,TRUE,TRUE,TRUE,FALSE,183,Tchem
+9866,TRIM66,tripartite motif containing 66,FALSE,TRUE,FALSE,FALSE,4,Tdark
+9874,TLK1,tousled like kinase 1,TRUE,TRUE,TRUE,TRUE,17,Tchem
+9891,NUAK1,NUAK family kinase 1,TRUE,TRUE,TRUE,FALSE,48,Tchem
+9943,OXSR1,oxidative stress responsive 1,TRUE,TRUE,TRUE,FALSE,11,Tbio
+10000,AKT3,AKT serine/threonine kinase 3,TRUE,TRUE,TRUE,FALSE,302,Tchem
+10087,COL4A3BP,collagen type IV alpha 3 binding protein,FALSE,TRUE,FALSE,FALSE,23,Tbio
+10110,SGK2,"SGK2, serine/threonine kinase 2",TRUE,TRUE,TRUE,FALSE,20,Tbio
+10114,HIPK3,homeodomain interacting protein kinase 3,TRUE,TRUE,TRUE,TRUE,32,Tchem
+10155,TRIM28,tripartite motif containing 28,TRUE,TRUE,FALSE,FALSE,192,Tbio
+10188,TNK2,tyrosine kinase non receptor 2,TRUE,TRUE,TRUE,FALSE,51,Tchem
+10221,TRIB1,tribbles pseudokinase 1,TRUE,TRUE,TRUE,FALSE,108,Tbio
+10290,SPEG,SPEG complex locus,FALSE,TRUE,TRUE,FALSE,84,Tbio
+10295,BCKDK,branched chain ketoacid dehydrogenase kinase,TRUE,TRUE,TRUE,TRUE,14,Tbio
+10298,PAK4,p21 (RAC1) activated kinase 4,TRUE,TRUE,TRUE,FALSE,166,Tchem
+10420,TESK2,testis associated actin remodelling kinase 2,TRUE,TRUE,TRUE,TRUE,4,Tdark
+10461,MERTK,"MER proto-oncogene, tyrosine kinase",TRUE,TRUE,TRUE,FALSE,325,Tchem
+10494,STK25,serine/threonine kinase 25,TRUE,TRUE,TRUE,FALSE,24,Tchem
+10595,ERN2,endoplasmic reticulum to nucleus signaling 2,TRUE,TRUE,TRUE,TRUE,101,Tbio
+10645,CAMKK2,calcium/calmodulin dependent protein kinase kinase 2,TRUE,TRUE,TRUE,TRUE,93,Tchem
+10733,PLK4,polo like kinase 4,TRUE,TRUE,TRUE,FALSE,151,Tchem
+10746,MAP3K2,mitogen-activated protein kinase kinase kinase 2,TRUE,TRUE,TRUE,FALSE,39,Tchem
+10769,PLK2,polo like kinase 2,TRUE,TRUE,TRUE,FALSE,102,Tchem
+10783,NEK6,NIMA related kinase 6,TRUE,TRUE,TRUE,TRUE,35,Tchem
+10922,FASTK,Fas activated serine/threonine kinase,TRUE,TRUE,TRUE,FALSE,11,Tbio
+11011,TLK2,tousled like kinase 2,TRUE,TRUE,TRUE,TRUE,13,Tchem
+11035,RIPK3,receptor interacting serine/threonine kinase 3,TRUE,TRUE,TRUE,FALSE,602,Tchem
+11040,PIM2,"Pim-2 proto-oncogene, serine/threonine kinase",TRUE,TRUE,TRUE,FALSE,125,Tchem
+11113,CIT,citron rho-interacting serine/threonine kinase,TRUE,TRUE,TRUE,FALSE,2013,Tchem
+11177,BAZ1A,bromodomain adjacent to zinc finger domain 1A,FALSE,TRUE,FALSE,FALSE,19,Tbio
+11183,MAP4K5,mitogen-activated protein kinase kinase kinase kinase 5,TRUE,TRUE,TRUE,FALSE,5,Tchem
+11184,MAP4K1,mitogen-activated protein kinase kinase kinase kinase 1,TRUE,TRUE,TRUE,FALSE,8,Tchem
+11200,CHEK2,checkpoint kinase 2,TRUE,TRUE,TRUE,FALSE,533,Tchem
+11213,IRAK3,interleukin 1 receptor associated kinase 3,TRUE,TRUE,TRUE,FALSE,85,Tchem
+11329,STK38,serine/threonine kinase 38,TRUE,TRUE,TRUE,FALSE,29,Tbio
+22848,AAK1,AP2 associated kinase 1,TRUE,TRUE,TRUE,FALSE,21,Tchem
+22853,LMTK2,lemur tyrosine kinase 2,TRUE,TRUE,TRUE,TRUE,16,Tbio
+22858,ICK,intestinal cell kinase,TRUE,TRUE,TRUE,TRUE,108,Tchem
+22868,FASTKD2,FAST kinase domains 2,FALSE,FALSE,TRUE,FALSE,13,Tbio
+22983,MAST1,microtubule associated serine/threonine kinase 1,TRUE,TRUE,TRUE,FALSE,7,Tchem
+23012,STK38L,serine/threonine kinase 38 like,TRUE,TRUE,TRUE,TRUE,18,Tchem
+23031,MAST3,microtubule associated serine/threonine kinase 3,TRUE,TRUE,TRUE,TRUE,5,Tbio
+23043,TNIK,TRAF2 and NCK interacting kinase,TRUE,TRUE,TRUE,FALSE,38,Tchem
+23049,SMG1,"SMG1, nonsense mediated mRNA decay associated PI3K related kinase",TRUE,TRUE,TRUE,FALSE,64,Tchem
+23097,CDK19,cyclin dependent kinase 19,TRUE,TRUE,TRUE,TRUE,46,Tchem
+23139,MAST2,microtubule associated serine/threonine kinase 2,TRUE,TRUE,TRUE,TRUE,11,Tbio
+23178,PASK,PAS domain containing serine/threonine kinase,TRUE,TRUE,TRUE,FALSE,110,Tbio
+23235,SIK2,salt inducible kinase 2,TRUE,TRUE,TRUE,FALSE,50,Tchem
+23387,SIK3,SIK family kinase 3,TRUE,TRUE,TRUE,FALSE,38,Tchem
+23396,PIP5K1C,phosphatidylinositol-4-phosphate 5-kinase type 1 gamma,FALSE,FALSE,FALSE,TRUE,15,Tchem
+23476,BRD4,bromodomain containing 4,TRUE,TRUE,FALSE,FALSE,818,Tchem
+23552,CDK20,cyclin dependent kinase 20,TRUE,TRUE,TRUE,TRUE,6,Tbio
+23604,DAPK2,death associated protein kinase 2,TRUE,TRUE,TRUE,FALSE,323,Tchem
+23617,TSSK2,testis specific serine kinase 2,TRUE,TRUE,TRUE,TRUE,8,Tbio
+23678,SGK3,serum/glucocorticoid regulated kinase family member 3,TRUE,TRUE,TRUE,FALSE,51,Tchem
+23683,PRKD3,protein kinase D3,TRUE,TRUE,TRUE,FALSE,10,Tchem
+25778,DSTYK,dual serine/threonine and tyrosine protein kinase,TRUE,TRUE,TRUE,TRUE,7,Tchem
+25865,PRKD2,protein kinase D2,TRUE,TRUE,TRUE,FALSE,16,Tchem
+25989,ULK3,unc-51 like kinase 3,TRUE,TRUE,TRUE,FALSE,15,Tchem
+26353,HSPB8,heat shock protein family B (small) member 8,TRUE,FALSE,FALSE,FALSE,97,Tbio
+26524,LATS2,large tumor suppressor kinase 2,TRUE,TRUE,TRUE,FALSE,199,Tchem
+26576,SRPK3,SRSF protein kinase 3,TRUE,TRUE,TRUE,TRUE,4,Tchem
+26750,RPS6KC1,ribosomal protein S6 kinase C1,TRUE,TRUE,TRUE,TRUE,4,Tdark
+27102,EIF2AK1,eukaryotic translation initiation factor 2 alpha kinase 1,TRUE,TRUE,TRUE,FALSE,24,Tchem
+27148,STK36,serine/threonine kinase 36,TRUE,TRUE,TRUE,TRUE,8,Tbio
+27330,RPS6KA6,ribosomal protein S6 kinase A6,TRUE,TRUE,TRUE,FALSE,14,Tchem
+27347,STK39,serine/threonine kinase 39,TRUE,TRUE,TRUE,FALSE,131,Tbio
+28951,TRIB2,tribbles pseudokinase 2,TRUE,TRUE,TRUE,FALSE,62,Tbio
+28996,HIPK2,homeodomain interacting protein kinase 2,TRUE,TRUE,TRUE,FALSE,131,Tchem
+29110,TBK1,TANK binding kinase 1,TRUE,TRUE,TRUE,FALSE,639,Tchem
+29904,EEF2K,eukaryotic elongation factor 2 kinase,TRUE,TRUE,TRUE,TRUE,121,Tbio
+29941,PKN3,protein kinase N3,TRUE,TRUE,TRUE,TRUE,9,Tbio
+29959,NRBP1,nuclear receptor binding protein 1,TRUE,TRUE,TRUE,FALSE,9,Tbio
+30811,HUNK,hormonally up-regulated Neu-associated kinase,TRUE,TRUE,TRUE,FALSE,7,Tchem
+30849,PIK3R4,phosphoinositide-3-kinase regulatory subunit 4,TRUE,TRUE,TRUE,FALSE,22,Tbio
+50488,MINK1,misshapen like kinase 1,TRUE,TRUE,TRUE,FALSE,12,Tchem
+51086,TNNI3K,TNNI3 interacting kinase,TRUE,TRUE,TRUE,FALSE,41,Tchem
+51135,IRAK4,interleukin 1 receptor associated kinase 4,TRUE,TRUE,TRUE,FALSE,241,Tchem
+51231,VRK3,vaccinia related kinase 3,TRUE,TRUE,TRUE,TRUE,8,Tbio
+51265,CDKL3,cyclin dependent kinase like 3,TRUE,TRUE,TRUE,TRUE,6,Tchem
+51347,TAOK3,TAO kinase 3,TRUE,TRUE,TRUE,FALSE,11,Tchem
+51592,TRIM33,tripartite motif containing 33,TRUE,TRUE,FALSE,FALSE,71,Tbio
+51701,NLK,nemo like kinase,TRUE,TRUE,TRUE,FALSE,88,Tchem
+51755,CDK12,cyclin dependent kinase 12,TRUE,TRUE,TRUE,TRUE,66,Tbio
+51765,STK26,serine/threonine kinase 26,TRUE,TRUE,TRUE,FALSE,3,Tchem
+51776,MAP3K20,mitogen-activated protein kinase kinase kinase 20,TRUE,TRUE,TRUE,FALSE,1,Tchem
+53904,MYO3A,myosin IIIA,TRUE,TRUE,TRUE,FALSE,18,Tbio
+53944,CSNK1G1,casein kinase 1 gamma 1,TRUE,TRUE,TRUE,TRUE,3,Tbio
+54101,RIPK4,receptor interacting serine/threonine kinase 4,TRUE,TRUE,TRUE,FALSE,37,Tchem
+54822,TRPM7,transient receptor potential cation channel subfamily M member 7,TRUE,TRUE,TRUE,FALSE,309,Tbio
+54861,SNRK,SNF related kinase,TRUE,TRUE,TRUE,FALSE,31,Tbio
+54899,PXK,PX domain containing serine/threonine kinase like,TRUE,TRUE,TRUE,TRUE,15,Tbio
+54986,ULK4,unc-51 like kinase 4,TRUE,TRUE,TRUE,TRUE,21,Tbio
+55300,PI4K2B,phosphatidylinositol 4-kinase type 2 beta,FALSE,FALSE,TRUE,FALSE,2,Tbio
+55351,STK32B,serine/threonine kinase 32B,TRUE,TRUE,TRUE,TRUE,9,Tdark
+55359,STYK1,serine/threonine/tyrosine kinase 1,TRUE,TRUE,TRUE,FALSE,18,Tbio
+55361,PI4K2A,phosphatidylinositol 4-kinase type 2 alpha,FALSE,FALSE,TRUE,FALSE,4,Tbio
+55437,STRADB,STE20-related kinase adaptor beta,TRUE,TRUE,TRUE,FALSE,2,Tbio
+55561,CDC42BPG,CDC42 binding protein kinase gamma,TRUE,TRUE,TRUE,TRUE,2,Tbio
+55589,BMP2K,BMP2 inducible kinase,TRUE,TRUE,TRUE,FALSE,10,Tchem
+55681,SCYL2,SCY1 like pseudokinase 2,TRUE,TRUE,TRUE,TRUE,5,Tbio
+55781,RIOK2,RIO kinase 2,TRUE,TRUE,TRUE,TRUE,8,Tbio
+55872,PBK,PDZ binding kinase,TRUE,TRUE,TRUE,FALSE,149,Tchem
+56155,TEX14,"testis expressed 14, intercellular bridge forming factor",TRUE,TRUE,TRUE,FALSE,12,Tbio
+56164,STK31,serine/threonine kinase 31,TRUE,TRUE,TRUE,TRUE,15,Tbio
+56924,PAK6,p21 (RAC1) activated kinase 6,TRUE,TRUE,TRUE,TRUE,44,Tchem
+56997,COQ8A,coenzyme Q8A,TRUE,TRUE,TRUE,TRUE,5,Tbio
+57118,CAMK1D,calcium/calmodulin dependent protein kinase ID,TRUE,TRUE,TRUE,TRUE,27,Tchem
+57143,ADCK1,aarF domain containing kinase 1,TRUE,TRUE,TRUE,TRUE,4,Tdark
+57144,PAK5,p21 (RAC1) activated kinase 5,TRUE,TRUE,TRUE,TRUE,33,Tchem
+57147,SCYL3,SCY1 like pseudokinase 3,TRUE,TRUE,TRUE,TRUE,3,Tdark
+57172,CAMK1G,calcium/calmodulin dependent protein kinase IG,TRUE,TRUE,TRUE,TRUE,6,Tchem
+57396,CLK4,CDC like kinase 4,TRUE,TRUE,TRUE,TRUE,15,Tchem
+57410,SCYL1,SCY1 like pseudokinase 1,TRUE,TRUE,TRUE,TRUE,19,Tbio
+57538,ALPK3,alpha kinase 3,TRUE,TRUE,TRUE,TRUE,7,Tdark
+57551,TAOK1,TAO kinase 1,TRUE,TRUE,TRUE,TRUE,12,Tchem
+57761,TRIB3,tribbles pseudokinase 3,TRUE,TRUE,TRUE,FALSE,162,Tbio
+57787,MARK4,microtubule affinity regulating kinase 4,TRUE,TRUE,TRUE,TRUE,49,Tchem
+60493,FASTKD5,FAST kinase domains 5,FALSE,FALSE,TRUE,FALSE,4,Tdark
+65018,PINK1,PTEN induced putative kinase 1,TRUE,TRUE,TRUE,FALSE,967,Tbio
+65061,CDK15,cyclin dependent kinase 15,TRUE,TRUE,TRUE,TRUE,2,Tchem
+65125,WNK1,WNK lysine deficient protein kinase 1,TRUE,TRUE,TRUE,FALSE,191,Tbio
+65266,WNK4,WNK lysine deficient protein kinase 4,TRUE,TRUE,TRUE,FALSE,132,Tbio
+65267,WNK3,WNK lysine deficient protein kinase 3,TRUE,TRUE,TRUE,TRUE,25,Tbio
+65268,WNK2,WNK lysine deficient protein kinase 2,TRUE,TRUE,TRUE,TRUE,16,Tbio
+65975,STK33,serine/threonine kinase 33,TRUE,TRUE,TRUE,TRUE,26,Tchem
+79012,CAMKV,CaM kinase like vesicle associated,TRUE,TRUE,TRUE,TRUE,4,Tbio
+79072,FASTKD3,FAST kinase domains 3,FALSE,FALSE,TRUE,FALSE,2,Tbio
+79675,FASTKD1,FAST kinase domains 1,FALSE,FALSE,TRUE,FALSE,5,Tdark
+79705,LRRK1,leucine rich repeat kinase 1,TRUE,TRUE,TRUE,TRUE,34,Tbio
+79834,PEAK1,pseudopodium enriched atypical kinase 1,TRUE,TRUE,TRUE,FALSE,27,Tbio
+79837,PIP4K2C,phosphatidylinositol-5-phosphate 4-kinase type 2 gamma,FALSE,FALSE,FALSE,TRUE,4,Tchem
+79858,NEK11,NIMA related kinase 11,TRUE,TRUE,TRUE,TRUE,5,Tbio
+79934,COQ8B,coenzyme Q8B,TRUE,TRUE,TRUE,TRUE,2,Tchem
+80122,MAP3K19,mitogen-activated protein kinase kinase kinase 19,TRUE,TRUE,TRUE,FALSE,3,Tchem
+80201,HKDC1,hexokinase domain containing 1,FALSE,FALSE,TRUE,FALSE,16,Tbio
+80216,ALPK1,alpha kinase 1,TRUE,TRUE,TRUE,FALSE,20,Tbio
+81629,TSSK3,testis specific serine kinase 3,TRUE,TRUE,TRUE,TRUE,3,Tbio
+81788,NUAK2,NUAK family kinase 2,TRUE,TRUE,TRUE,TRUE,19,Tchem
+83440,ADPGK,ADP dependent glucokinase,FALSE,FALSE,TRUE,FALSE,8,Tbio
+83694,RPS6KL1,ribosomal protein S6 kinase like 1,TRUE,TRUE,TRUE,TRUE,3,Tdark
+83732,RIOK1,RIO kinase 1,TRUE,TRUE,TRUE,TRUE,12,Tchem
+83903,HASPIN,histone H3 associated protein kinase,TRUE,TRUE,TRUE,FALSE,55,Tbio
+83931,STK40,serine/threonine kinase 40,TRUE,TRUE,TRUE,TRUE,18,Tbio
+83942,TSSK1B,testis specific serine kinase 1B,TRUE,TRUE,TRUE,TRUE,3,Tchem
+83983,TSSK6,testis specific serine kinase 6,TRUE,TRUE,TRUE,TRUE,11,Tbio
+84033,OBSCN,"obscurin, cytoskeletal calmodulin and titin-interacting RhoGEF",TRUE,TRUE,TRUE,TRUE,39,Tbio
+84197,POMK,protein-O-mannose kinase,TRUE,TRUE,TRUE,TRUE,9,Tdark
+84254,CAMKK1,calcium/calmodulin dependent protein kinase kinase 1,TRUE,TRUE,TRUE,TRUE,12,Tchem
+84446,BRSK1,BR serine/threonine kinase 1,TRUE,TRUE,TRUE,TRUE,24,Tchem
+84451,MAP3K21,mitogen-activated protein kinase kinase kinase 21,TRUE,TRUE,TRUE,TRUE,4,Tdark
+84630,TTBK1,tau tubulin kinase 1,TRUE,TRUE,TRUE,TRUE,14,Tbio
+84930,MASTL,microtubule associated serine/threonine kinase like,TRUE,TRUE,TRUE,FALSE,33,Tbio
+85366,MYLK2,myosin light chain kinase 2,TRUE,TRUE,TRUE,FALSE,10,Tbio
+85443,DCLK3,doublecortin like kinase 3,TRUE,TRUE,TRUE,TRUE,2,Tchem
+85481,PSKH2,protein serine kinase H2,TRUE,TRUE,TRUE,TRUE,0,Tdark
+90956,ADCK2,aarF domain containing kinase 2,TRUE,TRUE,TRUE,TRUE,0,Tbio
+91461,PKDCC,"protein kinase domain containing, cytoplasmic",TRUE,TRUE,TRUE,FALSE,7,Tbio
+91754,NEK9,NIMA related kinase 9,TRUE,TRUE,TRUE,TRUE,26,Tchem
+91807,MYLK3,myosin light chain kinase 3,TRUE,TRUE,TRUE,FALSE,8,Tchem
+92335,STRADA,STE20-related kinase adaptor alpha,TRUE,TRUE,TRUE,FALSE,1697,Tbio
+93627,TBCK,TBC1 domain containing kinase,TRUE,TRUE,TRUE,TRUE,13,Tbio
+112858,TP53RK,TP53 regulating kinase,TRUE,TRUE,TRUE,TRUE,7,Tbio
+114783,LMTK3,lemur tyrosine kinase 3,TRUE,TRUE,TRUE,TRUE,26,Tbio
+115701,ALPK2,alpha kinase 2,TRUE,TRUE,TRUE,TRUE,7,Tbio
+120892,LRRK2,leucine rich repeat kinase 2,TRUE,TRUE,TRUE,FALSE,1014,Tchem
+122011,CSNK1A1L,casein kinase 1 alpha 1 like,TRUE,TRUE,TRUE,TRUE,1,Tdark
+124923,SGK494,-,TRUE,TRUE,TRUE,TRUE,3,Tdark
+127933,UHMK1,U2AF homology motif kinase 1,TRUE,TRUE,TRUE,FALSE,15,Tbio
+130399,ACVR1C,activin A receptor type 1C,TRUE,TRUE,TRUE,FALSE,32,Tbio
+131890,GRK7,G protein-coupled receptor kinase 7,TRUE,TRUE,TRUE,FALSE,6,Tchem
+138474,TAF1L,TATA-box binding protein associated factor 1 like,TRUE,TRUE,FALSE,FALSE,9,Tchem
+139189,DGKK,diacylglycerol kinase kappa,FALSE,FALSE,TRUE,FALSE,9,Tbio
+139728,PNCK,pregnancy up-regulated nonubiquitous CaM kinase,TRUE,TRUE,TRUE,TRUE,6,Tbio
+140469,MYO3B,myosin IIIB,TRUE,TRUE,TRUE,FALSE,10,Tbio
+140609,NEK7,NIMA related kinase 7,TRUE,TRUE,TRUE,TRUE,40,Tchem
+140803,TRPM6,transient receptor potential cation channel subfamily M member 6,TRUE,TRUE,TRUE,FALSE,136,Tchem
+140901,STK35,serine/threonine kinase 35,TRUE,TRUE,TRUE,FALSE,4,Tchem
+146057,TTBK2,tau tubulin kinase 2,TRUE,TRUE,TRUE,TRUE,27,Tbio
+147746,HIPK4,homeodomain interacting protein kinase 4,TRUE,TRUE,TRUE,TRUE,4,Tchem
+149420,PDIK1L,PDLIM1 interacting kinase 1 like,TRUE,TRUE,TRUE,TRUE,1,Tdark
+150094,SIK1,salt inducible kinase 1,TRUE,TRUE,TRUE,FALSE,65,Tchem
+152110,NEK10,NIMA related kinase 10,TRUE,TRUE,TRUE,TRUE,7,Tdark
+157285,PRAG1,"PEAK1 related, kinase-activating pseudokinase 1",TRUE,TRUE,TRUE,TRUE,1,Tbio
+160851,DGKH,diacylglycerol kinase eta,FALSE,FALSE,TRUE,FALSE,25,Tbio
+166614,DCLK2,doublecortin like kinase 2,TRUE,TRUE,TRUE,FALSE,8,Tchem
+167359,NIM1K,NIM1 serine/threonine protein kinase,TRUE,TRUE,TRUE,TRUE,0,Tbio
+169436,STKLD1,serine/threonine kinase like domain containing 1,TRUE,TRUE,TRUE,TRUE,0,Tdark
+197259,MLKL,mixed lineage kinase domain like pseudokinase,TRUE,TRUE,TRUE,FALSE,429,Tbio
+202374,STK32A,serine/threonine kinase 32A,TRUE,TRUE,TRUE,TRUE,4,Tchem
+203054,ADCK5,aarF domain containing kinase 5,TRUE,TRUE,TRUE,TRUE,1,Tdark
+203447,NRK,Nik related kinase,TRUE,TRUE,TRUE,TRUE,428,Tdark
+204851,HIPK1,homeodomain interacting protein kinase 1,TRUE,TRUE,TRUE,TRUE,29,Tbio
+225689,MAPK15,mitogen-activated protein kinase 15,TRUE,TRUE,TRUE,TRUE,16,Tchem
+255239,ANKK1,ankyrin repeat and kinase domain containing 1,TRUE,TRUE,TRUE,FALSE,156,Tbio
+255967,PAN3,poly(A) specific ribonuclease subunit PAN3,FALSE,TRUE,FALSE,TRUE,26,Tdark
+282974,STK32C,serine/threonine kinase 32C,TRUE,TRUE,TRUE,TRUE,6,Tbio
+283106,CSNK2A3,casein kinase 2 alpha 3,FALSE,FALSE,TRUE,TRUE,0,Tdark
+283455,KSR2,kinase suppressor of ras 2,TRUE,TRUE,TRUE,FALSE,25,Tbio
+283629,TSSK4,testis specific serine kinase 4,TRUE,TRUE,TRUE,TRUE,7,Tbio
+284086,NEK8,NIMA related kinase 8,TRUE,TRUE,TRUE,TRUE,28,Tbio
+284656,EPHA10,EPH receptor A10,TRUE,TRUE,TRUE,FALSE,17,Tbio
+285220,EPHA6,EPH receptor A6,TRUE,TRUE,TRUE,FALSE,24,Tchem
+285962,WEE2-AS1,WEE2 antisense RNA 1,TRUE,FALSE,FALSE,FALSE,1,Tdark
+340156,MYLK4,myosin light chain kinase family member 4,TRUE,TRUE,TRUE,FALSE,5,Tchem
+340371,NRBP2,nuclear receptor binding protein 2,TRUE,TRUE,TRUE,TRUE,3,Tdark
+341676,NEK5,NIMA related kinase 5,TRUE,TRUE,TRUE,TRUE,7,Tchem
+344387,CDKL4,cyclin dependent kinase like 4,TRUE,TRUE,TRUE,TRUE,2,Tdark
+375133,PI4KAP2,phosphatidylinositol 4-kinase alpha pseudogene 2,FALSE,FALSE,TRUE,FALSE,1,Tdark
+375449,MAST4,microtubule associated serine/threonine kinase family member 4,TRUE,TRUE,TRUE,TRUE,10,Tbio
+388228,SBK1,SH3 domain binding kinase 1,TRUE,TRUE,TRUE,TRUE,3,Tchem
+389840,MAP3K15,mitogen-activated protein kinase kinase kinase 15,TRUE,TRUE,TRUE,TRUE,5,Tchem
+415116,PIM3,"Pim-3 proto-oncogene, serine/threonine kinase",TRUE,TRUE,TRUE,FALSE,68,Tchem
+440275,EIF2AK4,eukaryotic translation initiation factor 2 alpha kinase 4,TRUE,TRUE,TRUE,FALSE,146,Tchem
+494551,WEE2,WEE1 homolog 2,FALSE,TRUE,TRUE,TRUE,10,Tbio
+548596,CKMT1A,"creatine kinase, mitochondrial 1A",FALSE,FALSE,TRUE,FALSE,9,Tbio
+646643,SBK2,SH3 domain binding kinase family member 2,TRUE,TRUE,TRUE,TRUE,3,Tdark
+653650,PDPK2P,"3-phosphoinositide dependent protein kinase 2, pseudogene",FALSE,FALSE,TRUE,FALSE,0,Tdark
+728642,CDK11A,cyclin dependent kinase 11A,FALSE,FALSE,TRUE,TRUE,8,Tchem
+100130827,SBK3,SH3 domain binding kinase family member 3,FALSE,TRUE,TRUE,TRUE,0,Tchem
+100526835,FPGT-TNNI3K,FPGT-TNNI3K readthrough,FALSE,TRUE,TRUE,FALSE,2,Tbio
+100533105,C8orf44-SGK3,C8orf44-SGK3 readthrough,FALSE,TRUE,TRUE,FALSE,0,Tchem
+102724428,SIK1B,salt inducible kinase 1B (putative),FALSE,TRUE,TRUE,FALSE,0,NA
+102800317,TPTEP2-CSNK1E,TPTEP2-CSNK1E readthrough,FALSE,TRUE,TRUE,FALSE,0,Tchem
+106821730,BUB1B-PAK6,BUB1B-PAK6 readthrough,FALSE,TRUE,TRUE,FALSE,0,Tchem
