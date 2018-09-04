@@ -1,6 +1,6 @@
 from util import *
 from indra.statements import *
-from indra.assemblers import IndexCardAssembler
+from indra.assemblers.index_card import IndexCardAssembler
 
 stmts = pklload('pysb_stmts')
 ica = IndexCardAssembler()

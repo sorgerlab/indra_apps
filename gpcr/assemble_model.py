@@ -4,7 +4,7 @@ import sys
 from random import shuffle
 from indra.sources import biopax
 import indra.tools.assemble_corpus as ac
-from indra.assemblers import CxAssembler
+from indra.assemblers.cx import CxAssembler
 from indra.literature.pubmed_client import get_ids_for_gene
 
 

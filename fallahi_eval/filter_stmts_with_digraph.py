@@ -9,9 +9,9 @@ from indra.util import _require_python3
 from indra.util import plot_formatting as pf
 from indra.tools import assemble_corpus as ac
 from indra.explanation import paths_graph as pg
-from indra.assemblers import PybelAssembler
+from indra.assemblers.pybel import PybelAssembler
 from indra.util import read_unicode_csv, write_unicode_csv
-from indra.assemblers.pysb_assembler import PysbPreassembler
+from indra.assemblers.pysb import PysbPreassembler
 
 def stmts_to_digraph(stmts):
     digraph = nx.MultiDiGraph()

@@ -12,7 +12,7 @@ from indra.preassembler import grounding_mapper as gm
 from indra.sources import ndex_cx
 from indra.databases import hgnc_client, ndex_client
 import indra.tools.assemble_corpus as ac
-from indra.assemblers import CxAssembler
+from indra.assemblers.cx import CxAssembler
 from indra.literature.pubmed_client import get_ids_for_gene
 from indra.util import _require_python3
 from indra.tools.gene_network import GeneNetwork

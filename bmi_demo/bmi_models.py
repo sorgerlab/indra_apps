@@ -4,8 +4,8 @@ import shutil
 import matplotlib.pyplot as plt
 from indra.sources import eidos
 from indra.statements import DecreaseAmount, Concept
-from indra.assemblers.bmi_wrapper import BMIModel
-from indra.assemblers import PysbAssembler
+from indra.assemblers.pysb.bmi_wrapper import BMIModel
+from indra.assemblers.pysb import PysbAssembler
 from topoflow.framework import emeli
 import eval_model
 

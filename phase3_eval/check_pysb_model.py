@@ -2,7 +2,9 @@ import json
 import pickle
 import itertools
 from indra.util import write_unicode_csv
-from indra.assemblers import PysbAssembler, EnglishAssembler, CyJSAssembler
+from indra.assemblers.pysb import PysbAssembler
+from indra.assemblers.english import EnglishAssembler
+from indra.assemblers.cyjs import CyJSAssembler
 from indra.explanation.model_checker import ModelChecker
 import indra.tools.assemble_corpus as ac
 import process_data

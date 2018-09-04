@@ -1,5 +1,5 @@
 import itertools
-from indra.assemblers import EnglishAssembler
+from indra.assemblers.english import EnglishAssembler
 from indra.explanation.reporting import stmts_from_path
 from indra.explanation.model_checker import ModelChecker
 from util import pklload, pkldump

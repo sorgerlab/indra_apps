@@ -8,7 +8,9 @@ from pysb.export.kappa import KappaExporter
 from indra.statements import *
 from indra.mechlinker import MechLinker
 import indra.tools.assemble_corpus as ac
-from indra.assemblers import PysbAssembler, IndexCardAssembler, SifAssembler
+from indra.assemblers.pysb import PysbAssembler
+from indra.assemblers.sif import SifAssembler
+from indra.assemblers.index_card import IndexCardAssembler
 import process_data
 
 def assemble_pysb(stmts, data_genes, out_file):

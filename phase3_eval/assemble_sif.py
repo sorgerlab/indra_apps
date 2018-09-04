@@ -2,7 +2,8 @@ from indra.util import _require_python3
 import itertools
 from copy import deepcopy
 from os.path import join as pjoin
-from indra.assemblers import SifAssembler, CxAssembler
+from indra.assemblers.sif import SifAssembler
+from indra.assemblers.cx import CxAssembler
 import indra.tools.assemble_corpus as ac
 from indra.statements import *
 

@@ -7,7 +7,8 @@ from indra.mechlinker import MechLinker
 import indra.tools.assemble_corpus as ac
 from indra.databases import context_client, cbio_client, hgnc_client, \
                             uniprot_client
-from indra.assemblers import PysbAssembler, IndexCardAssembler
+from indra.assemblers.pysb import PysbAssembler
+from indra.assemblers.index_card import IndexCardAssembler
 from util import prefixed_pkl, pklload
 from process_data import antibody_map, cell_lines, read_ccle_variants, \
                          drug_targets, drug_grounding, agent_from_gene_name

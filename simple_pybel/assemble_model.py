@@ -1,5 +1,5 @@
 from indra.sources import trips
-from indra.assemblers import PybelAssembler
+from indra.assemblers.pybel import PybelAssembler
 import pybel
 import requests
 from indra.databases import hgnc_client
