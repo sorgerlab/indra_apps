@@ -16,7 +16,7 @@ import indra.tools.assemble_corpus as ac
 from indra.preassembler import Preassembler, render_stmt_graph, ontology_mapper
 from indra.statements import Influence, Concept
 from indra.assemblers.cag import CAGAssembler
-from indra.statements.pysb import PysbAssembler
+from indra.assemblers.pysb import PysbAssembler
 from indra.explanation.model_checker import ModelChecker
 from indra.preassembler.hierarchy_manager import HierarchyManager
 from indra.assemblers.pysb.bmi_wrapper import BMIModel
