@@ -10,15 +10,10 @@ import indra.tools.assemble_corpus as ac
 
 
 if __name__ == '__main__':
-    # For small corpus
-    corpus_size = 'Small'
-    fnames = glob.glob('SmallJsonld/*.jsonld')
-
-    # For large corpus
-    # corpus_size = 'Large'
-    # fnames = glob.glob('data/wm/LargeJsonld/*.jsonld')
-
-    version = 3
+    path = '/home/bmg16/data/wm/2-Jsonld'
+    corpus_size = '16k'
+    prefix = '%s%s' % (path, corpus_size)
+    fnames = glob.glob('%s/*.jsonld' % prefix)
 
     # For large corpus
     all_statements = []
@@ -30,7 +25,7 @@ if __name__ == '__main__':
                     os.path.basename(fname)
         all_statements += ep.statements
         print('%d: %d' % (idx, len(all_statements)))
-    with open('%sJsonld-INDRA-v%d.pkl' % (corpus_size, version), 'wb') as fh:
+    with open('%s/3-Indra%s.pkl' % (prefix, corpus_size), 'wb') as fh:
         pickle.dump(all_statements, fh)
 
     scorer = get_eidos_scorer()
@@ -38,5 +33,5 @@ if __name__ == '__main__':
                                          return_toplevel=False)
 
     jd = stmts_to_json(assembled_stmts, use_sbo=False)
-    with open('%sJsonld-INDRA-v%d.json' % (corpus_size, version), 'w') as fh:
+    with open('%s/3-Indra%s.json' % (prefix, corpus_size), 'w') as fh:
         json.dump(jd, fh, indent=1)
