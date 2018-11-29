@@ -53,13 +53,17 @@ def process_cwms():
     return stmts
 
 
-def assemble_stmts(stmts, hume_auto_mapping=True):
+def ontomap_stmts(stmts, hume_auto_mapping=True):
     if hume_auto_mapping:
         wm_ontomap = _load_wm_map()
     else:
         wm_ontomap = _load_wm_map(exclude_auto=[('HUME', 'UN')])
     om = OntologyMapper(stmts, wm_ontomap, scored=True, symmetric=False)
     om.map_statements()
+    return stmts
+
+
+def assemble_stmts(stmts):
     scorer = get_eidos_scorer()
     stmts = ac.run_preassembly(stmts, belief_scorer=scorer,
                                return_toplevel=False)
@@ -120,6 +124,24 @@ def preferential_un_grounding(stmts):
                 print('=====')
 
 
+def filter_to_hume_interventions(stmts):
+    include = ['provision_of_free_food_distribution',
+               'provision_of_cash_transfer']
+    filter_out = [False] * len(stmts)
+    print('Filtering %d stmts' % len(stmts))
+    for idx, stmt in enumerate(stmts):
+        for agent in stmt.agent_list():
+            if 'UN' in agent.db_refs:
+                ug = agent.db_refs['UN'][0][0]
+                if ug.startswith('UN/interventions'):
+                    if not ug.endswith(include[0]) and not \
+                        ug.endswith(include[1]):
+                        filter_out[idx] = True
+    stmts = [s for s, f in zip(stmts, filter_out) if not f]
+    print('Filtered to %d stmts' % len(stmts))
+    return stmts
+
+
 if __name__ == '__main__':
     """
     # With Hume->UN mapping
@@ -128,17 +150,32 @@ if __name__ == '__main__':
     cwms_stmts = process_cwms()
     sofia_stmts = process_sofia()
     stmts = hume_stmts + eidos_stmts + cwms_stmts + sofia_stmts
+    stmts = ontomap_stmts(stmts)
     stmts = assemble_stmts(stmts)
     stmts = standardize_names_groundings(stmts)
     dump_stmts_json(stmts, 'wm_12_month_4_reader_20181129_hume_un.json')
     """
+    # Without Hume->UN mapping
+    # Without intervention other than food or cash
+    hume_stmts = process_hume()
+    eidos_stmts = process_eidos()
+    cwms_stmts = process_cwms()
+    sofia_stmts = process_sofia()
+    stmts = hume_stmts + eidos_stmts + cwms_stmts + sofia_stmts
+    stmts = ontomap_stmts(stmts, False)
+    stmts = filter_to_hume_interventions(stmts)
+    stmts = assemble_stmts(stmts)
+    stmts = standardize_names_groundings(stmts)
+    dump_stmts_json(stmts, 'wm_12_month_4_reader_20181129_noautomap_filtered.json')
     # Without Hume->UN mapping
     hume_stmts = process_hume()
     eidos_stmts = process_eidos()
     cwms_stmts = process_cwms()
     sofia_stmts = process_sofia()
     stmts = hume_stmts + eidos_stmts + cwms_stmts + sofia_stmts
-    stmts = assemble_stmts(stmts, False)
+    stmts = ontomap_stmts(stmts, False)
+    stmts = assemble_stmts(stmts)
     stmts = standardize_names_groundings(stmts)
-    dump_stmts_json(stmts, 'wm_12_month_4_reader_20181129_no_hume_un.json')
+    dump_stmts_json(stmts, 'wm_12_month_4_reader_20181129_noautomap_unfiltered.json')
+
     #preferential_un_grounding(stmts)
