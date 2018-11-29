@@ -1,6 +1,7 @@
 import os
 import glob
 import json
+import numpy
 import indra.tools.assemble_corpus as ac
 from indra.statements import stmts_to_json
 from indra.sources import eidos, hume, cwms, sofia
@@ -67,6 +68,39 @@ def dump_stmts_json(stmts, fname):
         json.dump(jd, fh, indent=1)
 
 
+def standardize_names_groundings(stmts):
+    """Standardize the names of Concepts with respect to an ontology."""
+    for stmt in stmts:
+        for concept in stmt.agent_list():
+            db_ns, db_id = concept.get_grounding()
+            if db_id is not None:
+                if isinstance(db_id, list):
+                    db_id = db_id[0][0].split('/')[-1]
+                else:
+                    db_id = db_id.split('/')[-1]
+                db_id = db_id.replace('|', ' ')
+                db_id = db_id.replace('_', ' ')
+                db_id = db_id.replace('ONT::', '')
+                db_id = db_id.capitalize()
+                concept.name = db_id
+    for stmt in stmts:
+        for agent in stmt.agent_list():
+            if 'UN' in agent.db_refs:
+                all_un_scores = []
+                for ev in stmt.evidence:
+                    agent_annots = ev.annotations.get('agents')
+                    if agent_annots and 'raw_grounding' in agent_annots and \
+                        'UN' in  agent_annots['raw_grounding']:
+                        un_score = agent_annots['raw_grounding']['UN'][0][1]
+                        all_un_scores.append(un_score)
+                if all_un_scores:
+                    noisy_or_score = 1 - numpy.prod([1-x for x in
+                                                     all_un_scores])
+                    agent.db_refs['UN'][0] = (agent.db_refs['UN'][0][0],
+                                              noisy_or_score)
+    return stmts
+
+
 if __name__ == '__main__':
     hume_stmts = process_hume()
     eidos_stmts = process_eidos()
@@ -74,4 +108,5 @@ if __name__ == '__main__':
     sofia_stmts = process_sofia()
     stmts = hume_stmts + eidos_stmts + cwms_stmts + sofia_stmts
     stmts = assemble_stmts(stmts)
-    dump_stmts_json(stmts, 'wm_12_month_4_reader_20181128_v2.json')
+    stmts = standardize_names_groundings(stmts)
+    dump_stmts_json(stmts, 'wm_12_month_4_reader_20181129_v2.json')
