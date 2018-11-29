@@ -6,7 +6,7 @@ import indra.tools.assemble_corpus as ac
 from indra.statements import stmts_to_json
 from indra.sources import eidos, hume, cwms, sofia
 from indra.belief.wm_scorer import get_eidos_scorer
-from indra.preassembler.ontology_mapper import OntologyMapper, wm_ontomap
+from indra.preassembler.ontology_mapper import OntologyMapper, _load_wm_map
 
 
 def process_eidos():
@@ -53,7 +53,11 @@ def process_cwms():
     return stmts
 
 
-def assemble_stmts(stmts):
+def assemble_stmts(stmts, hume_auto_mapping=True):
+    if hume_auto_mapping:
+        wm_ontomap = _load_wm_map()
+    else:
+        wm_ontomap = _load_wm_map(exclude_auto=[('HUME', 'UN')])
     om = OntologyMapper(stmts, wm_ontomap, scored=True, symmetric=False)
     om.map_statements()
     scorer = get_eidos_scorer()
@@ -101,7 +105,24 @@ def standardize_names_groundings(stmts):
     return stmts
 
 
+def preferential_un_grounding(stmts):
+    for stmt in stmts:
+        for idx, agent in enumerate(stmt.agent_list()):
+            un_groundings = []
+            for ev in stmt.evidence:
+                raw_grounding = ev.annotations['agents']['raw_grounding'][idx]
+                raw_text = ev.annotations['agents']['raw_grounding'][idx]['TEXT']
+                if 'UN' in raw_grounding:
+                    un_groundings.append((raw_grounding['UN'][0], raw_text))
+            if un_groundings:
+                for fr, txt in un_groundings:
+                    print('%s: %s' % (txt, str(fr)))
+                print('=====')
+
+
 if __name__ == '__main__':
+    """
+    # With Hume->UN mapping
     hume_stmts = process_hume()
     eidos_stmts = process_eidos()
     cwms_stmts = process_cwms()
@@ -109,4 +130,15 @@ if __name__ == '__main__':
     stmts = hume_stmts + eidos_stmts + cwms_stmts + sofia_stmts
     stmts = assemble_stmts(stmts)
     stmts = standardize_names_groundings(stmts)
-    dump_stmts_json(stmts, 'wm_12_month_4_reader_20181129_v2.json')
+    dump_stmts_json(stmts, 'wm_12_month_4_reader_20181129_hume_un.json')
+    """
+    # Without Hume->UN mapping
+    hume_stmts = process_hume()
+    eidos_stmts = process_eidos()
+    cwms_stmts = process_cwms()
+    sofia_stmts = process_sofia()
+    stmts = hume_stmts + eidos_stmts + cwms_stmts + sofia_stmts
+    stmts = assemble_stmts(stmts, False)
+    stmts = standardize_names_groundings(stmts)
+    dump_stmts_json(stmts, 'wm_12_month_4_reader_20181129_no_hume_un.json')
+    #preferential_un_grounding(stmts)
