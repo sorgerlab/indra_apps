@@ -2,10 +2,12 @@ import os
 import glob
 import json
 import numpy
+import pickle
 import indra.tools.assemble_corpus as ac
-from indra.statements import stmts_to_json
 from indra.sources import eidos, hume, cwms, sofia
 from indra.belief.wm_scorer import get_eidos_scorer
+from indra.statements import stmts_to_json, Influence
+from indra.preassembler.hierarchy_manager import get_wm_hierarchies
 from indra.preassembler.ontology_mapper import OntologyMapper, _load_wm_map
 
 
@@ -14,6 +16,19 @@ def process_eidos():
     stmts = []
     for fname in fnames:
         print(fname)
+        ep = eidos.process_json_file(fname)
+        for stmt in ep.statements:
+            for ev in stmt.evidence:
+                ev.annotations['provenance'][0]['document']['@id'] = \
+                    os.path.basename(fname)
+            stmts.append(stmt)
+    return stmts
+
+
+def process_eidos_un():
+    fnames = glob.glob('/home/bmg16/data/wm/2-Jsonld16k/*.jsonld')
+    stmts = []
+    for fname in fnames:
         ep = eidos.process_json_file(fname)
         for stmt in ep.statements:
             for ev in stmt.evidence:
@@ -64,9 +79,11 @@ def ontomap_stmts(stmts, hume_auto_mapping=True):
 
 
 def assemble_stmts(stmts):
+    hm = get_wm_hierarchies()
     scorer = get_eidos_scorer()
     stmts = ac.run_preassembly(stmts, belief_scorer=scorer,
-                               return_toplevel=False)
+                               return_toplevel=False,
+                               poolsize=2)
     return stmts
 
 
@@ -91,26 +108,31 @@ def standardize_names_groundings(stmts):
                 db_id = db_id.replace('ONT::', '')
                 db_id = db_id.capitalize()
                 concept.name = db_id
+    return stmts
+    """
     for stmt in stmts:
-        for agent in stmt.agent_list():
+        for idx, agent in enumerate(stmt.agent_list()):
             if 'UN' in agent.db_refs:
                 all_un_scores = []
                 for ev in stmt.evidence:
                     agent_annots = ev.annotations.get('agents')
                     if agent_annots and 'raw_grounding' in agent_annots and \
-                        'UN' in  agent_annots['raw_grounding']:
-                        un_score = agent_annots['raw_grounding']['UN'][0][1]
+                        'UN' in  agent_annots['raw_grounding'][idx]:
+                        un_score = agent_annots['raw_grounding'][idx]['UN'][0][1]
                         all_un_scores.append(un_score)
                 if all_un_scores:
                     noisy_or_score = 1 - numpy.prod([1-x for x in
                                                      all_un_scores])
+                    print('%s -> %.2f' % (str(all_un_scores), noisy_or_score))
                     agent.db_refs['UN'][0] = (agent.db_refs['UN'][0][0],
                                               noisy_or_score)
-    return stmts
+   """
 
 
 def preferential_un_grounding(stmts):
     for stmt in stmts:
+        if not isinstance(stmt, Influence):
+            continue
         for idx, agent in enumerate(stmt.agent_list()):
             un_groundings = []
             for ev in stmt.evidence:
@@ -125,6 +147,7 @@ def preferential_un_grounding(stmts):
 
 
 def filter_to_hume_interventions(stmts):
+    """Filter out UN intervention nodes except the ones in the include list."""
     include = ['provision_of_free_food_distribution',
                'provision_of_cash_transfer']
     filter_out = [False] * len(stmts)
@@ -142,18 +165,27 @@ def filter_to_hume_interventions(stmts):
     return stmts
 
 
+def load_pkl(prefix):
+    fname = '%s.pkl' % prefix
+    print('Loading %s' % fname)
+    with open(fname, 'rb') as fh:
+        obj = pickle.load(fh)
+    return obj
+
+
 if __name__ == '__main__':
-    """
     # With Hume->UN mapping
     hume_stmts = process_hume()
     eidos_stmts = process_eidos()
+    eidos2_stmts = process_eidos_un()
     cwms_stmts = process_cwms()
     sofia_stmts = process_sofia()
-    stmts = hume_stmts + eidos_stmts + cwms_stmts + sofia_stmts
+    stmts = hume_stmts + eidos_stmts + eidos2_stmts + cwms_stmts + sofia_stmts
+    #stmts = load_pkl('raw_stmts')
     stmts = ontomap_stmts(stmts)
     stmts = assemble_stmts(stmts)
-    stmts = standardize_names_groundings(stmts)
-    dump_stmts_json(stmts, 'wm_12_month_4_reader_20181129_hume_un.json')
+    #stmts = standardize_names_groundings(stmts)
+    dump_stmts_json(stmts, 'wm_12_month_4_reader_20181129_v3.json')
     """
     # Without Hume->UN mapping
     # Without intervention other than food or cash
@@ -177,5 +209,5 @@ if __name__ == '__main__':
     stmts = assemble_stmts(stmts)
     stmts = standardize_names_groundings(stmts)
     dump_stmts_json(stmts, 'wm_12_month_4_reader_20181129_noautomap_unfiltered.json')
-
     #preferential_un_grounding(stmts)
+    """
