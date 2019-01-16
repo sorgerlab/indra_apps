@@ -1,6 +1,7 @@
 import os
 import glob
 import json
+import tqdm
 import numpy
 import pickle
 import indra.tools.assemble_corpus as ac
@@ -12,6 +13,7 @@ from indra.preassembler.ontology_mapper import OntologyMapper, _load_wm_map
 
 
 def process_eidos():
+    print('Processing Eidos output')
     fnames = glob.glob('docs/eidos/*.jsonld')
     stmts = []
     for fname in fnames:
@@ -26,9 +28,10 @@ def process_eidos():
 
 
 def process_eidos_un():
-    fnames = glob.glob('/home/bmg16/data/wm/2-Jsonld16k/*.jsonld')
+    print('Processing Eidos output for UN corpus')
+    fnames = glob.glob('/Users/ben/data/wm/2-Jsonld16k/*.jsonld')
     stmts = []
-    for fname in fnames:
+    for fname in tqdm.tqdm(fnames):
         ep = eidos.process_json_file(fname)
         for stmt in ep.statements:
             for ev in stmt.evidence:
@@ -39,12 +42,14 @@ def process_eidos_un():
 
 
 def process_hume():
+    print('Processing Hume output')
     path = 'docs/hume/wm_m12.v8.full.v4.json-ld'
     hp = hume.process_jsonld_file(path)
     return hp.statements
 
 
 def process_sofia():
+    print('Processing Sofia output')
     fname = 'docs/sofia/MITRE_AnnualEval_v1.xlsx'
     sp = sofia.process_table(fname)
     for stmt in sp.statements:
@@ -55,6 +60,7 @@ def process_sofia():
 
 
 def process_cwms():
+    print('Processing CWMS output')
     path = 'docs/cwms/20181114/*.ekb'
     ekbs = glob.glob(path)
     stmts = []
@@ -69,6 +75,7 @@ def process_cwms():
 
 
 def ontomap_stmts(stmts, hume_auto_mapping=True):
+    print('Ontology mapping')
     if hume_auto_mapping:
         wm_ontomap = _load_wm_map()
     else:
@@ -79,6 +86,7 @@ def ontomap_stmts(stmts, hume_auto_mapping=True):
 
 
 def assemble_stmts(stmts):
+    print('Running preassembly')
     hm = get_wm_hierarchies()
     scorer = get_eidos_scorer()
     stmts = ac.run_preassembly(stmts, belief_scorer=scorer,
@@ -88,6 +96,7 @@ def assemble_stmts(stmts):
 
 
 def dump_stmts_json(stmts, fname):
+    print('Dumping statements into JSON')
     jd = stmts_to_json(stmts, use_sbo=False)
     with open(fname, 'w') as fh:
         json.dump(jd, fh, indent=1)
@@ -95,6 +104,7 @@ def dump_stmts_json(stmts, fname):
 
 def standardize_names_groundings(stmts):
     """Standardize the names of Concepts with respect to an ontology."""
+    print('Standardize names to groundings')
     for stmt in stmts:
         for concept in stmt.agent_list():
             db_ns, db_id = concept.get_grounding()
@@ -130,6 +140,7 @@ def standardize_names_groundings(stmts):
 
 
 def preferential_un_grounding(stmts):
+    print('Bubble up UN groundings')
     for stmt in stmts:
         if not isinstance(stmt, Influence):
             continue
@@ -173,11 +184,25 @@ def load_pkl(prefix):
     return obj
 
 
+def get_stats(stmts):
+    grounding_to_text = {}
+    for stmt in stmts:
+        for agent in stmt.agent_list():
+            if 'UN' in agent.db_refs:
+                gr = agent.db_refs['UN'][0][0]
+                txt = agent.db_refs['TEXT']
+                try:
+                    grounding_to_text[gr].append(txt)
+                except KeyError:
+                    grounding_to_text[gr] = [txt]
+    return grounding_to_text
+
+
 if __name__ == '__main__':
     # With Hume->UN mapping
     hume_stmts = process_hume()
     eidos_stmts = process_eidos()
-    eidos2_stmts = process_eidos_un()
+    eidos2_stmts = [] # process_eidos_un()
     cwms_stmts = process_cwms()
     sofia_stmts = process_sofia()
     stmts = hume_stmts + eidos_stmts + eidos2_stmts + cwms_stmts + sofia_stmts
@@ -185,7 +210,7 @@ if __name__ == '__main__':
     stmts = ontomap_stmts(stmts)
     stmts = assemble_stmts(stmts)
     #stmts = standardize_names_groundings(stmts)
-    dump_stmts_json(stmts, 'wm_12_month_4_reader_20181129_v3.json')
+    dump_stmts_json(stmts, 'wm_12_month_4_reader_20190115.json')
     """
     # Without Hume->UN mapping
     # Without intervention other than food or cash
