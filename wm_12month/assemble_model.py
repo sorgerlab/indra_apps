@@ -21,8 +21,8 @@ def process_eidos():
         ep = eidos.process_json_file(fname)
         for stmt in ep.statements:
             for ev in stmt.evidence:
-                ev.annotations['provenance'][0]['document']['@id'] = \
-                    os.path.basename(fname)
+                doc_id = os.path.splitext(os.path.basename(fname))[0]
+                ev.annotations['provenance'][0]['document']['@id'] = doc_id
             stmts.append(stmt)
     return stmts
 
@@ -35,8 +35,8 @@ def process_eidos_un():
         ep = eidos.process_json_file(fname)
         for stmt in ep.statements:
             for ev in stmt.evidence:
-                ev.annotations['provenance'][0]['document']['@id'] = \
-                    os.path.basename(fname)
+                doc_id = os.path.splitext(os.path.basename(fname))[0]
+                ev.annotations['provenance'][0]['document']['@id'] = doc_id
             stmts.append(stmt)
     return stmts
 
@@ -90,8 +90,10 @@ def assemble_stmts(stmts):
     hm = get_wm_hierarchies()
     scorer = get_eidos_scorer()
     stmts = ac.run_preassembly(stmts, belief_scorer=scorer,
-                               return_toplevel=False,
+                               return_toplevel=True,
+                               flatten_evidence=True,
                                poolsize=2)
+
     return stmts
 
 
@@ -198,19 +200,42 @@ def get_stats(stmts):
     return grounding_to_text
 
 
+def surface_details(stmts):
+    stmts = ac.merge_groundings(stmts)
+    stmts = ac.merge_deltas(stmts)
+    return stmts
+
+
+def set_corpus(stmts, corpus):
+    for stmt in stmts:
+        for ev in stmt.evidence:
+            ev.annotations['provenance'][0]['document']['corpus'] = corpus
+
+
 if __name__ == '__main__':
     # With Hume->UN mapping
     hume_stmts = process_hume()
     eidos_stmts = process_eidos()
-    eidos2_stmts = [] # process_eidos_un()
+    eidos2_stmts = process_eidos_un()
     cwms_stmts = process_cwms()
     sofia_stmts = process_sofia()
-    stmts = hume_stmts + eidos_stmts + eidos2_stmts + cwms_stmts + sofia_stmts
+    stmts = hume_stmts + eidos_stmts + cwms_stmts + sofia_stmts
+    set_corpus(stmts, '500m')
+    set_corpus(eidos2_stmts, '16k')
+    stmts += eidos2_stmts
+    #with open('raw_stmts.pkl', 'rb') as fh:
+    #    stmts = pickle.load(fh)
     #stmts = load_pkl('raw_stmts')
     stmts = ontomap_stmts(stmts)
     stmts = assemble_stmts(stmts)
+    #with open('assembled_stmts.pkl', 'wb') as fh:
+    #    pickle.dump(stmts, fh)
+
+    stmts = surface_details(stmts)
+    stmts = standardize_names_groundings(stmts)
+
     #stmts = standardize_names_groundings(stmts)
-    dump_stmts_json(stmts, 'wm_12_month_4_reader_20190115.json')
+    dump_stmts_json(stmts, 'wm_12_month_4_reader_20190118.json')
     """
     # Without Hume->UN mapping
     # Without intervention other than food or cash
