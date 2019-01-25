@@ -4,6 +4,9 @@ import json
 import tqdm
 import numpy
 import pickle
+import logging
+from collections import Counter
+import indra
 import indra.tools.assemble_corpus as ac
 from indra.sources import eidos, hume, cwms, sofia
 from indra.belief.wm_scorer import get_eidos_scorer
@@ -14,7 +17,7 @@ from indra.preassembler.ontology_mapper import OntologyMapper, _load_wm_map
 
 def process_eidos():
     print('Processing Eidos output')
-    fnames = glob.glob('docs/eidos/*.jsonld')
+    fnames = sorted(glob.glob('docs/eidos/*.jsonld'))
     stmts = []
     for fname in fnames:
         print(fname)
@@ -43,7 +46,8 @@ def process_eidos_un():
 
 def process_hume():
     print('Processing Hume output')
-    path = 'docs/hume/wm_m12.v8.full.v4.json-ld'
+    #path = 'docs/hume/wm_m12.v8.full.v4.json-ld'
+    path = 'docs/hume/wm_m12.v11.500doc.before.json-ld'
     hp = hume.process_jsonld_file(path)
     return hp.statements
 
@@ -62,7 +66,7 @@ def process_sofia():
 def process_cwms():
     print('Processing CWMS output')
     path = 'docs/cwms/20181114/*.ekb'
-    ekbs = glob.glob(path)
+    ekbs = sorted(glob.glob(path))
     stmts = []
     for ekb in ekbs:
         cp = cwms.process_ekb_file(ekb)
@@ -84,6 +88,12 @@ def ontomap_stmts(stmts, hume_auto_mapping=True):
     om.map_statements()
     return stmts
 
+def dump_mks(stmts):
+    ss = sorted(stmts, key=lambda x: len(x.evidence), reverse=True)
+    mks = [s.matches_key() for s in ss]
+    with open('mks.txt', 'w') as fh:
+        for stmt, mk in zip(ss, mks):
+            fh.write('%s\t%s\n' % (len(stmt.evidence), mk))
 
 def assemble_stmts(stmts):
     print('Running preassembly')
@@ -92,10 +102,9 @@ def assemble_stmts(stmts):
     stmts = ac.run_preassembly(stmts, belief_scorer=scorer,
                                return_toplevel=True,
                                flatten_evidence=True,
+                               flatten_evidence_collect_from='supported_by',
                                poolsize=2)
-
     return stmts
-
 
 def dump_stmts_json(stmts, fname):
     print('Dumping statements into JSON')
@@ -212,30 +221,51 @@ def set_corpus(stmts, corpus):
             ev.annotations['provenance'][0]['document']['corpus'] = corpus
 
 
+def print_source_stats(stmts):
+    # Print the number of Statements with a given combination of sources
+    source_sets = []
+    for stmt in stmts:
+        source_sets.append(str({ev.source_api for ev in stmt.evidence}))
+    print(Counter(source_sets))
+
+    # Print the number of evidences in total from each source
+    sources = []
+    for stmt in stmts:
+        for ev in stmt.evidence:
+            sources.append(ev.source_api)
+    print(Counter(sources))
+
+
 if __name__ == '__main__':
+    indra.logger.setLevel(logging.DEBUG)
     # With Hume->UN mapping
-    hume_stmts = process_hume()
     eidos_stmts = process_eidos()
     eidos2_stmts = process_eidos_un()
+    hume_stmts = process_hume()
     cwms_stmts = process_cwms()
     sofia_stmts = process_sofia()
     stmts = hume_stmts + eidos_stmts + cwms_stmts + sofia_stmts
     set_corpus(stmts, '500m')
     set_corpus(eidos2_stmts, '16k')
     stmts += eidos2_stmts
+    #with open('raw_stmts.pkl', 'wb') as fh:
+    #    pickle.dump(stmts, fh)
     #with open('raw_stmts.pkl', 'rb') as fh:
     #    stmts = pickle.load(fh)
+    # Print raw stmt statistics
+    print_source_stats(stmts)
+
     #stmts = load_pkl('raw_stmts')
     stmts = ontomap_stmts(stmts)
     stmts = assemble_stmts(stmts)
     #with open('assembled_stmts.pkl', 'wb') as fh:
     #    pickle.dump(stmts, fh)
-
     stmts = surface_details(stmts)
-    stmts = standardize_names_groundings(stmts)
-
     #stmts = standardize_names_groundings(stmts)
-    dump_stmts_json(stmts, 'wm_12_month_4_reader_20190118.json')
+    # Print assembled stmt statistics
+    print_source_stats(stmts)
+    stmts = standardize_names_groundings(stmts)
+    dump_stmts_json(stmts, 'wm_12_month_4_reader_learnint_after_20190124.json')
     """
     # Without Hume->UN mapping
     # Without intervention other than food or cash
