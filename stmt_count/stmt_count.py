@@ -85,7 +85,7 @@ def get_stmt_count_from_db():
 
 
 def get_stmt_count_from_stmt_df(df_filename):
-    with open(, 'rb') as f:
+    with open(df_filename, 'rb') as f:
         df = pickle.load(f)
     df_A = df[df['agA_ns'] == 'HGNC'].groupby('agA_id').agg(
             {'evidence_count': 'sum'})
@@ -117,13 +117,9 @@ if __name__ == '__main__':
     # Put together paired list of counts by gene
     stmt_counts = []
     citations = []
-    counter = 0
+    results = {}
     log_diffs_by_gene = {}
     for hgnc_id, stmt_count in stmt_count_df.iteritems():
-        print(counter)
-        if counter > 100:
-            pass #break
-        counter += 1
         hgnc_name = hgnc_client.get_hgnc_name(hgnc_id)
         assert hgnc_name is not None
         try:
@@ -131,16 +127,27 @@ if __name__ == '__main__':
             citations.append(citation_count)
             stmt_counts.append(stmt_count)
             if stmt_counts != 0 and citation_count != 0:
-                log_diffs_by_gene[hgnc_name] = (np.log10(stmt_count) -
-                                                np.log10(citation_count))
+                log_diff = (np.log10(stmt_count) - np.log10(citation_count))
+                log_diffs_by_gene[hgnc_name] = log_diff
+            else:
+                log_diff = None
+            results[hgnc_name] = {'statements': stmt_count,
+                                  'citations': citation_count,
+                                  'log10_diff': log_diff}
         # Will trigger KeyError if the gene name has changed since the
         # PMIDs were obtained from Entrez; skip these
         except KeyError:
             pass
 
+
+    # Save the results in a JSON file
+    with open('stmts_vs_citations.json', 'wt') as f:
+        json.dump(results, f, indent=2)
+
     # Differences, sorted by magnitude
     sorted_diffs = sorted([(k, v) for k, v in log_diffs_by_gene.items()],
                           key=lambda x: x[1], reverse=True)
+    import sys; sys.exit()
 
     plt.ion()
     # Scatterplot
