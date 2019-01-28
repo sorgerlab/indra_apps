@@ -147,7 +147,6 @@ if __name__ == '__main__':
     # Differences, sorted by magnitude
     sorted_diffs = sorted([(k, v) for k, v in log_diffs_by_gene.items()],
                           key=lambda x: x[1], reverse=True)
-    import sys; sys.exit()
 
     plt.ion()
     # Scatterplot
