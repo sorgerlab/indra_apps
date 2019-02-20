@@ -17,7 +17,7 @@ from indra.preassembler.ontology_mapper import OntologyMapper, _load_wm_map
 
 def process_eidos():
     print('Processing Eidos output')
-    fnames = sorted(glob.glob('docs/eidos/*.jsonld'))
+    fnames = sorted(glob.glob('/Users/ben/data/wm/2-Jsonld500/*.jsonld'))
     stmts = []
     for fname in fnames:
         print(fname)
@@ -32,7 +32,7 @@ def process_eidos():
 
 def process_eidos_un():
     print('Processing Eidos output for UN corpus')
-    fnames = glob.glob('/Users/ben/data/wm/2-Jsonld16k/*.jsonld')
+    fnames = sorted(glob.glob('/Users/ben/data/wm/2-Jsonld16k/*.jsonld'))
     stmts = []
     for fname in tqdm.tqdm(fnames):
         ep = eidos.process_json_file(fname)
@@ -47,7 +47,7 @@ def process_eidos_un():
 def process_hume():
     print('Processing Hume output')
     #path = 'docs/hume/wm_m12.v8.full.v4.json-ld'
-    path = 'docs/hume/wm_m12.v11.500doc.before.json-ld'
+    path = 'docs/hume/wm_m12.v11.500doc.after.json-ld'
     hp = hume.process_jsonld_file(path)
     return hp.statements
 
@@ -261,11 +261,13 @@ if __name__ == '__main__':
     #with open('assembled_stmts.pkl', 'wb') as fh:
     #    pickle.dump(stmts, fh)
     stmts = surface_details(stmts)
-    #stmts = standardize_names_groundings(stmts)
     # Print assembled stmt statistics
     print_source_stats(stmts)
     stmts = standardize_names_groundings(stmts)
-    dump_stmts_json(stmts, 'wm_12_month_4_reader_learnint_after_20190124.json')
+    prefix = 'wm_12_month_4_reader_learnit_after_20190127'
+    dump_stmts_json(stmts, '%s.json' % prefix)
+    with open('%s.pkl' % prefix, 'wb') as fh:
+        pickle.dump(stmts, fh)
     """
     # Without Hume->UN mapping
     # Without intervention other than food or cash
