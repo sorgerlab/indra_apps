@@ -236,11 +236,23 @@ def print_source_stats(stmts):
     print(Counter(sources))
 
 
+def remove_indicators(stmts):
+    remove_keys = ['WHO', 'WDI', 'FAO']
+    for stmt in stmts:
+        for agent in stmt.agent_list():
+            if agent is not None:
+                for key in remove_keys:
+                    try:
+                        agent.db_refs.pop(key)
+                    except Exception:
+                        pass
+
+
 if __name__ == '__main__':
     indra.logger.setLevel(logging.DEBUG)
     # With Hume->UN mapping
     eidos_stmts = process_eidos()
-    eidos2_stmts = process_eidos_un()
+    eidos2_stmts = []  # process_eidos_un()
     hume_stmts = process_hume()
     cwms_stmts = process_cwms()
     sofia_stmts = process_sofia()
@@ -264,7 +276,8 @@ if __name__ == '__main__':
     # Print assembled stmt statistics
     print_source_stats(stmts)
     stmts = standardize_names_groundings(stmts)
-    prefix = 'wm_12_month_4_reader_learnit_after_20190127'
+    remove_indicators(stmts)
+    prefix = 'wm_12_month_4_reader_500m_20190507'
     dump_stmts_json(stmts, '%s.json' % prefix)
     with open('%s.pkl' % prefix, 'wb') as fh:
         pickle.dump(stmts, fh)
