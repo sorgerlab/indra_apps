@@ -10,7 +10,7 @@ fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$DIR"
-export PYTHONPATH=$PYTHONPATH:../../indra
+export PYTHONPATH=$PYTHONPATH:../../indra:../../protmapper
 echo $PYTHONPATH
 log_file="$model_name/log.txt"
 $HOME/.virtualenvs/py36/bin/python -m indra.tools.machine run_with_search $model_name >> $log_file 2>> $log_file
