@@ -5,8 +5,10 @@ from indra.sources import eidos
 from indra.tools import assemble_corpus as ac
 from indra.belief.wm_scorer import get_eidos_scorer
 from indra.preassembler.custom_preassembly import *
+from indra.tools.live_curation import Corpus
 
 fnames = glob.glob('jsonld-merged20190404/*.jsonld')
+
 
 def get_events(stmts):
     # Create list of standalone events
@@ -49,7 +51,6 @@ def remove_raw_grounding(stmts):
                 agents.pop('raw_grounding', None)
 
 
-
 if __name__ == '__main__':
     stmts = []
     for fname in fnames:
@@ -78,6 +79,8 @@ if __name__ == '__main__':
                                     refinement_fun=refinement_fun)
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
-        sj = stmts_to_json(assembled_stmts)
+        corpus = Corpus(assembled_stmts, raw_statements=stmts)
+        corpus.s3_put('jsonld-merged20190627-stmts-%s' % key)
+        sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open('jsonld-merged20190627-stmts-%s.json' % key, 'w') as fh:
             json.dump(sj, fh, indent=1)
