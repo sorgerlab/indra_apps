@@ -7,7 +7,14 @@ from indra.belief.wm_scorer import get_eidos_scorer
 from indra.preassembler.custom_preassembly import *
 from indra.tools.live_curation import Corpus
 
-fnames = glob.glob('jsonld-merged20190404/*.jsonld')
+# For 52-document corpus
+# fnames = glob.glob('jsonld-merged20190404/*.jsonld')
+
+# For 500-document corpus
+# Extracted from https://drive.google.com/drive/folders/
+# 1CrGfVYaZg_O13YojYSlWbhpSuXKQjHMq,  Doc500BMost1.zip
+fnames = glob.glob('mitre500-20190721/jsonld/*.jsonld')
+
 
 
 def get_events(stmts):
@@ -80,7 +87,7 @@ if __name__ == '__main__':
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus.s3_put('jsonld-merged20190627-stmts-%s' % key)
+        corpus.s3_put('mitre500-20190721-stmts-%s' % key)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
-        with open('jsonld-merged20190627-stmts-%s.json' % key, 'w') as fh:
+        with open('mitre500-20190721-stmts-%s.json' % key, 'w') as fh:
             json.dump(sj, fh, indent=1)
