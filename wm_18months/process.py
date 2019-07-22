@@ -2,10 +2,11 @@ import json
 import glob
 import copy
 from indra.sources import eidos
+from indra.tools.live_curation import Corpus
 from indra.tools import assemble_corpus as ac
 from indra.belief.wm_scorer import get_eidos_scorer
 from indra.preassembler.custom_preassembly import *
-from indra.tools.live_curation import Corpus
+from indra.statements import Event, Influence, Association
 
 # For 52-document corpus
 # fnames = glob.glob('jsonld-merged20190404/*.jsonld')
@@ -16,18 +17,24 @@ from indra.tools.live_curation import Corpus
 fnames = glob.glob('mitre500-20190721/jsonld/*.jsonld')
 
 
-
 def get_events(stmts):
-    # Create list of standalone events
+    """Return a list of all standalone events from a list of statements."""
     events = []
     for stmt in stmts:
+        stmt = copy.deepcopy(stmt)
         if isinstance(stmt, Influence):
             for member in [stmt.subj, stmt.obj]:
                 member.evidence = stmt.evidence[:]
+                # Remove the context since it may be for the other member
+                for ev in member.evidence:
+                    ev.context = None
                 events.append(member)
         elif isinstance(stmt, Association):
             for member in stmt.members:
                 member.evidence = stmt.evidence[:]
+                # Remove the context since it may be for the other member
+                for ev in member.evidence:
+                    ev.context = None
                 events.append(member)
         elif isinstance(stmt, Event):
             events.append(stmt)
@@ -35,10 +42,12 @@ def get_events(stmts):
 
 
 def get_non_events(stmts):
+    """Return a list of statements that aren't Events"""
     return [st for st in stmts if not isinstance(st, Event)]
 
 
 def remove_namespaces(stmts, namespaces):
+    """Remove unnecessary namespaces from Concept grounding."""
     for stmt in stmts:
         for agent in stmt.agent_list():
             for namespace in namespaces:
@@ -47,6 +56,7 @@ def remove_namespaces(stmts, namespaces):
 
 
 def remove_raw_grounding(stmts):
+    """Remove the raw_grounding annotation to decrease output size."""
     for stmt in stmts:
         for ev in stmt.evidence:
             if not ev.annotations:
@@ -58,14 +68,36 @@ def remove_raw_grounding(stmts):
                 agents.pop('raw_grounding', None)
 
 
+def fix_provenance(stmts):
+    """Move the document identifiers in evidences."""
+    for stmt in stmts:
+        for ev in stmt.evidence:
+            try:
+                prov = ev.annotations['provenance'][0]['document']
+                prov['@id'] = prov.pop('title', None)
+            except KeyError:
+                pass
+
+
+def check_event_context(events):
+    for event in events:
+        if not event.context and event.evidence[0].context:
+            assert False, ('Event context issue', event, event.evidence)
+        ej = event.to_json()
+        if 'context' not in ej and 'context' in ej['evidence'][0]:
+            assert False, ('Event context issue', event, event.evidence)
+
+
 if __name__ == '__main__':
     stmts = []
     for fname in fnames:
+        print('Processing %s' % fname)
         ep = eidos.process_json_file(fname)
         stmts += ep.statements
     remove_namespaces(stmts, ['WHO', 'MITRE12'])
 
     events = get_events(stmts)
+    check_event_context(events)
     non_events = get_non_events(stmts)
     scorer = get_eidos_scorer()
 
@@ -84,8 +116,10 @@ if __name__ == '__main__':
         assembled_events = ac.run_preassembly(events, belief_scorer=scorer,
                                     matches_fun=matches_fun,
                                     refinement_fun=refinement_fun)
+        check_event_context(assembled_events)
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
+        fix_provenance(stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
         corpus.s3_put('mitre500-20190721-stmts-%s' % key)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
