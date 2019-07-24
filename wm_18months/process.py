@@ -72,11 +72,9 @@ def fix_provenance(stmts):
     """Move the document identifiers in evidences."""
     for stmt in stmts:
         for ev in stmt.evidence:
-            try:
-                prov = ev.annotations['provenance'][0]['document']
+            prov = ev.annotations['provenance'][0]['document']
+            if 'title' in prov:
                 prov['@id'] = prov.pop('title', None)
-            except KeyError:
-                pass
 
 
 def check_event_context(events):
@@ -119,7 +117,7 @@ if __name__ == '__main__':
         check_event_context(assembled_events)
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
-        fix_provenance(stmts)
+        fix_provenance(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
         corpus.s3_put('mitre500-20190721-stmts-%s' % key)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
