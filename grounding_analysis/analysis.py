@@ -48,9 +48,21 @@ def get_hgnc_ids():
     # return sorted(list(hgnc_client.hgnc_names.keys()))
 
     # All HGNC IDs for which we have preassembled stmts in the DB
-    with open('hgnc_ids.txt', 'r') as fh:
-        hgnc_ids = [l.strip() for l in fh.readlines()]
-        return hgnc_ids
+    # with open('hgnc_ids.txt', 'r') as fh:
+    #    hgnc_ids = [l.strip() for l in fh.readlines()]
+    #    return hgnc_ids
+    #
+
+    # All dark kinases
+    import csv
+    fname = '../../indra_analysis/Table_005_IDG_dark_kinome.csv'
+    hgnc_ids = []
+    with open(fname, 'r') as fh:
+        for row in csv.reader(fh):
+            hgnc_symbol = row[1]
+            hgnc_id = hgnc_client.get_hgnc_id(hgnc_symbol)
+            hgnc_ids.append(hgnc_id)
+    return hgnc_ids
 
 
 def generate_report(genes, top_lists, fname):
@@ -79,7 +91,7 @@ def generate_report(genes, top_lists, fname):
 
 if __name__ == '__main__':
     genes = get_hgnc_ids()
-    genes = [random.choice(genes) for _ in range(100)]
+    #genes = [random.choice(genes) for _ in range(100)]
     top_lists = []
     for gene in genes:
         stmts = get_statements('HGNC', gene)
