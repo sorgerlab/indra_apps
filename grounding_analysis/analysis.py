@@ -44,6 +44,7 @@ def get_top_counts(raw_strings, threshold=0.8):
 
 
 def get_hgnc_ids():
+    import csv
     # All HGNC IDs in the client
     # return sorted(list(hgnc_client.hgnc_names.keys()))
 
@@ -53,16 +54,25 @@ def get_hgnc_ids():
     #    return hgnc_ids
     #
 
-    # All dark kinases
-    import csv
-    fname = '../../indra_analysis/Table_005_IDG_dark_kinome.csv'
+    # RAS 220 genes
     hgnc_ids = []
-    with open(fname, 'r') as fh:
-        for row in csv.reader(fh):
-            hgnc_symbol = row[1]
+    with open('../../indra/data/ras_pathway_proteins.csv', 'r') as fh:
+        for row in csv.reader(fh, delimiter='\t'):
+            hgnc_symbol = row[0]
             hgnc_id = hgnc_client.get_hgnc_id(hgnc_symbol)
             hgnc_ids.append(hgnc_id)
     return hgnc_ids
+
+
+    # All dark kinases
+    # fname = '../../indra_analysis/Table_005_IDG_dark_kinome.csv'
+    # hgnc_ids = []
+    # with open(fname, 'r') as fh:
+    #     for row in csv.reader(fh):
+    #         hgnc_symbol = row[1]
+    #         hgnc_id = hgnc_client.get_hgnc_id(hgnc_symbol)
+    #         hgnc_ids.append(hgnc_id)
+    # return hgnc_ids
 
 
 def generate_report(genes, top_lists, fname):
@@ -92,6 +102,7 @@ def generate_report(genes, top_lists, fname):
 if __name__ == '__main__':
     genes = get_hgnc_ids()
     #genes = [random.choice(genes) for _ in range(100)]
+    #genes = ['9871']
     top_lists = []
     for gene in genes:
         stmts = get_statements('HGNC', gene)
