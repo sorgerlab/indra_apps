@@ -7,25 +7,27 @@
 #########################################################
 
 # Change to the path to your own forest.py script
-forestpath=/ext/OmicsIntegrator/scripts/forest.py
-msgpath=/ext/msgsteiner-1.3/msgsteiner
+forestpath=$HOME/OmicsIntegrator/scripts/forest.py
+msgpath=$HOME/.local/bin/msgsteiner
 
 # Default parameters
 w=5 # controls the number of trees in output
 d=10 # maximum depth from the dummy node
 b=2 # controls the number of terminal nodes included
 u=0 # penalize hubs with high degree
-
+n=0.05
 
 # parse flagged arguments
-while getopts 'w:d:b:u:n:' option
+while getopts 'w:d:b:u:r:n:' option
 do
     case "$option" in 
 	w) w="$OPTARG";;
 	d) d="$OPTARG";;
 	b) b="$OPTARG";;
 	u) u="$OPTARG";;
+	r) r="$OPTARG";;
 	n) n="$OPTARG";;
+	
     esac
 done
 
@@ -44,13 +46,14 @@ w = $w
 D = $d
 b = $b
 mu = $u
+noise = $n
 EOF
 
 echo bird
 echo $n
 echo $([[ -n $n ]] && echo "--noisyEdges $n")
 
-python $forestpath --msgpath=$msgpath --prize=$prize --edge=$edge --outpath=$outpath --conf=$conf/forest_cfg $([[ -n $n ]] && echo "--noisyEdges $n")
+python $forestpath --msgpath=$msgpath --prize=$prize --edge=$edge --outpath=$outpath --conf=$conf/forest_cfg $([[ -n $r ]] && echo "--noisyEdges $r")
 
 # Add the generated conf file to the output folder so we can recover
 # the parameters later
