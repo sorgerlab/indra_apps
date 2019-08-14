@@ -5,7 +5,7 @@ from indra.util import write_unicode_csv
 from indra.assemblers.pysb import PysbAssembler
 from indra.assemblers.english import EnglishAssembler
 from indra.assemblers.cyjs import CyJSAssembler
-from indra.explanation.model_checker import ModelChecker
+from indra.explanation.model_checker import PysbModelChecker
 import indra.tools.assemble_corpus as ac
 import process_data
 import make_stmts_for_checking as make_stmts
@@ -205,7 +205,7 @@ if __name__ == '__main__':
     #model = assemble_pysb(combined_stmts, data_genes, '')
     rerun = True
     if rerun:
-        mc = ModelChecker(model, all_data_stmts, agent_obs)
+        mc = PysbModelChecker(model, all_data_stmts, agent_obs)
         mc.prune_influence_map()
 
         # Iterate over each drug/ab statement subset

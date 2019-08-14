@@ -1,7 +1,7 @@
 import itertools
 from indra.assemblers.english import EnglishAssembler
 from indra.explanation.reporting import stmts_from_path
-from indra.explanation.model_checker import ModelChecker
+from indra.explanation.model_checker import PysbModelChecker
 from util import pkldump, pklload
 from process_data import *
 
@@ -51,7 +51,7 @@ def get_global_mc(model, stmts_to_check, agents_to_observe):
         for drug in stmts_to_check[cell_line].keys():
             stmts_condition, _ = stmts_to_check[cell_line][drug][1.0]
             all_stmts_condition += stmts_condition
-    mc = ModelChecker(model, all_stmts_condition, agents_to_observe)
+    mc = PysbModelChecker(model, all_stmts_condition, agents_to_observe)
     mc.prune_influence_map()
     return mc
 
