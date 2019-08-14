@@ -13285,9 +13285,9 @@ INFO: [2018-05-25 19:13:17] indra/model_checker - Finding paths between BRAF() a
 <div class="prompt input_prompt">In&nbsp;[35]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">indra.explanation.reporting</span> <span class="k">import</span> <span class="n">stmts_from_path</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">indra.explanation.reporting</span> <span class="k">import</span> <span class="n">stmts_from_pysb_path</span>
 <span class="kn">from</span> <span class="nn">indra.assemblers</span> <span class="k">import</span> <span class="n">EnglishAssembler</span>
-<span class="n">path_stmts</span> <span class="o">=</span> <span class="n">stmts_from_path</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">pa</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">stmts</span><span class="p">)</span>
+<span class="n">path_stmts</span> <span class="o">=</span> <span class="n">stmts_from_pysb_path</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">pa</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">stmts</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">EnglishAssembler</span><span class="p">(</span><span class="n">path_stmts</span><span class="p">)</span><span class="o">.</span><span class="n">make_model</span><span class="p">())</span>
 </pre></div>
 
