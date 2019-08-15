@@ -6,8 +6,7 @@ from indra.assemblers.pysb import PysbAssembler
 from indra.assemblers.english import EnglishAssembler
 from indra.assemblers.cyjs import CyJSAssembler
 from indra.explanation.model_checker import PysbModelChecker
-from indra.explanation.model_checker.pysb import stmt_from_rule
-from indra.explanation.reporting import stmts_from_pysb_path
+from indra.explanation.reporting import stmts_from_pysb_path, stmt_from_rule
 import indra.tools.assemble_corpus as ac
 import process_data
 import make_stmts_for_checking as make_stmts
