@@ -1,6 +1,6 @@
 import os
 import re
-import pickle
+
 import argparse
 import pandas as pd
 
@@ -19,7 +19,7 @@ if __name__ == '__main__':
                         default=r'^noisyEdges_[0-9]+_optimalForest.sif$',
                         help='regex pattern that network filenames'
                         ' match')
-                        
+
     args = parser.parse_args()
     base = args.path
     pattern1 = args.pattern1
@@ -32,12 +32,18 @@ if __name__ == '__main__':
                     edge_df = pd.read_csv(os.path.join(base, folder,
                                                        filename),
                                           sep='\t',
-                                          names=['node1', 'pp', 'node2'],
+                                          names=['node1', 'node2', 'edge'],
                                           na_filter=False)
                     edges.update([tuple(sorted(edge)) for edge
-                                  in edge_df[['node1', 'node2']].values])
-
-    node1, node2 = zip(*edges)
-    out = pd.DataFrame({'node1': node1, 'node2': node2})
-    out.to_csv(os.path.join(base, 'merged_network.tsv'),
+                                  in edge_df[['node1',
+                                              'node2', 'edge']].values])
+    node1, node2, edge = zip(*edges)
+    out = pd.DataFrame({'node1': node1, 'edge': edge, 'node2': node2})
+    out = out[['node1', 'edge', 'node2']]
+    out.loc[:, 'edge'] = out.loc[:, 'edge'].apply(lambda x:
+                                                  'N' if x == 'pd'
+                                                  else 'U')
+    out.to_csv(os.path.join(base, 'merged_network.sif'),
                sep='\t', header=False, index=False)
+    out[['node1', 'node2']].to_csv(os.path.join(base, 'merged_network.tsv'),
+                                   sep='\t', header=False, index=False)
