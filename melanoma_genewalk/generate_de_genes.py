@@ -16,8 +16,16 @@ def get_hgnc_ids(gene_names):
     return ids
 
 
+def filter_df(df, log2_fc_thresh):
+    df = df[df['log2FoldChange'].abs() > log2_fc_thresh]
+    return df
+
+
 if __name__ == '__main__':
     df = pandas.read_csv('A375_Day4.csv')
+    print('Loaded data frame with %d rows' % len(df))
+    df = filter_df(df, log2_fc_thresh=1)
+    print('Filtered data frame to %d rows' % len(df))
     genes = list(df['HUGO'])
     hgnc_ids = get_hgnc_ids(genes)
     with open('A375_Day4_de_genes.txt', 'w') as fh:
