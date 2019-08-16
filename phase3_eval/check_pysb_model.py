@@ -67,7 +67,7 @@ def make_english_output(results, model, stmts):
             for i, (path_rule, sign) in enumerate(path):
                 for rule in model.rules:
                     if rule.name == path_rule:
-                        stmt = stmt_from_rule(model, path_rule, stmts)
+                        stmt = stmt_from_rule(path_rule, model, stmts)
                         if i == 0:
                             sentences.append('%s is a target of %s.' %
                                             (stmt.agent_list()[0].name, source))
@@ -118,7 +118,7 @@ def export_json(results, model, stmts):
         for idx, path in enumerate(paths):
             path_stmts = []
             for rule_name, sign in path[:-1]:
-                stmt = _stmt_from_rule(model, rule_name, stmts)
+                stmt = stmt_from_rule(rule_name, model, stmts)
                 path_stmts.append(stmt.uuid)
             json_dict[drug][ab][idx] = path_stmts
     return json_dict
