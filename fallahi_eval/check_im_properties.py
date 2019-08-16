@@ -1,7 +1,7 @@
 import pickle
 import itertools
 from pysb import kappa
-from indra.explanation.model_checker import remove_im_params
+from indra.explanation.model_checker.pysb import remove_im_params
 from assemble_models import prefixed_pkl
 
 print("Loading")

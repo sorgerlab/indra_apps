@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from IPython.display import IFrame
 from pysb.export import export
 from indra.assemblers.english import EnglishAssembler
-from indra.explanation.reporting import stmts_from_path
+from indra.explanation.reporting import stmts_from_pysb_path
 from indra.util.kappa_util import im_json_to_graph
 
 def list_submodules(module):
@@ -75,7 +75,7 @@ def make_influence_map(pysb_model):
     return im
 
 def path_to_english(path, model, stmts):
-    path_stmts = stmts_from_path(path, model, stmts)
+    path_stmts = stmts_from_pysb_path(path, model, stmts)
     ea = EnglishAssembler(path_stmts)
     return ea.make_model()
 

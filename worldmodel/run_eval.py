@@ -17,7 +17,7 @@ from indra.preassembler import Preassembler, render_stmt_graph, ontology_mapper
 from indra.statements import Influence, Concept
 from indra.assemblers.cag import CAGAssembler
 from indra.assemblers.pysb import PysbAssembler
-from indra.explanation.model_checker import ModelChecker
+from indra.explanation.model_checker import PysbModelChecker
 from indra.preassembler.hierarchy_manager import HierarchyManager
 from indra.assemblers.pysb.bmi_wrapper import BMIModel
 
@@ -432,7 +432,7 @@ def make_pysb_model(statements):
 
 def get_model_checker(model):
     stmt = Influence(Concept('Crop_production'), Concept('Food_security'))
-    mc = ModelChecker(model, [stmt])
+    mc = PysbModelChecker(model, [stmt])
     mc.prune_influence_map()
     return mc
 

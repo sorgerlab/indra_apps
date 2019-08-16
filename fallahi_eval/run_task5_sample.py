@@ -1,7 +1,7 @@
 import itertools
 from indra.assemblers.english import EnglishAssembler
-from indra.explanation.reporting import stmts_from_path
-from indra.explanation.model_checker import ModelChecker
+from indra.explanation.reporting import stmts_from_pysb_path
+from indra.explanation.model_checker import PysbModelChecker
 from util import pklload, pkldump
 from process_data import *
 
@@ -53,7 +53,7 @@ def export_paths(scored_paths, model, stmts):
             path, score = scpaths[0]
             label = '%s_%s_%s_%s' % (drug, time, conc, cell_line)
             paths[label] = {'meta': [], 'path': []}
-            path_stmts = stmts_from_path(path, model, stmts)
+            path_stmts = stmts_from_pysb_path(path, model, stmts)
             uuids = [stmt.uuid for stmt in path_stmts]
             paths[label]['path'] = uuids
     return paths
@@ -76,7 +76,7 @@ def report_paths(scored_paths, model, stmts, cell_line):
             title += ' in %s cells?' % cell_line
             print(title)
             print('=' * len(title))
-            path_stmts = stmts_from_path(path, model, stmts)
+            path_stmts = stmts_from_pysb_path(path, model, stmts)
             sentences = []
             for i, stmt in enumerate(path_stmts):
                 if i == 0:
@@ -127,7 +127,7 @@ def get_global_mc(model, stmts_to_check, agents_to_observe):
         for drug in stmts_to_check[cell_line].keys():
             stmts_condition, _ = stmts_to_check[cell_line][drug][1.0]
             all_stmts_condition += stmts_condition
-    mc = ModelChecker(model, all_stmts_condition, agents_to_observe, do_sampling=True)
+    mc = PysbModelChecker(model, all_stmts_condition, agents_to_observe, do_sampling=True)
     mc.prune_influence_map()
     return mc
 

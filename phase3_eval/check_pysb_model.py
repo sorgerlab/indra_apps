@@ -5,7 +5,8 @@ from indra.util import write_unicode_csv
 from indra.assemblers.pysb import PysbAssembler
 from indra.assemblers.english import EnglishAssembler
 from indra.assemblers.cyjs import CyJSAssembler
-from indra.explanation.model_checker import ModelChecker
+from indra.explanation.model_checker import PysbModelChecker
+from indra.explanation.reporting import stmts_from_pysb_path, stmt_from_rule
 import indra.tools.assemble_corpus as ac
 import process_data
 import make_stmts_for_checking as make_stmts
@@ -16,20 +17,12 @@ def get_path_stmts(results, model, stmts):
     for drug, target, polarity, value, found_path, paths, flag in results:
         path_stmts = {}
         for path in paths:
-            path_stmts1 = stmts_for_path(path, model, stmts)
+            path_stmts1 = stmts_from_pysb_path(path, model, stmts)
             for ps in path_stmts1:
                 path_stmts[ps.uuid] = ps
         all_path_stmts.append(path_stmts)
     return all_path_stmts
 
-def stmts_for_path(path, model, stmts):
-    path_stmts = []
-    for path_rule, sign in path:
-        for rule in model.rules:
-            if rule.name == path_rule:
-                stmt = _stmt_from_rule(model, path_rule, stmts)
-                path_stmts.append(stmt)
-    return path_stmts
 
 def get_path_genes(all_path_stmts):
     path_genes = []
@@ -41,18 +34,6 @@ def get_path_genes(all_path_stmts):
     path_genes = sorted(list(set(path_genes)))
     return path_genes
 
-def _stmt_from_rule(model, rule_name, stmts):
-    """Return the INDRA Statement corresponding to a given rule by name."""
-    stmt_uuid = None
-    for ann in model.annotations:
-        if ann.predicate == 'from_indra_statement':
-            if ann.subject == rule_name:
-                stmt_uuid = ann.object
-                break
-    if stmt_uuid:
-        for stmt in stmts:
-            if stmt.uuid == stmt_uuid:
-                return stmt
 
 def make_cyjs_network(results, model, stmts):
     path_stmts = get_path_stmts(results, model, stmts)
@@ -86,7 +67,7 @@ def make_english_output(results, model, stmts):
             for i, (path_rule, sign) in enumerate(path):
                 for rule in model.rules:
                     if rule.name == path_rule:
-                        stmt = _stmt_from_rule(model, path_rule, stmts)
+                        stmt = stmt_from_rule(path_rule, model, stmts)
                         if i == 0:
                             sentences.append('%s is a target of %s.' %
                                             (stmt.agent_list()[0].name, source))
@@ -137,7 +118,7 @@ def export_json(results, model, stmts):
         for idx, path in enumerate(paths):
             path_stmts = []
             for rule_name, sign in path[:-1]:
-                stmt = _stmt_from_rule(model, rule_name, stmts)
+                stmt = stmt_from_rule(rule_name, model, stmts)
                 path_stmts.append(stmt.uuid)
             json_dict[drug][ab][idx] = path_stmts
     return json_dict
@@ -205,7 +186,7 @@ if __name__ == '__main__':
     #model = assemble_pysb(combined_stmts, data_genes, '')
     rerun = True
     if rerun:
-        mc = ModelChecker(model, all_data_stmts, agent_obs)
+        mc = PysbModelChecker(model, all_data_stmts, agent_obs)
         mc.prune_influence_map()
 
         # Iterate over each drug/ab statement subset

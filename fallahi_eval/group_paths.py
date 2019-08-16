@@ -1,6 +1,6 @@
 import pickle
 from indra.databases import hgnc_client
-from indra.explanation.model_checker import stmt_from_rule
+from indra.explanation.reporting import stmt_from_rule
 from indra.databases.context_client import get_protein_expression
 from util import prefixed_pkl
 from process_data import cell_lines
