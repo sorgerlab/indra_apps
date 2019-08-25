@@ -1,21 +1,7 @@
-import openpyxl
-
-
-def process_sheet(sheet):
-    for row in sheet.rows:
-        for cell in row:
-            print(cell)
-            import ipdb; ipdb.set_trace()
-            break
+from indra.tools import assemble_corpus as ac
+from indra.sources.eidos import migration_table_processor as mtp
 
 
 if __name__ == '__main__':
     fname = 'Initial annotation exercise for migration use case.xlsx'
-
-    wb = openpyxl.load_workbook(fname, read_only=True)
-    sheets = wb.get_sheet_names()
-    cag_sheets = [s for s in sheets if 'CAG' in s]
-
-    for sheet_name in cag_sheets:
-        sheet = wb[sheet_name]
-        process_sheet(sheet)
+    stmts = mtp.process_workbook(fname)
