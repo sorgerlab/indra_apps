@@ -99,7 +99,7 @@ def expand_complex(stmt):
         if len(set(keys)) == 1:
             continue
         ordered = sorted([m1, m2], key=lambda x: x.entity_matches_key())
-        c = Complex([m1, m2], evidence=copy.deepcopy(stmt.evidence))
+        c = Complex(ordered, evidence=copy.deepcopy(stmt.evidence))
         stmts.append(c)
         added.add(keys)
     return stmts
@@ -151,9 +151,6 @@ def format_and_upload_network(ncx, **ndex_args):
                                for k, v in ndex_args.items()})
     nd.make_network_public(network_id)
     nd.add_networks_to_networkset(network_set_id, [network_id])
-    #nd.set_network_properties(network_id,
-    #                          [{'predicateString': 'name',
-    #                            'value': network_name}])
     return network_id
 
 
