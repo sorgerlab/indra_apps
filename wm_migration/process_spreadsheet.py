@@ -7,10 +7,8 @@ from indra.belief.wm_scorer import get_eidos_scorer
 
 
 if __name__ == '__main__':
-    fname = 'Initial annotation exercise for migration use case.xlsx'
+    fname = 'grounded CAG links - New Ontology.xlsx'
     stmts = mtp.process_workbook(fname)
-    wm_ont_url = ('https://raw.githubusercontent.com/WorldModelers/'
-                  'Ontologies/migration_edits/wm.yml')
     hm = YamlHierarchyManager(load_yaml_from_url(wm_ont_url),
                               rdf_graph_from_yaml, True)
     stmts = ac.run_preassembly(stmts, return_toplevel=False,
