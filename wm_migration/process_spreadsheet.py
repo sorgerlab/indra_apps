@@ -6,6 +6,10 @@ from indra.preassembler.make_eidos_hume_ontologies import load_yaml_from_url, \
 from indra.belief.wm_scorer import get_eidos_scorer
 
 
+wm_ont_url = ('https://raw.githubusercontent.com/WorldModelers/'\
+              'Ontologies/master/wm.yml')
+
+
 if __name__ == '__main__':
     fname = 'grounded CAG links - New Ontology.xlsx'
     stmts = mtp.process_workbook(fname)
