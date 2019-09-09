@@ -2,13 +2,19 @@ import os
 import glob
 import copy
 import json
+import yaml
 import logging
 from indra.sources import eidos, hume
+from indra.sources.eidos import migration_table_processor
 from indra.tools.live_curation import Corpus
 from indra.tools import assemble_corpus as ac
+from indra.sources.eidos.reader import EidosReader
 from indra.belief.wm_scorer import get_eidos_scorer
 from indra.preassembler.custom_preassembly import *
 from indra.statements import Event, Influence, Association
+from indra.preassembler.hierarchy_manager import YamlHierarchyManager
+from indra.preassembler.make_eidos_hume_ontologies import eidos_ont_url, \
+    load_yaml_from_url, rdf_graph_from_yaml
 
 
 logger = logging.getLogger()
@@ -39,6 +45,13 @@ def load_hume():
         hp = hume.process_jsonld_file(fname)
         stmts += hp.statements
     logger.info(f'Loaded {len(stmts)} statements from Hume')
+    return stmts
+
+
+def load_migration_spreadsheets():
+    fname = os.path.join(os.pardir, 'wm_migration',
+                         'grounded CAG links - New Ontology.xlsx')
+    stmts = migration_table_processor.process_workbook(fname)
     return stmts
 
 
@@ -110,11 +123,38 @@ def check_event_context(events):
             assert False, ('Event context issue', event, event.evidence)
 
 
+def reground_stmts(stmts):
+    ont_manager = _make_un_ontology()
+    eidos_reader = EidosReader()
+    # Send the latest ontology and list of concept texts to Eidos
+    yaml_str = yaml.dump(ont_manager.yaml_root)
+    concepts = []
+    for stmt in stmts:
+        for concept in stmt.agent_list():
+            concept_txt = concept.db_refs.get('TEXT')
+            concepts.append(concept_txt)
+    groundings = eidos_reader.reground_texts(concepts, yaml_str)
+    # Update the corpus with new groundings
+    idx = 0
+    for stmt in stmts:
+        for concept in stmt.agent_list():
+            concept.db_refs['UN'] = groundings[idx]
+            idx += 1
+    return stmts
+
+
+def _make_un_ontology():
+    return YamlHierarchyManager(load_yaml_from_url(eidos_ont_url),
+                                rdf_graph_from_yaml, True)
+
+
 if __name__ == '__main__':
+    mig_stmts = load_migration_spreadsheets()
     eidos_stmts = load_eidos()
     hume_stmts = load_hume()
-    stmts = eidos_stmts + hume_stmts
-    remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
+    stmts = eidos_stmts + hume_stmts + mig_stmts
+    reground_stmts(stmts)
+    remove_namespaces(stmts, ['WHO', 'MITRE12'])
 
     events = get_events(stmts)
     check_event_context(events)
@@ -140,8 +180,8 @@ if __name__ == '__main__':
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus.s3_put('dart-20190905-stmts-%s' % key)
+        corpus.s3_put('dart-20190906-stmts-%s' % key)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path,
-                  'dart-20190905-stmts-%s.json' % key), 'w') as fh:
+                  'dart-20190906-stmts-%s.json' % key), 'w') as fh:
             json.dump(sj, fh, indent=1)
