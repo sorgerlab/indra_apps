@@ -129,10 +129,11 @@ def get_genes_for_go_id(go_id):
     return gene_names
 
 
-def get_cx_network(stmts, name):
+def get_cx_network(stmts, name, network_attributes):
     """Return NiceCxNetwork assembled from statements."""
     ca = NiceCxAssembler(stmts, name)
-    ncx = ca.make_model(self_loops=False)
+    ncx = ca.make_model(self_loops=False,
+                        network_attributes=network_attributes)
     return ncx
 
 
@@ -163,17 +164,37 @@ if __name__ == '__main__':
                  'password': password}
     indra_df = load_indra_df('/Users/ben/db.pkl')
     go_ids = get_go_ids()
-    for go_id in go_ids:
-        network_name = 'INDRA network for %s' % go_id
+    for go_id in go_ids[:10]:
+        go_name = go_dag[go_id].name
+        logger.info('Looking at %s (%s)' % (go_id, go_name))
+        network_name = 'GO:%s (%s)' % (go_id, go_name)
         genes = get_genes_for_go_id(go_id)
         logger.info('%d genes for %s' % (len(genes), go_id))
         if len(genes) < 5 or len(genes) > 50:
+            logger.info('Skipping: too few or too many genes.')
             continue
         df = filter_to_genes(indra_df, genes)
         if len(df) == 0:
+            logger.info('Skipping: no statements found between genes.')
             continue
         stmts = download_statements(df)
         stmts = assemble_statements(stmts)
-        ncx = get_cx_network(stmts, network_name)
+        network_attributes = {
+            'networkType': 'pathway',
+            'GO ID': go_id,
+            'GO hierarchy': 'biological process',
+            'Prov:wasGeneratedBy': 'INDRA',
+            'Organism': 'Homo sapiens (Human)',
+            'Description': go_dag[go_id].name,
+            'Methods': 'This network was assembled automatically by INDRA ('
+                       'http://indra.bio) by processing all available '
+                       'biomedical literature with multiple machine reading '
+                       'systems, and integrating curated pathway '
+                       'databases. The network represents '
+                       'mechanistic interactions between genes/proteins that '
+                       'are associated with this GO process.',
+        }
+        ncx = get_cx_network(stmts, network_name, network_attributes)
         network_id = format_and_upload_network(ncx, **ndex_args)
-        print('Uploaded network with ID: %s' % network_id)
+        logger.info('Uploaded network with ID: %s' % network_id)
+        logger.info('===============================')
