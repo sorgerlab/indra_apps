@@ -8,6 +8,7 @@ from goatools.obo_parser import GODag
 from indra.util import batch_iter
 from indra.statements import Complex
 from indra.sources import indra_db_rest
+import indra.tools.assemble_corpus as ac
 from indra.databases import uniprot_client, ndex_client
 from indra.assemblers.cx import NiceCxAssembler
 from indra.preassembler import Preassembler
@@ -113,7 +114,10 @@ def assemble_statements(stmts):
             all_stmts += expand_complex(stmt)
         else:
             all_stmts.append(stmt)
-
+    # This is to make sure that expanded complexes don't add nodes that
+    # shouldn't be in the scope of the network
+    all_stmts = ac.filter_genes_only(all_stmts, specific_only=True)
+    all_stmts = ac.filter_human_only(all_stmts)
     pa = Preassembler(hierarchies, stmts=all_stmts,
                       matches_fun=agents_stmt_type_matches)
     stmts = pa.combine_duplicates()
@@ -164,7 +168,14 @@ if __name__ == '__main__':
                  'password': password}
     indra_df = load_indra_df('/Users/ben/db.pkl')
     go_ids = get_go_ids()
-    for go_id in go_ids[:10]:
+    start = 'GO:0000187'
+    started = False
+    for go_id in go_ids:
+        if go_id == start:
+            started = True
+        if not started:
+            continue
+        logger.info('===============================')
         go_name = go_dag[go_id].name
         logger.info('Looking at %s (%s)' % (go_id, go_name))
         network_name = 'GO:%s (%s)' % (go_id, go_name)
@@ -195,6 +206,8 @@ if __name__ == '__main__':
                        'are associated with this GO process.',
         }
         ncx = get_cx_network(stmts, network_name, network_attributes)
+        if not ncx.nodes or not ncx.edges:
+            logger.info('Skipping: no nodes or edges in network.')
+            continue
         network_id = format_and_upload_network(ncx, **ndex_args)
         logger.info('Uploaded network with ID: %s' % network_id)
-        logger.info('===============================')
