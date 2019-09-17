@@ -154,7 +154,7 @@ if __name__ == '__main__':
     hume_stmts = load_hume()
     stmts = eidos_stmts + hume_stmts + mig_stmts
     reground_stmts(stmts)
-    remove_namespaces(stmts, ['WHO', 'MITRE12'])
+    remove_namespaces(stmts, ['WHO', 'MITRE12', 'WM'])
 
     events = get_events(stmts)
     check_event_context(events)
@@ -180,8 +180,8 @@ if __name__ == '__main__':
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus.s3_put('dart-20190906-stmts-%s' % key)
+        corpus.s3_put('dart-20190910-stmts-%s' % key)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path,
-                  'dart-20190906-stmts-%s.json' % key), 'w') as fh:
+                  'dart-20190910-stmts-%s.json' % key), 'w') as fh:
             json.dump(sj, fh, indent=1)

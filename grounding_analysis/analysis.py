@@ -1,4 +1,5 @@
 import sys
+import csv
 import random
 from collections import Counter
 from indra.statements import Complex
@@ -43,17 +44,19 @@ def get_top_counts(raw_strings, threshold=0.8):
     return top_list
 
 
-def get_hgnc_ids():
-    import csv
+def get_all_client_hgnc_ids():
     # All HGNC IDs in the client
-    # return sorted(list(hgnc_client.hgnc_names.keys()))
+    return sorted(list(hgnc_client.hgnc_names.keys()))
 
+
+def get_all_db_stmt_hgnc_ids():
     # All HGNC IDs for which we have preassembled stmts in the DB
-    # with open('hgnc_ids.txt', 'r') as fh:
-    #    hgnc_ids = [l.strip() for l in fh.readlines()]
-    #    return hgnc_ids
-    #
+    with open('hgnc_ids.txt', 'r') as fh:
+        hgnc_ids = [l.strip() for l in fh.readlines()]
+        return hgnc_ids
 
+
+def get_ras220_hgnc_ids():
     # RAS 220 genes
     hgnc_ids = []
     with open('../../indra/data/ras_pathway_proteins.csv', 'r') as fh:
@@ -64,15 +67,28 @@ def get_hgnc_ids():
     return hgnc_ids
 
 
+def get_ion_channel_hgnc_ids():
+    # RAS 220 genes
+    hgnc_ids = []
+    with open('ion_channels.tsv', 'r') as fh:
+        reader = csv.reader(fh, delimiter='\t')
+        next(reader)
+        for row in reader:
+            hgnc_id = row[0][5:]
+            hgnc_ids.append(hgnc_id)
+    return hgnc_ids
+
+
+def get_dark_kinase_hgnc_ids():
     # All dark kinases
-    # fname = '../../indra_analysis/Table_005_IDG_dark_kinome.csv'
-    # hgnc_ids = []
-    # with open(fname, 'r') as fh:
-    #     for row in csv.reader(fh):
-    #         hgnc_symbol = row[1]
-    #         hgnc_id = hgnc_client.get_hgnc_id(hgnc_symbol)
-    #         hgnc_ids.append(hgnc_id)
-    # return hgnc_ids
+    fname = '../../indra_analysis/Table_005_IDG_dark_kinome.csv'
+    hgnc_ids = []
+    with open(fname, 'r') as fh:
+        for row in csv.reader(fh):
+            hgnc_symbol = row[1]
+            hgnc_id = hgnc_client.get_hgnc_id(hgnc_symbol)
+            hgnc_ids.append(hgnc_id)
+    return hgnc_ids
 
 
 def generate_report(genes, top_lists, fname):
@@ -100,7 +116,7 @@ def generate_report(genes, top_lists, fname):
 
 
 if __name__ == '__main__':
-    genes = get_hgnc_ids()
+    genes = get_ion_channel_hgnc_ids()
     #genes = [random.choice(genes) for _ in range(100)]
     #genes = ['9871']
     top_lists = []
@@ -109,4 +125,4 @@ if __name__ == '__main__':
         raw_strings = get_raw_strings(stmts, 'HGNC', gene)
         top_list = get_top_counts(raw_strings)
         top_lists.append(top_list)
-    generate_report(genes, top_lists, 'report.html')
+    generate_report(genes, top_lists, 'report_ion_channel.html')
