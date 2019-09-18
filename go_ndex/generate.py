@@ -78,13 +78,25 @@ def filter_to_genes(df, genes):
     return df_filt
 
 
+def filter_out_medscan(stmts):
+    new_stmts = []
+    for stmt in stmts:
+        new_evidence = [e for e in stmt.evidence if e.source_api != 'medscan']
+        if not new_evidence:
+            continue
+        stmt.evidence = new_evidence
+        new_stmts.append(stmt)
+    return new_stmts
+
+
 def download_statements(df):
     """Download the INDRA Statements corresponding to entries in a data frame.
     """
     all_stmts = []
     for idx, group in enumerate(batch_iter(df.hash, 500)):
         logger.info('Getting statement batch %d' % idx)
-        stmts = indra_db_rest.get_statements_by_hash(list(group))
+        stmts = indra_db_rest.get_statements_by_hash(list(group),
+                                                     ev_limit=50)
         all_stmts += stmts
     return all_stmts
 
@@ -106,7 +118,7 @@ def expand_complex(stmt):
     return stmts
 
 
-def assemble_statements(stmts):
+def assemble_statements(stmts, genes):
     """Run assembly on statements."""
     all_stmts = []
     for stmt in stmts:
@@ -116,8 +128,7 @@ def assemble_statements(stmts):
             all_stmts.append(stmt)
     # This is to make sure that expanded complexes don't add nodes that
     # shouldn't be in the scope of the network
-    all_stmts = ac.filter_genes_only(all_stmts, specific_only=True)
-    all_stmts = ac.filter_human_only(all_stmts)
+    all_stmts = ac.filter_gene_list(all_stmts, genes, policy='all')
     pa = Preassembler(hierarchies, stmts=all_stmts,
                       matches_fun=agents_stmt_type_matches)
     stmts = pa.combine_duplicates()
@@ -168,17 +179,17 @@ if __name__ == '__main__':
                  'password': password}
     indra_df = load_indra_df('/Users/ben/db.pkl')
     go_ids = get_go_ids()
-    start = 'GO:0000187'
+    start = None
     started = False
     for go_id in go_ids:
-        if go_id == start:
+        if not start or go_id == start:
             started = True
         if not started:
             continue
         logger.info('===============================')
         go_name = go_dag[go_id].name
         logger.info('Looking at %s (%s)' % (go_id, go_name))
-        network_name = 'GO:%s (%s)' % (go_id, go_name)
+        network_name = '%s (%s)' % (go_id, go_name)
         genes = get_genes_for_go_id(go_id)
         logger.info('%d genes for %s' % (len(genes), go_id))
         if len(genes) < 5 or len(genes) > 50:
@@ -189,7 +200,8 @@ if __name__ == '__main__':
             logger.info('Skipping: no statements found between genes.')
             continue
         stmts = download_statements(df)
-        stmts = assemble_statements(stmts)
+        stmts = filter_out_medscan(stmts)
+        stmts = assemble_statements(stmts, genes)
         network_attributes = {
             'networkType': 'pathway',
             'GO ID': go_id,
@@ -206,8 +218,8 @@ if __name__ == '__main__':
                        'are associated with this GO process.',
         }
         ncx = get_cx_network(stmts, network_name, network_attributes)
-        if not ncx.nodes or not ncx.edges:
-            logger.info('Skipping: no nodes or edges in network.')
+        if not ncx.nodes:
+            logger.info('Skipping: no nodes in network.')
             continue
         network_id = format_and_upload_network(ncx, **ndex_args)
         logger.info('Uploaded network with ID: %s' % network_id)
