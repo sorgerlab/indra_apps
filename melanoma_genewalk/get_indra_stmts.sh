@@ -1,1 +1,10 @@
-python -m genewalk.get_indra_stmts --df ../../genewalk/data/refresh_db_dataframe_20190702.pkl --genes A375_Day4_de_genes.txt --stmts A375_Day4_stmts.pkl
+python -m genewalk.get_indra_stmts --df ~/db.pkl --genes A375_Day2_de_genes.txt --stmts A375_Day2_stmts.pkl
+python -m genewalk.get_indra_stmts --df ~/db.pkl --genes A375_Day4_de_genes.txt --stmts A375_Day4_stmts.pkl
+python -m genewalk.get_indra_stmts --df ~/db.pkl --genes A375_Day14_de_genes.txt --stmts A375_Day14_stmts.pkl
+python -m genewalk.get_indra_stmts --df ~/db.pkl --genes A375_Day36_de_genes.txt --stmts A375_Day36_stmts.pkl
+python -m genewalk.get_indra_stmts --df ~/db.pkl --genes A375_Day39_de_genes.txt --stmts A375_Day39_stmts.pkl
+python -m genewalk.get_indra_stmts --df ~/db.pkl --genes A375_Day40_de_genes.txt --stmts A375_Day40_stmts.pkl
+python -m genewalk.get_indra_stmts --df ~/db.pkl --genes A375_Day125_de_genes.txt --stmts A375_Day125_stmts.pkl
+python -m genewalk.get_indra_stmts --df ~/db.pkl --genes A375_Day130_de_genes.txt --stmts A375_Day130_stmts.pkl
+python -m genewalk.get_indra_stmts --df ~/db.pkl --genes A375_Day131_de_genes.txt --stmts A375_Day131_stmts.pkl
+python -m genewalk.get_indra_stmts --df ~/db.pkl --genes A375_Day250_de_genes.txt --stmts A375_Day250_stmts.pkl
