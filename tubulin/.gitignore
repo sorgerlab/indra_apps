@@ -1,0 +1,14 @@
+# data files, reference files, results and intermediate data
+input/*
+result/*
+ref/*
+work/*
+
+# python byte code
+*.pyc
+
+# emacs backups
+*~
+
+
+ls
