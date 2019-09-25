@@ -1,5 +1,6 @@
 import sys
 import csv
+import tqdm
 import random
 from collections import Counter
 from indra.statements import Complex
@@ -79,6 +80,24 @@ def get_ion_channel_hgnc_ids():
     return hgnc_ids
 
 
+def get_dark_ion_channel_hgnc_ids():
+    # RAS 220 genes
+    hgnc_ids = []
+    with open('../../idg_ion_channels/data/IDG_target_final.csv', 'r') as fh:
+        reader = csv.reader(fh, delimiter=',')
+        next(reader)
+        gene_names = [row[0] for row in reader
+                      if row[1] == 'Ion Channel' and row[3] == 'TRUE']
+    hgnc_ids = []
+    for gene_name in gene_names:
+        hgnc_id = hgnc_client.get_current_hgnc_id(gene_name)
+        if not hgnc_id:
+            print('Could not get HGNC ID for %s' % gene_name)
+        else:
+            hgnc_ids.append(hgnc_id)
+    return hgnc_ids
+
+
 def get_dark_kinase_hgnc_ids():
     # All dark kinases
     fname = '../../indra_analysis/Table_005_IDG_dark_kinome.csv'
@@ -116,11 +135,11 @@ def generate_report(genes, top_lists, fname):
 
 
 if __name__ == '__main__':
-    genes = get_ion_channel_hgnc_ids()
+    genes = get_dark_ion_channel_hgnc_ids()
     #genes = [random.choice(genes) for _ in range(100)]
     #genes = ['9871']
     top_lists = []
-    for gene in genes:
+    for gene in tqdm.tqdm(genes):
         stmts = get_statements('HGNC', gene)
         raw_strings = get_raw_strings(stmts, 'HGNC', gene)
         top_list = get_top_counts(raw_strings)
