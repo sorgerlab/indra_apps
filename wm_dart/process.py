@@ -4,6 +4,8 @@ import copy
 import json
 import yaml
 import logging
+import argparse
+import requests
 from datetime import datetime
 from indra.sources import eidos, hume
 from indra.sources.eidos import migration_table_processor
@@ -49,11 +51,27 @@ def load_hume():
     return stmts
 
 
-def load_migration_spreadsheets():
-    fname = os.path.join(os.pardir, 'wm_migration',
-                         'grounded CAG links - New Ontology.xlsx')
-    stmts = migration_table_processor.process_workbook(fname)
-    return stmts
+def load_migration_spreadsheets(sheets_path):
+    sheets_path = sheets_path if sheets_path.endswith('/') else \
+        sheets_path + '/'
+    spreadsheets = glob.glob(sheets_path + '*.xlsx')
+    ms = []
+    for sheet in spreadsheets:
+        ms += migration_table_processor.process_workbook(sheet)
+    return ms
+
+
+def _get_all_dart_resources(url=None):
+    if not url:
+        url = 'http://localhost:9200/cdr_search/_search'
+    json_data = {"query": {"match_all": {}},
+                 "size": 10000}
+    res = requests.get(url, json=json_data)
+    if res.status_code != 200:
+        logger.warning(f'Got status code {res.status_code} while trying to '
+                       f'get dart resource files from {url}.')
+        return None
+    return res.json()
 
 
 def filter_dart_sources(cdr_json, filter_date, before=True):
@@ -203,7 +221,11 @@ def _make_un_ontology():
 
 
 if __name__ == '__main__':
-    mig_stmts = load_migration_spreadsheets()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--spreadsheets-path', type=str)
+    parser.add_argument('-id', '--id', type=str)
+    args = parser.parse_args()
+    mig_stmts = load_migration_spreadsheets(args.spreadsheet_path)
     eidos_stmts = load_eidos()
     hume_stmts = load_hume()
     stmts = eidos_stmts + hume_stmts + mig_stmts
@@ -234,8 +256,15 @@ if __name__ == '__main__':
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus.s3_put('dart-20190910-stmts-%s' % key)
+        if args.id:
+            file_id = args.id
+        else:
+            file_id = str(int(datetime.timestamp(datetime.now())))
+            logger.info('Using UTC timestamp (%s) as unique id for file' %
+                        file_id)
+        file_name = 'dart-%s-stmts-%s' % (file_id, key)
+        corpus.s3_put(file_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path,
-                  'dart-20190910-stmts-%s.json' % key), 'w') as fh:
+                               file_name + '.json' % key), 'w') as fh:
             json.dump(sj, fh, indent=1)
