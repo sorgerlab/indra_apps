@@ -95,9 +95,9 @@ def download_statements(df):
     all_stmts = []
     for idx, group in enumerate(batch_iter(df.hash, 500)):
         logger.info('Getting statement batch %d' % idx)
-        stmts = indra_db_rest.get_statements_by_hash(list(group),
-                                                     ev_limit=50)
-        all_stmts += stmts
+        idbp = indra_db_rest.get_statements_by_hash(list(group),
+                                                    ev_limit=50)
+        all_stmts += idbp.statements
     return all_stmts
 
 
