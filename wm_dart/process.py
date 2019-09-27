@@ -7,7 +7,7 @@ import logging
 import argparse
 import requests
 from datetime import datetime
-from indra.sources import eidos, hume
+from indra.sources import eidos, hume, sofia
 from indra.sources.eidos import migration_table_processor
 from indra.tools.live_curation import Corpus
 from indra.tools import assemble_corpus as ac
@@ -48,6 +48,36 @@ def load_hume():
         hp = hume.process_jsonld_file(fname)
         stmts += hp.statements
     logger.info(f'Loaded {len(stmts)} statements from Hume')
+    return stmts
+
+
+def load_sofia():
+    logger.info('Loading Sofia statements')
+    fnames = glob.glob(os.path.join(data_path,
+                                    'sofia/Nov_*.xlsx'))
+
+    stmts = []
+    doc_ids = set()
+    for idx, fname in enumerate(fnames):
+        sp = sofia.process_table(fname)
+        if idx == 0:
+            for stmt in sp.statements:
+                for ev in stmt.evidence:
+                    doc_id = ev.pmid.split('.')[0]
+                    doc_ids.add(doc_id)
+            stmts += sp.statements
+        else:
+            for stmt in sp.statements:
+                doc_id = stmt.evidence[0].pmid.split('.')[0]
+                if doc_id not in doc_ids:
+                    stmts.append(stmt)
+    for stmt in stmts:
+        for ev in stmt.evidence:
+            doc_id = ev.pmid.split('.')[0]
+            ev.annotations['provenance'] = [{'@type': 'Provenance',
+                                             'document': {
+                                                 '@id': doc_id}}]
+    logger.info(f'Loaded {len(stmts)} statements from Sofia')
     return stmts
 
 
@@ -225,12 +255,12 @@ def check_event_context(events):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--spreadsheets-path', type=str)
-    parser.add_argument('-id', '--id', type=str)
     args = parser.parse_args()
-    mig_stmts = load_migration_spreadsheets(args.spreadsheet_path)
+    sofia_stmts = load_sofia()
+    # mig_stmts = load_migration_spreadsheets(args.spreadsheet_path)
     eidos_stmts = load_eidos()
     hume_stmts = load_hume()
-    stmts = eidos_stmts + hume_stmts + mig_stmts
+    stmts = eidos_stmts + hume_stmts + sofia_stmts  # + mig_stmts
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
 
     events = get_events(stmts)
@@ -257,15 +287,8 @@ if __name__ == '__main__':
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        if args.id:
-            file_id = args.id
-        else:
-            file_id = str(int(datetime.timestamp(datetime.now())))
-            logger.info('Using UTC timestamp (%s) as unique id for file' %
-                        file_id)
-        file_name = 'dart-%s-stmts-%s' % (file_id, key)
-        corpus.s3_put(file_name)
+        corpus_name = 'dart-20190925-stmts-%s' % key
+        corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
-        with open(os.path.join(data_path,
-                               file_name + '.json' % key), 'w') as fh:
+        with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
             json.dump(sj, fh, indent=1)
