@@ -4,7 +4,10 @@ import copy
 import json
 import yaml
 import logging
-from indra.sources import eidos, hume
+import argparse
+import requests
+from datetime import datetime
+from indra.sources import eidos, hume, sofia
 from indra.sources.eidos import migration_table_processor
 from indra.tools.live_curation import Corpus
 from indra.tools import assemble_corpus as ac
@@ -14,7 +17,7 @@ from indra.preassembler.custom_preassembly import *
 from indra.statements import Event, Influence, Association
 from indra.preassembler.hierarchy_manager import YamlHierarchyManager
 from indra.preassembler.make_eidos_hume_ontologies import eidos_ont_url, \
-    load_yaml_from_url, rdf_graph_from_yaml
+    load_yaml_from_url, rdf_graph_from_yaml, wm_ont_url
 
 
 logger = logging.getLogger()
@@ -48,11 +51,110 @@ def load_hume():
     return stmts
 
 
-def load_migration_spreadsheets():
-    fname = os.path.join(os.pardir, 'wm_migration',
-                         'grounded CAG links - New Ontology.xlsx')
-    stmts = migration_table_processor.process_workbook(fname)
+def load_sofia():
+    logger.info('Loading Sofia statements')
+    fnames = glob.glob(os.path.join(data_path,
+                                    'sofia/Nov_*.xlsx'))
+
+    stmts = []
+    doc_ids = set()
+    for idx, fname in enumerate(fnames):
+        sp = sofia.process_table(fname)
+        if idx == 0:
+            for stmt in sp.statements:
+                for ev in stmt.evidence:
+                    doc_id = ev.pmid.split('.')[0]
+                    doc_ids.add(doc_id)
+            stmts += sp.statements
+        else:
+            for stmt in sp.statements:
+                doc_id = stmt.evidence[0].pmid.split('.')[0]
+                if doc_id not in doc_ids:
+                    stmts.append(stmt)
+    for stmt in stmts:
+        for ev in stmt.evidence:
+            doc_id = ev.pmid.split('.')[0]
+            ev.annotations['provenance'] = [{'@type': 'Provenance',
+                                             'document': {
+                                                 '@id': doc_id}}]
+    logger.info(f'Loaded {len(stmts)} statements from Sofia')
     return stmts
+
+
+def load_migration_spreadsheets(sheets_path):
+    sheets_path = sheets_path if sheets_path.endswith('/') else \
+        sheets_path + '/'
+    spreadsheets = glob.glob(sheets_path + '*.xlsx')
+    ms = []
+    for sheet in spreadsheets:
+        ms += migration_table_processor.process_workbook(sheet)
+    return ms
+
+
+def get_all_dart_resources(url=None):
+    if not url:
+        url = 'http://localhost:9200/cdr_search/_search'
+    json_data = {"query": {"match_all": {}},
+                 "size": 10000}
+    res = requests.get(url, json=json_data)
+    if res.status_code != 200:
+        logger.warning(f'Got status code {res.status_code} while trying to '
+                       f'get dart resource files from {url}.')
+        return None
+    return res.json()
+
+
+def filter_dart_sources(cdr_json, filter_date, before=True):
+    """Filter a cdr json to only contain resources before datetime
+
+    Parameters
+    ----------
+    cdr_json : json
+        The CDR json structure to filter
+    filter_date : `py:obj:builtins:datetime.datetime`|int|str
+        A python datetime object or a date string, being either timestamp (
+        as an integer) or a datetime string of the format YYYY-MM-DD
+        (hh:mm:ss).
+    before : bool
+        If True, only keep results from before filter date. If False,
+        keep only results from after filter date (Default: True).
+
+    Return
+    ------
+    cdr_json : json
+        The CDR json structure filtered to contain only the texts created
+        before datetime
+    """
+    if cdr_json.get('hits') and cdr_json['hits'].get('hits'):
+        if isinstance(filter_date, datetime):
+            filter_dt_obj = filter_date
+        elif isinstance(filter_date, int):
+            # Assume UTC in timestamp
+            filter_dt_obj = datetime.utcfromtimestamp(filter_date)
+        elif isinstance(filter_date, str):
+            # Assume YYYY-MM-DD, and potentially hh:mm:ss as well
+            try:
+                filter_dt_obj = datetime.strptime(filter_date, '%Y-%m-%d')
+            except ValueError:
+                # Assuming a timestamp was sent as str
+                filter_dt_obj = datetime.utcfromtimestamp(int(filter_date))
+        else:
+            logger.info('Could not parse filter date. Make sure filter_date '
+                        'is either datetime object, a timestamp number or ')
+            return None
+        filtered_hits = []
+        for hit in cdr_json['hits']['hits']:
+            hit_dt_obj = datetime.utcfromtimestamp(
+                hit['_source']['extracted_metadata']['CreationDate']
+            )
+            if before and hit_dt_obj <= filter_dt_obj:
+                filtered_hits.append(hit)
+            elif not before and filter_dt_obj <= hit_dt_obj:
+                filtered_hits.append(hit)
+        cdr_json['hits']['hits'] = filtered_hits
+    else:
+        logger.info('The CDR json seems to be empty. No processing was done.')
+    return cdr_json
 
 
 def fix_provenance(stmts, doc_id):
@@ -123,8 +225,7 @@ def check_event_context(events):
             assert False, ('Event context issue', event, event.evidence)
 
 
-def reground_stmts(stmts):
-    ont_manager = _make_un_ontology()
+def reground_stmts(stmts, ont_manager, namespace):
     eidos_reader = EidosReader()
     # Send the latest ontology and list of concept texts to Eidos
     yaml_str = yaml.dump(ont_manager.yaml_root)
@@ -138,7 +239,7 @@ def reground_stmts(stmts):
     idx = 0
     for stmt in stmts:
         for concept in stmt.agent_list():
-            concept.db_refs['UN'] = groundings[idx]
+            concept.db_refs[namespace] = groundings[idx]
             idx += 1
     return stmts
 
@@ -148,13 +249,39 @@ def _make_un_ontology():
                                 rdf_graph_from_yaml, True)
 
 
+def _make_wm_ontology():
+    return YamlHierarchyManager(load_yaml_from_url(wm_ont_url),
+                                rdf_graph_from_yaml, True)
+
+
+def filter_dart_date(stmts, datestr):
+    res = get_all_dart_resources()
+    fres = filter_dart_sources(res, datestr, before=True)
+    ids = {h['_id'] for h in fres['hits']['hits']}
+
+    logger.info(f'Filtering {len(stmts)} statements with {len(ids)} DART IDs')
+    stmts = [s for s in stmts if
+             (s.evidence[0].annotations['provenance'][0]['document']['@id']
+              in ids)]
+    logger.info(f'{len(stmts)} statements after filter')
+    return stmts
+
+
 if __name__ == '__main__':
-    mig_stmts = load_migration_spreadsheets()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--spreadsheets-path', type=str)
+    args = parser.parse_args()
+
+    sofia_stmts = load_sofia()
+    sofia_stmts = reground_stmts(sofia_stmts, _make_wm_ontology(), 'WM')
+    # mig_stmts = load_migration_spreadsheets(args.spreadsheet_path)
     eidos_stmts = load_eidos()
     hume_stmts = load_hume()
-    stmts = eidos_stmts + hume_stmts + mig_stmts
-    reground_stmts(stmts)
-    remove_namespaces(stmts, ['WHO', 'MITRE12', 'WM'])
+    stmts = eidos_stmts + hume_stmts + sofia_stmts  # + mig_stmts
+    remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
+
+    # Deal with DART document IDs
+    stmts = filter_dart_date(stmts, '2018-04-30')
 
     events = get_events(stmts)
     check_event_context(events)
@@ -180,8 +307,8 @@ if __name__ == '__main__':
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus.s3_put('dart-20190910-stmts-%s' % key)
+        corpus_name = 'dart-20191001-stmts-%s' % key
+        corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
-        with open(os.path.join(data_path,
-                  'dart-20190910-stmts-%s.json' % key), 'w') as fh:
+        with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
             json.dump(sj, fh, indent=1)
