@@ -17,7 +17,7 @@ from indra.preassembler.custom_preassembly import *
 from indra.statements import Event, Influence, Association
 from indra.preassembler.hierarchy_manager import YamlHierarchyManager
 from indra.preassembler.make_eidos_hume_ontologies import eidos_ont_url, \
-    load_yaml_from_url, rdf_graph_from_yaml
+    load_yaml_from_url, rdf_graph_from_yaml, wm_ont_url
 
 
 logger = logging.getLogger()
@@ -225,38 +225,41 @@ def check_event_context(events):
             assert False, ('Event context issue', event, event.evidence)
 
 
-### THIS BLOCK OF CODE WAS FOR BACKWARDS COMPATIBILITY WITH THE UN ONTOLOGY
-### CURRENTLY UNUSED
-#def reground_stmts(stmts):
-#    ont_manager = _make_un_ontology()
-#    eidos_reader = EidosReader()
-#    # Send the latest ontology and list of concept texts to Eidos
-#    yaml_str = yaml.dump(ont_manager.yaml_root)
-#    concepts = []
-#    for stmt in stmts:
-#        for concept in stmt.agent_list():
-#            concept_txt = concept.db_refs.get('TEXT')
-#            concepts.append(concept_txt)
-#    groundings = eidos_reader.reground_texts(concepts, yaml_str)
-#    # Update the corpus with new groundings
-#    idx = 0
-#    for stmt in stmts:
-#        for concept in stmt.agent_list():
-#            concept.db_refs['UN'] = groundings[idx]
-#            idx += 1
-#    return stmts
-#
-#
-#def _make_un_ontology():
-#    return YamlHierarchyManager(load_yaml_from_url(eidos_ont_url),
-#                                rdf_graph_from_yaml, True)
-###########################
+def reground_stmts(stmts, ont_manager, namespace):
+    eidos_reader = EidosReader()
+    # Send the latest ontology and list of concept texts to Eidos
+    yaml_str = yaml.dump(ont_manager.yaml_root)
+    concepts = []
+    for stmt in stmts:
+        for concept in stmt.agent_list():
+            concept_txt = concept.db_refs.get('TEXT')
+            concepts.append(concept_txt)
+    groundings = eidos_reader.reground_texts(concepts, yaml_str)
+    # Update the corpus with new groundings
+    idx = 0
+    for stmt in stmts:
+        for concept in stmt.agent_list():
+            concept.db_refs[namespace] = groundings[idx]
+            idx += 1
+    return stmts
+
+
+def _make_un_ontology():
+    return YamlHierarchyManager(load_yaml_from_url(eidos_ont_url),
+                                rdf_graph_from_yaml, True)
+
+
+def _make_wm_ontology():
+    return YamlHierarchyManager(load_yaml_from_url(wm_ont_url),
+                                rdf_graph_from_yaml, True)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--spreadsheets-path', type=str)
     args = parser.parse_args()
     sofia_stmts = load_sofia()
+    sofia_stmts = reground_stmts(sofia_stmts, _make_wm_ontology(), 'WM')
     # mig_stmts = load_migration_spreadsheets(args.spreadsheet_path)
     eidos_stmts = load_eidos()
     hume_stmts = load_hume()
@@ -287,7 +290,7 @@ if __name__ == '__main__':
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus_name = 'dart-20190925-stmts-%s' % key
+        corpus_name = 'dart-20190930-stmts-%s' % key
         corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
