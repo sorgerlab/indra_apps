@@ -91,7 +91,7 @@ def load_migration_spreadsheets(sheets_path):
     return ms
 
 
-def _get_all_dart_resources(url=None):
+def get_all_dart_resources(url=None):
     if not url:
         url = 'http://localhost:9200/cdr_search/_search'
     json_data = {"query": {"match_all": {}},
@@ -134,7 +134,7 @@ def filter_dart_sources(cdr_json, filter_date, before=True):
         elif isinstance(filter_date, str):
             # Assume YYYY-MM-DD, and potentially hh:mm:ss as well
             try:
-                filter_dt_obj = datetime.fromisoformat(filter_date)
+                filter_dt_obj = datetime.strptime(filter_date, '%Y-%m-%d')
             except ValueError:
                 # Assuming a timestamp was sent as str
                 filter_dt_obj = datetime.utcfromtimestamp(int(filter_date))
@@ -254,10 +254,24 @@ def _make_wm_ontology():
                                 rdf_graph_from_yaml, True)
 
 
+def filter_dart_date(stmts, datestr):
+    res = get_all_dart_resources()
+    fres = filter_dart_sources(res, datestr, before=True)
+    ids = {h['_id'] for h in fres['hits']['hits']}
+
+    logger.info(f'Filtering {len(stmts)} statements with {len(ids)} DART IDs')
+    stmts = [s for s in stmts if
+             (s.evidence[0].annotations['provenance'][0]['document']['@id']
+              in ids)]
+    logger.info(f'{len(stmts)} statements after filter')
+    return stmts
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--spreadsheets-path', type=str)
     args = parser.parse_args()
+
     sofia_stmts = load_sofia()
     sofia_stmts = reground_stmts(sofia_stmts, _make_wm_ontology(), 'WM')
     # mig_stmts = load_migration_spreadsheets(args.spreadsheet_path)
@@ -265,6 +279,9 @@ if __name__ == '__main__':
     hume_stmts = load_hume()
     stmts = eidos_stmts + hume_stmts + sofia_stmts  # + mig_stmts
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
+
+    # Deal with DART document IDs
+    stmts = filter_dart_date(stmts, '2018-04-30')
 
     events = get_events(stmts)
     check_event_context(events)
@@ -290,7 +307,7 @@ if __name__ == '__main__':
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus_name = 'dart-20190930-stmts-%s' % key
+        corpus_name = 'dart-20191001-stmts-%s' % key
         corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
