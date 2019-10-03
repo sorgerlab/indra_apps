@@ -239,7 +239,8 @@ def reground_stmts(stmts, ont_manager, namespace):
     idx = 0
     for stmt in stmts:
         for concept in stmt.agent_list():
-            concept.db_refs[namespace] = groundings[idx]
+            if groundings[idx]:
+                concept.db_refs[namespace] = groundings[idx]
             idx += 1
     return stmts
 
@@ -267,6 +268,20 @@ def filter_dart_date(stmts, datestr):
     return stmts
 
 
+def fix_wm_ontology(stmts):
+    for stmt in stmts:
+        for concept in stmt.agent_list():
+            if 'WM' in concept.db_refs:
+                concept.db_refs['WM'] = [(entry.replace(' ', '_'), score)
+                                         for entry, score in
+                                         concept.db_refs['WM']]
+
+
+def print_statistics(stmts):
+    ev_tot = sum([len(stmt.evidence) for stmt in stmts])
+    logger.info(f'Total evidence {ev_tot} for {len(stmts)} statements.')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--spreadsheets-path', type=str)
@@ -279,6 +294,7 @@ if __name__ == '__main__':
     hume_stmts = load_hume()
     stmts = eidos_stmts + hume_stmts + sofia_stmts  # + mig_stmts
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
+    fix_wm_ontology(stmts)
 
     # Deal with DART document IDs
     stmts = filter_dart_date(stmts, '2018-04-30')
@@ -300,14 +316,16 @@ if __name__ == '__main__':
                                                   belief_scorer=scorer,
                                                   matches_fun=matches_fun,
                                                   refinement_fun=refinement_fun)
+        print_statistics(assembled_non_events)
         assembled_events = ac.run_preassembly(events, belief_scorer=scorer,
                                               matches_fun=matches_fun,
                                               refinement_fun=refinement_fun)
+        print_statistics(assembled_events)
         check_event_context(assembled_events)
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus_name = 'dart-20191001-stmts-%s' % key
+        corpus_name = 'dart-20191002-stmts-%s' % key
         corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
