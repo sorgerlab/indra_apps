@@ -15,8 +15,9 @@ from indra.sources.eidos.reader import EidosReader
 from indra.belief.wm_scorer import get_eidos_scorer
 from indra.preassembler.custom_preassembly import *
 from indra.statements import Event, Influence, Association
-from indra.preassembler.hierarchy_manager import YamlHierarchyManager
-from indra.preassembler.make_eidos_hume_ontologies import eidos_ont_url, \
+from indra.preassembler.hierarchy_manager import YamlHierarchyManager, \
+    get_wm_hierarchies
+from indra.preassembler.make_wm_ontologies import eidos_ont_url, \
     load_yaml_from_url, rdf_graph_from_yaml, wm_ont_url
 
 
@@ -275,6 +276,9 @@ def fix_wm_ontology(stmts):
                 concept.db_refs['WM'] = [(entry.replace(' ', '_'), score)
                                          for entry, score in
                                          concept.db_refs['WM']]
+                concept.db_refs['WM'] = [(entry.replace('boarder', 'border'), score)
+                                         for entry, score in
+                                         concept.db_refs['WM']]
 
 
 def print_statistics(stmts):
@@ -311,21 +315,31 @@ if __name__ == '__main__':
                               location_time_refinement)
     }
 
+    hierarchies = get_wm_hierarchies()
+
     for key, (matches_fun, refinement_fun) in funs.items():
         assembled_non_events = ac.run_preassembly(non_events,
                                                   belief_scorer=scorer,
                                                   matches_fun=matches_fun,
-                                                  refinement_fun=refinement_fun)
+                                                  refinement_fun=refinement_fun,
+                                                  normalize_equivalences=True,
+                                                  normalize_opposites=True,
+                                                  normalize_ns='WM',
+                                                  hierarchies=hierarchies)
         print_statistics(assembled_non_events)
         assembled_events = ac.run_preassembly(events, belief_scorer=scorer,
                                               matches_fun=matches_fun,
-                                              refinement_fun=refinement_fun)
+                                              refinement_fun=refinement_fun,
+                                              normalize_equivalences=True,
+                                              normalize_opposites=True,
+                                              normalize_ns='WM',
+                                              hierarchies=hierarchies)
         print_statistics(assembled_events)
         check_event_context(assembled_events)
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus_name = 'dart-20191002-stmts-%s' % key
+        corpus_name = 'dart-20191007-stmts-%s' % key
         corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
