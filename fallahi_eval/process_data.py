@@ -1,4 +1,5 @@
 from indra.util import _require_python3
+import os
 import re
 import copy
 import json
@@ -8,6 +9,7 @@ import pandas
 import itertools
 import collections
 from copy import deepcopy
+import indra
 from indra.statements import *
 from indra.literature import pubmed_client
 from indra.databases import hgnc_client, uniprot_client, cbio_client
@@ -198,11 +200,13 @@ def get_gene_names(data):
     antibody_gene_list = []
     for ab in antibody_list:
         antibody_gene_list += list(antibody_map[ab].keys())
-    ras_gene_list = _read_gene_list('../../data/ras_pathway_proteins.csv')
+    fname = os.path.join(indra.__path__[0], 'resources',
+                         'ras_pathway_proteins.csv')
+    ras_gene_list = _read_gene_list(fname)
     msb2015_gene_list = \
-            _read_gene_list('MFS_MSB_2015_gene_list.csv')
+        _read_gene_list('MFS_MSB_2015_gene_list.csv')
     msb2017_gene_list = \
-            _read_gene_list('MFS_MSB_2017_gene_list.csv')
+        _read_gene_list('MFS_MSB_2017_gene_list.csv')
     gene_names = (ras_gene_list + msb2015_gene_list +
                   msb2017_gene_list + antibody_gene_list)
     gene_names = sorted(list(set(gene_names)))

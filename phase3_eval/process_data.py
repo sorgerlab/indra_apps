@@ -1,5 +1,4 @@
-from __future__ import absolute_import, print_function, unicode_literals
-from builtins import dict, str
+import os
 import numpy
 import pandas
 from copy import copy
@@ -13,6 +12,7 @@ from indra.statements import Agent, ModCondition
 data_file = 'data/Korkut et al. Data 05122017.xlsx'
 antibody_map_file = 'data/antibody_site_map.csv'
 drug_grounding_file = 'data/drug_grounding.csv'
+
 
 def read_data(fname=data_file):
     """Returns the data as a dictionary."""
@@ -36,9 +36,11 @@ def read_data(fname=data_file):
                                            index_col=None)
     return data
 
+
 def get_all_antibodies(data):
     ab_names = list(data['protein'].columns[2:])
     return ab_names
+
 
 def get_phos_antibodies(data):
     ab_names = get_all_antibodies(data)
@@ -51,11 +53,13 @@ def get_phos_antibodies(data):
                 break
     return ab_phos
 
+
 def get_antibody_genes(data, ab_name):
     """Return the UniProt IDs corresponding to a specific antibody."""
     df_filt = data['antibody'][data['antibody']['Protein Data ID'] == ab_name]
     up_ids = df_filt['UniProt ID'].values[0].split(',')
     return up_ids
+
 
 def get_agent_from_upid(up_id):
     """Get an Agent based on a UniProt ID."""
@@ -64,12 +68,16 @@ def get_agent_from_upid(up_id):
     a = Agent(gene_name, db_refs={'HGNC': hgnc_id, 'UP': up_id})
     return a
 
+
 def get_ras227_genes():
-    ras227_file = '../../data/ras_pathway_proteins.csv'
+    import indra
+    ras227_file = os.path.join(indra.__path__[0], 'resources',
+                               'ras_pathway_proteins.csv')
     df = pandas.read_csv(ras227_file, sep='\t', index_col=None, header=None,
                          encoding='utf-8')
     gene_names = [x for x in df[0]]
     return gene_names
+
 
 def get_all_gene_names(data, out_file='prior_genes.txt'):
     """Return all gene names corresponding to all ABs."""
@@ -112,6 +120,7 @@ def get_all_gene_names(data, out_file='prior_genes.txt'):
             fh.write(('%s\n' % gene).encode('utf-8'))
     return all_genes
 
+
 def get_gene_pmids(genes, out_file='pmids.txt'):
     all_pmids = set()
     for gene in genes:
@@ -125,6 +134,7 @@ def get_gene_pmids(genes, out_file='pmids.txt'):
             fh.write(('%s\n' % pmid).encode('utf-8'))
     return all_pmids
 
+
 def get_drugs(data):
     drugs_col = \
         data['protein']['Sample Description (drug abbre. | dose or time-point)']
@@ -136,6 +146,7 @@ def get_drugs(data):
             drug_abbrevs.add(da)
     drug_abbrevs = sorted(list(drug_abbrevs))
     return drug_abbrevs
+
 
 def get_drug_targets(fname=None):
     if not fname:
@@ -149,6 +160,7 @@ def get_drug_targets(fname=None):
                         for ui in tupid.split(',')]
     return targets
 
+
 def get_single_drug_treatments(data):
     drugs_col = \
         data['protein']['Sample Description (drug abbre. | dose or time-point)']
@@ -158,6 +170,7 @@ def get_single_drug_treatments(data):
         if len(terms) == 1:
             drug_tx.append(cond)
     return drug_tx
+
 
 def get_midas_data(data, pkn_abs, pkn_drugs, out_file='MD-korkut.csv'):
     drug_abbrevs = get_drugs(data)
@@ -212,6 +225,7 @@ def get_midas_data(data, pkn_abs, pkn_drugs, out_file='MD-korkut.csv'):
     df.to_csv(out_file, index=False)
     return df
 
+
 def get_dynamic_range(data):
     ncol = len(data['protein'].columns)
     ranges = {}
@@ -220,6 +234,7 @@ def get_dynamic_range(data):
         rangev = numpy.max(vals) - numpy.min(vals)
         ranges[data['protein'].columns[i]] = rangev
     return ranges
+
 
 def get_average_dev(data):
     ncol = len(data['protein'].columns)
@@ -230,6 +245,7 @@ def get_average_dev(data):
         devs[data['protein'].columns[i]] = dev
     return devs
 
+
 def get_max_dev(data):
     ncol = len(data['protein'].columns)
     devs = {}
@@ -238,6 +254,7 @@ def get_max_dev(data):
         dev = numpy.mean(numpy.abs(1-vals))
         devs[data['protein'].columns[i]] = dev
     return devs
+
 
 def get_antibody_map(data):
     phos_ab_map = get_phospho_antibody_map()
@@ -300,6 +317,7 @@ def get_phospho_antibody_map(fname=antibody_map_file):
         else:
             antibody_map[ps] = [sub]
     return antibody_map
+
 
 if __name__ == '__main__':
     data = read_data(data_file)
