@@ -1,16 +1,13 @@
+import os
 import csv
-import sys
-from indra.literature import pubmed_client
-from collections import OrderedDict
-from matplotlib import pyplot as plt
 import pickle
 import numpy as np
-import boto3
-import botocore
-import os
-from indra.literature import id_lookup
-from indra.literature import crossref_client
 from texttable import Texttable
+from collections import OrderedDict
+from matplotlib import pyplot as plt
+import indra
+from indra.literature import pubmed_client
+
 
 def get_ids():
     """Search PubMed for references for the Ras 227 gene set."""
@@ -26,7 +23,9 @@ def get_ids():
     # STEP 0: Get gene list
     gene_list = []
     # Get gene list from ras_pathway_proteins.csv
-    with open('../../data/ras_pathway_proteins.csv') as f:
+    fname = os.path.join(indra.__path__[0], 'resources',
+                         'ras_pathway_proteins.csv')
+    with open(fname) as f:
         csvreader = csv.reader(f, delimiter='\t')
         for row in csvreader:
             gene_list.append(row[0].strip())
@@ -35,9 +34,9 @@ def get_ids():
     pmids_from_gene = OrderedDict()
 
     for gene in gene_list:
-        print "Querying for", gene
+        print("Querying for %s" % gene)
         ids_gene = set(pubmed_client.get_ids_for_gene(gene))
-        print "Found %d in gene query" % len(ids_gene)
+        print("Found %d in gene query" % len(ids_gene))
         # Hack to deal with excessive number of names
         if gene == 'MET':
             query_gene = 'CMET'
@@ -47,15 +46,15 @@ def get_ids():
             query_gene = gene
         ids_pubmed = set(pubmed_client.get_ids(query_gene,
                                                **{'retmax': 100000}))
-        print "Found %d in string query" % len(ids_pubmed)
+        print("Found %d in string query" % len(ids_pubmed))
         pmids[gene] = ids_pubmed
         pmids_from_gene[gene] = ids_gene
 
-    with open('reading/pmids.pkl', 'w') as f:
+    with open('reading/pmids.pkl', 'wb') as f:
         pickle.dump(pmids, f)
-    with open('reading/pmids_from_gene.pkl', 'w') as f:
+    with open('reading/pmids_from_gene.pkl', 'wb') as f:
         pickle.dump(pmids_from_gene, f)
-    return (pmids, pmids_from_gene)
+    return pmids, pmids_from_gene
 
 
 def plot_counts(refs, ax, **kwargs):
@@ -97,6 +96,7 @@ with open('pmid_pmcid_doi_map.txt') as f:
         pmid_map[row[0]] = (row[1], doi)
 """
 
+
 def get_fulltexts(pmids_dict):
     fulltext_counts = OrderedDict()
     # Iterate over all 
@@ -105,10 +105,12 @@ def get_fulltexts(pmids_dict):
         fulltext_counts[gene] = refs_with_fulltext
     return fulltext_counts
 
+
 def num_unique_refs(pmids_dict):
     unique_refs = set([ref for gene, refs in pmids_dict.items()
                            for ref in refs])
     return len(unique_refs)
+
 
 if __name__ == '__main__':
     import plot_formatting as pf
@@ -127,7 +129,7 @@ if __name__ == '__main__':
                     ['Total refs', total_name, total_gene],
                     ['Unique refs', num_unique_refs(pmids_by_name),
                                    num_unique_refs(pmids_by_gene)]])
-    print refs_table.draw() + '\n'
+    print(refs_table.draw() + '\n')
     # Sort both reference lists by number of citations
     pmids_by_name_sorted = sorted([(gene, len(refs))
                                    for gene, refs in pmids_by_name.items()],
@@ -147,7 +149,7 @@ if __name__ == '__main__':
 
         rows.append([rank, by_name_str, by_gene_str])
     top_10_table.add_rows(rows)
-    print top_10_table.draw() + '\n'
+    print(top_10_table.draw() + '\n')
     # - Bottom 10 genes for both searches
     bottom_10_table = Texttable()
     rows = [['Rank', 'By gene name (refs)', 'By gene ID (refs)']]
@@ -159,7 +161,7 @@ if __name__ == '__main__':
                                    pmids_by_gene_sorted[-i][1])
         rows.append([rank, by_name_str, by_gene_str])
     bottom_10_table.add_rows(rows)
-    print bottom_10_table.draw() + '\n'
+    print(bottom_10_table.draw() + '\n')
 
     # Plot citation distribution sorted by name search
     fig = plt.figure(figsize=(2, 2), dpi=300)
@@ -187,14 +189,14 @@ if __name__ == '__main__':
         plt.savefig('%s_line.png' % file_labels[dict_ix], dpi=150)
         plt.savefig('%s_line.pdf' % file_labels[dict_ix])
 
-        print "Unique refs (%s): %s" % \
-                (dict_labels[dict_ix], num_unique_refs(pmids_dict))
-        print "Unique refs (%s) in PMC-OA: %s" % \
-                (dict_labels[dict_ix], num_unique_refs(pmids_dict_ft))
-        print "%.2f%% with full text" % \
+        print("Unique refs (%s): %s" % \
+                (dict_labels[dict_ix], num_unique_refs(pmids_dict)))
+        print("Unique refs (%s) in PMC-OA: %s" % \
+                (dict_labels[dict_ix], num_unique_refs(pmids_dict_ft)))
+        print("%.2f%% with full text" % \
               ((num_unique_refs(pmids_dict_ft) /
-                  float(num_unique_refs(pmids_dict))) * 100)
-        print
+                  float(num_unique_refs(pmids_dict))) * 100))
+        print()
         # Get distribution of fractions in PMC
         pmids_dict_ft_fracs = []
         for gene in pmids_dict.keys():
@@ -212,7 +214,7 @@ if __name__ == '__main__':
         plt.savefig('%s_hist.png' % file_labels[dict_ix], dpi=150)
         plt.savefig('%s_hist.pdf' % file_labels[dict_ix])
         # Expected fraction articles in PMC OA
-        print "Mean %% in PMC OA: %s" % (np.mean(fracs) * 100)
-        print "Stdev of %% in PMC OA: %s" % (np.std(fracs) * 100)
-        print
+        print("Mean %% in PMC OA: %s" % (np.mean(fracs) * 100))
+        print("Stdev of %% in PMC OA: %s" % (np.std(fracs) * 100))
+        print()
 

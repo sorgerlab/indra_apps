@@ -1,3 +1,4 @@
+import os
 import sys
 import csv
 import tqdm
@@ -60,7 +61,10 @@ def get_all_db_stmt_hgnc_ids():
 def get_ras220_hgnc_ids():
     # RAS 220 genes
     hgnc_ids = []
-    with open('../../indra/data/ras_pathway_proteins.csv', 'r') as fh:
+    import indra
+    fname = os.path.join(indra.__path__[0], 'resources',
+                         'ras_pathway_proteins.csv')
+    with open(fname, 'r') as fh:
         for row in csv.reader(fh, delimiter='\t'):
             hgnc_symbol = row[0]
             hgnc_id = hgnc_client.get_hgnc_id(hgnc_symbol)
