@@ -41,8 +41,14 @@ def load_eidos():
     return stmts
 
 
-def load_hume():
+def load_hume(cached=True):
     logger.info('Loading Hume statements')
+    pkl_name = os.path.join(data_path, 'hume', 'stmts.pkl')
+    if cached:
+        if os.path.exists(pkl_name):
+            with open(pkl_name, 'rb') as fh:
+                stmts = pickle.load(fh)
+                return stmts
     fnames = glob.glob(os.path.join(data_path, 'hume', '*.json-ld'))
 
     stmts = []
@@ -50,6 +56,8 @@ def load_hume():
         hp = hume.process_jsonld_file(fname)
         stmts += hp.statements
     logger.info(f'Loaded {len(stmts)} statements from Hume')
+    with open(pkl_name, 'wb') as fh:
+        pickle.dump(stmts, fh)
     return stmts
 
 
@@ -69,6 +77,11 @@ def load_cwms(cached=True):
         except Exception as e:
             continue
         stmts += cp.statements
+    for stmt in stmts:
+        for ev in stmt.evidence:
+            ev.annotations['provenance'] = [{'@type': 'Provenance',
+                                             'document': {
+                                                 '@id': ev.pmid}}]
     logger.info(f'Loaded {len(stmts)} statements from CWMS')
     with open(pkl_name, 'wb') as fh:
         pickle.dump(stmts, fh)
@@ -250,7 +263,6 @@ def check_event_context(events):
 
 
 def reground_stmts(stmts, ont_manager, namespace):
-    eidos_reader = EidosReader()
     # Send the latest ontology and list of concept texts to Eidos
     yaml_str = yaml.dump(ont_manager.yaml_root)
     concepts = []
@@ -312,6 +324,7 @@ def print_statistics(stmts):
 
 if __name__ == '__main__':
     wm_ont = _make_wm_ontology()
+    eidos_reader = EidosReader()
     parser = argparse.ArgumentParser()
     parser.add_argument('--spreadsheets-path', type=str)
     args = parser.parse_args()
