@@ -22,9 +22,12 @@ from indra.preassembler.hierarchy_manager import YamlHierarchyManager, \
 from indra.preassembler.make_wm_ontologies import eidos_ont_url, \
     load_yaml_from_url, rdf_graph_from_yaml, wm_ont_url
 
+import indra
+indra.logger.setLevel(logging.DEBUG)
 
 logger = logging.getLogger()
-data_path = os.path.join(os.path.expanduser('~'), 'data', 'wm', 'dart')
+#data_path = os.path.join(os.path.expanduser('~'), 'data', 'wm', 'dart')
+data_path = os.path.join('.', 'data')
 
 
 def load_eidos():
@@ -262,7 +265,7 @@ def check_event_context(events):
             assert False, ('Event context issue', event, event.evidence)
 
 
-def reground_stmts(stmts, ont_manager, namespace):
+def reground_stmts(stmts, eidos_reader, ont_manager, namespace):
     # Send the latest ontology and list of concept texts to Eidos
     yaml_str = yaml.dump(ont_manager.yaml_root)
     concepts = []
@@ -275,7 +278,7 @@ def reground_stmts(stmts, ont_manager, namespace):
     idx = 0
     for stmt in stmts:
         for concept in stmt.agent_list():
-            if groundings[idx]:
+            if groundings[idx] and namespace not in concept.db_refs:
                 concept.db_refs[namespace] = groundings[idx]
             idx += 1
     return stmts
@@ -330,15 +333,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     sofia_stmts = load_sofia()
-    sofia_stmts = reground_stmts(sofia_stmts, wm_ont, 'WM')
+    sofia_stmts = reground_stmts(sofia_stmts, eidos_reader, wm_ont, 'WM')
     # mig_stmts = load_migration_spreadsheets(args.spreadsheet_path)
     eidos_stmts = load_eidos()
     hume_stmts = load_hume()
     cwms_stmts = load_cwms()
-    cwms_stmts = reground_stmts(cwms_stmts, wm_ont, 'WM')
-    stmts = eidos_stmts + hume_stmts + sofia_stmts  # + mig_stmts
+    cwms_stmts = reground_stmts(cwms_stmts, eidos_reader, wm_ont, 'WM')
+    stmts = eidos_stmts + hume_stmts + sofia_stmts + cwms_stmts # + mig_stmts
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
-    fix_wm_ontology(stmts)
+    #fix_wm_ontology(stmts)
 
     # Deal with DART document IDs
     # This was only necessary for the back casting, not needed currently
@@ -366,21 +369,25 @@ if __name__ == '__main__':
                                                   normalize_equivalences=True,
                                                   normalize_opposites=True,
                                                   normalize_ns='WM',
-                                                  hierarchies=hierarchies)
+                                                  hierarchies=hierarchies,
+                                                  return_toplevel=False, poolsize=16)
         print_statistics(assembled_non_events)
+        logger.info('-----Finished assembly-----')
         assembled_events = ac.run_preassembly(events, belief_scorer=scorer,
                                               matches_fun=matches_fun,
                                               refinement_fun=refinement_fun,
                                               normalize_equivalences=True,
                                               normalize_opposites=True,
                                               normalize_ns='WM',
-                                              hierarchies=hierarchies)
+                                              hierarchies=hierarchies,
+                                              return_toplevel=False, poolsize=16)
+        logger.info('-----Finished assembly-----')
         print_statistics(assembled_events)
         check_event_context(assembled_events)
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus_name = 'dart-20191014-stmts-%s' % key
+        corpus_name = 'dart-20191016-stmts-%s' % key
         corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
