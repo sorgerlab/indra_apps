@@ -1,13 +1,15 @@
 import os
 import glob
 import copy
+import tqdm
 import json
 import yaml
+import pickle
 import logging
 import argparse
 import requests
 from datetime import datetime
-from indra.sources import eidos, hume, sofia
+from indra.sources import eidos, hume, sofia, cwms
 from indra.sources.eidos import migration_table_processor
 from indra.tools.live_curation import Corpus
 from indra.tools import assemble_corpus as ac
@@ -20,9 +22,12 @@ from indra.preassembler.hierarchy_manager import YamlHierarchyManager, \
 from indra.preassembler.make_wm_ontologies import eidos_ont_url, \
     load_yaml_from_url, rdf_graph_from_yaml, wm_ont_url
 
+import indra
+indra.logger.setLevel(logging.DEBUG)
 
 logger = logging.getLogger()
-data_path = os.path.join(os.path.expanduser('~'), 'data', 'wm', 'dart')
+#data_path = os.path.join(os.path.expanduser('~'), 'data', 'wm', 'dart')
+data_path = os.path.join('.', 'data')
 
 
 def load_eidos():
@@ -30,7 +35,7 @@ def load_eidos():
     fnames = glob.glob(os.path.join(data_path, 'eidos/jsonldDir/*.jsonld'))
 
     stmts = []
-    for fname in fnames:
+    for fname in tqdm.tqdm(fnames):
         doc_id = os.path.basename(fname).split('.')[0]
         ep = eidos.process_json_file(fname)
         fix_provenance(ep.statements, doc_id)
@@ -39,16 +44,50 @@ def load_eidos():
     return stmts
 
 
-def load_hume():
+def load_hume(cached=True):
     logger.info('Loading Hume statements')
-    fnames = glob.glob(os.path.join(data_path,
-                                    'hume/wm_dart.082919.v3.json-ld'))
+    pkl_name = os.path.join(data_path, 'hume', 'stmts.pkl')
+    if cached:
+        if os.path.exists(pkl_name):
+            with open(pkl_name, 'rb') as fh:
+                stmts = pickle.load(fh)
+                return stmts
+    fnames = glob.glob(os.path.join(data_path, 'hume', '*.json-ld'))
 
     stmts = []
-    for fname in fnames:
+    for fname in tqdm.tqdm(fnames):
         hp = hume.process_jsonld_file(fname)
         stmts += hp.statements
     logger.info(f'Loaded {len(stmts)} statements from Hume')
+    with open(pkl_name, 'wb') as fh:
+        pickle.dump(stmts, fh)
+    return stmts
+
+
+def load_cwms(cached=True):
+    pkl_name = os.path.join(data_path, 'cwms', 'stmts.pkl')
+    if cached:
+        if os.path.exists(pkl_name):
+            with open(pkl_name, 'rb') as fh:
+                stmts = pickle.load(fh)
+                return stmts
+    logger.info('Loading CWMS statements')
+    fnames = glob.glob(os.path.join(data_path, 'cwms', 'ekbs', '*.ekb'))
+    stmts = []
+    for fname in tqdm.tqdm(fnames):
+        try:
+            cp = cwms.process_ekb_file(fname)
+        except Exception as e:
+            continue
+        stmts += cp.statements
+    for stmt in stmts:
+        for ev in stmt.evidence:
+            ev.annotations['provenance'] = [{'@type': 'Provenance',
+                                             'document': {
+                                                 '@id': ev.pmid}}]
+    logger.info(f'Loaded {len(stmts)} statements from CWMS')
+    with open(pkl_name, 'wb') as fh:
+        pickle.dump(stmts, fh)
     return stmts
 
 
@@ -226,8 +265,7 @@ def check_event_context(events):
             assert False, ('Event context issue', event, event.evidence)
 
 
-def reground_stmts(stmts, ont_manager, namespace):
-    eidos_reader = EidosReader()
+def reground_stmts(stmts, eidos_reader, ont_manager, namespace):
     # Send the latest ontology and list of concept texts to Eidos
     yaml_str = yaml.dump(ont_manager.yaml_root)
     concepts = []
@@ -240,7 +278,7 @@ def reground_stmts(stmts, ont_manager, namespace):
     idx = 0
     for stmt in stmts:
         for concept in stmt.agent_list():
-            if groundings[idx]:
+            if groundings[idx] and namespace not in concept.db_refs:
                 concept.db_refs[namespace] = groundings[idx]
             idx += 1
     return stmts
@@ -276,7 +314,8 @@ def fix_wm_ontology(stmts):
                 concept.db_refs['WM'] = [(entry.replace(' ', '_'), score)
                                          for entry, score in
                                          concept.db_refs['WM']]
-                concept.db_refs['WM'] = [(entry.replace('boarder', 'border'), score)
+                concept.db_refs['WM'] = [(entry.replace('boarder', 'border'),
+                                          score)
                                          for entry, score in
                                          concept.db_refs['WM']]
 
@@ -287,21 +326,26 @@ def print_statistics(stmts):
 
 
 if __name__ == '__main__':
+    wm_ont = _make_wm_ontology()
+    eidos_reader = EidosReader()
     parser = argparse.ArgumentParser()
     parser.add_argument('--spreadsheets-path', type=str)
     args = parser.parse_args()
 
     sofia_stmts = load_sofia()
-    sofia_stmts = reground_stmts(sofia_stmts, _make_wm_ontology(), 'WM')
+    sofia_stmts = reground_stmts(sofia_stmts, eidos_reader, wm_ont, 'WM')
     # mig_stmts = load_migration_spreadsheets(args.spreadsheet_path)
     eidos_stmts = load_eidos()
     hume_stmts = load_hume()
-    stmts = eidos_stmts + hume_stmts + sofia_stmts  # + mig_stmts
+    cwms_stmts = load_cwms()
+    cwms_stmts = reground_stmts(cwms_stmts, eidos_reader, wm_ont, 'WM')
+    stmts = eidos_stmts + hume_stmts + sofia_stmts + cwms_stmts # + mig_stmts
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
-    fix_wm_ontology(stmts)
+    #fix_wm_ontology(stmts)
 
     # Deal with DART document IDs
-    stmts = filter_dart_date(stmts, '2018-04-30')
+    # This was only necessary for the back casting, not needed currently
+    # stmts = filter_dart_date(stmts, '2018-04-30')
 
     events = get_events(stmts)
     check_event_context(events)
@@ -325,21 +369,25 @@ if __name__ == '__main__':
                                                   normalize_equivalences=True,
                                                   normalize_opposites=True,
                                                   normalize_ns='WM',
-                                                  hierarchies=hierarchies)
+                                                  hierarchies=hierarchies,
+                                                  return_toplevel=False, poolsize=16)
         print_statistics(assembled_non_events)
+        logger.info('-----Finished assembly-----')
         assembled_events = ac.run_preassembly(events, belief_scorer=scorer,
                                               matches_fun=matches_fun,
                                               refinement_fun=refinement_fun,
                                               normalize_equivalences=True,
                                               normalize_opposites=True,
                                               normalize_ns='WM',
-                                              hierarchies=hierarchies)
+                                              hierarchies=hierarchies,
+                                              return_toplevel=False, poolsize=16)
+        logger.info('-----Finished assembly-----')
         print_statistics(assembled_events)
         check_event_context(assembled_events)
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus_name = 'dart-20191007-stmts-%s' % key
+        corpus_name = 'dart-20191016-stmts-%s' % key
         corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
