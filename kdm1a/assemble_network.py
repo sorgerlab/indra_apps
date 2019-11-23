@@ -1,5 +1,6 @@
 from indra.statements import *
 from itertools import combinations
+from indra.tools import assemble_corpus as ac
 
 
 # Fix groundings (db_refs) of Agents in Statements
