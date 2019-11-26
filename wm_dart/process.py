@@ -340,6 +340,7 @@ if __name__ == '__main__':
     cwms_stmts = load_cwms()
     cwms_stmts = reground_stmts(cwms_stmts, eidos_reader, wm_ont, 'WM')
     stmts = eidos_stmts + hume_stmts + sofia_stmts + cwms_stmts # + mig_stmts
+    stmts = ac.filter_by_type(stmts, Influence)
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
     #fix_wm_ontology(stmts)
 
@@ -370,7 +371,8 @@ if __name__ == '__main__':
                                                   normalize_opposites=True,
                                                   normalize_ns='WM',
                                                   hierarchies=hierarchies,
-                                                  return_toplevel=False, poolsize=16)
+                                                  return_toplevel=False,
+                                                  poolsize=16)
         print_statistics(assembled_non_events)
         logger.info('-----Finished assembly-----')
         assembled_events = ac.run_preassembly(events, belief_scorer=scorer,
@@ -380,7 +382,8 @@ if __name__ == '__main__':
                                               normalize_opposites=True,
                                               normalize_ns='WM',
                                               hierarchies=hierarchies,
-                                              return_toplevel=False, poolsize=16)
+                                              return_toplevel=False,
+                                              poolsize=16)
         logger.info('-----Finished assembly-----')
         print_statistics(assembled_events)
         check_event_context(assembled_events)
