@@ -130,73 +130,6 @@ def load_migration_spreadsheets(sheets_path):
         ms += migration_table_processor.process_workbook(sheet)
     return ms
 
-
-def get_all_dart_resources(url=None):
-    if not url:
-        url = 'http://localhost:9200/cdr_search/_search'
-    json_data = {"query": {"match_all": {}},
-                 "size": 10000}
-    res = requests.get(url, json=json_data)
-    if res.status_code != 200:
-        logger.warning(f'Got status code {res.status_code} while trying to '
-                       f'get dart resource files from {url}.')
-        return None
-    return res.json()
-
-
-def filter_dart_sources(cdr_json, filter_date, before=True):
-    """Filter a cdr json to only contain resources before datetime
-
-    Parameters
-    ----------
-    cdr_json : json
-        The CDR json structure to filter
-    filter_date : `py:obj:builtins:datetime.datetime`|int|str
-        A python datetime object or a date string, being either timestamp (
-        as an integer) or a datetime string of the format YYYY-MM-DD
-        (hh:mm:ss).
-    before : bool
-        If True, only keep results from before filter date. If False,
-        keep only results from after filter date (Default: True).
-
-    Return
-    ------
-    cdr_json : json
-        The CDR json structure filtered to contain only the texts created
-        before datetime
-    """
-    if cdr_json.get('hits') and cdr_json['hits'].get('hits'):
-        if isinstance(filter_date, datetime):
-            filter_dt_obj = filter_date
-        elif isinstance(filter_date, int):
-            # Assume UTC in timestamp
-            filter_dt_obj = datetime.utcfromtimestamp(filter_date)
-        elif isinstance(filter_date, str):
-            # Assume YYYY-MM-DD, and potentially hh:mm:ss as well
-            try:
-                filter_dt_obj = datetime.strptime(filter_date, '%Y-%m-%d')
-            except ValueError:
-                # Assuming a timestamp was sent as str
-                filter_dt_obj = datetime.utcfromtimestamp(int(filter_date))
-        else:
-            logger.info('Could not parse filter date. Make sure filter_date '
-                        'is either datetime object, a timestamp number or ')
-            return None
-        filtered_hits = []
-        for hit in cdr_json['hits']['hits']:
-            hit_dt_obj = datetime.utcfromtimestamp(
-                hit['_source']['extracted_metadata']['CreationDate']
-            )
-            if before and hit_dt_obj <= filter_dt_obj:
-                filtered_hits.append(hit)
-            elif not before and filter_dt_obj <= hit_dt_obj:
-                filtered_hits.append(hit)
-        cdr_json['hits']['hits'] = filtered_hits
-    else:
-        logger.info('The CDR json seems to be empty. No processing was done.')
-    return cdr_json
-
-
 def fix_provenance(stmts, doc_id):
     """Move the document identifiers in evidences."""
     for stmt in stmts:
@@ -342,11 +275,6 @@ if __name__ == '__main__':
     stmts = eidos_stmts + hume_stmts + sofia_stmts + cwms_stmts # + mig_stmts
     stmts = ac.filter_by_type(stmts, Influence)
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
-    #fix_wm_ontology(stmts)
-
-    # Deal with DART document IDs
-    # This was only necessary for the back casting, not needed currently
-    # stmts = filter_dart_date(stmts, '2018-04-30')
 
     events = get_events(stmts)
     check_event_context(events)
