@@ -26,13 +26,13 @@ import indra
 indra.logger.setLevel(logging.DEBUG)
 
 logger = logging.getLogger()
-#data_path = os.path.join(os.path.expanduser('~'), 'data', 'wm', 'dart')
-data_path = os.path.join('.', 'data')
+data_path = os.path.join(os.path.expanduser('~'), 'data', 'wm', 'dart')
+#data_path = os.path.join('.', 'data')
 
 
 def load_eidos():
     logger.info('Loading Eidos statements')
-    fnames = glob.glob(os.path.join(data_path, 'eidos/jsonldDir/*.jsonld'))
+    fnames = glob.glob(os.path.join(data_path, 'eidos/*.jsonld'))
 
     stmts = []
     for fname in tqdm.tqdm(fnames):
@@ -130,6 +130,7 @@ def load_migration_spreadsheets(sheets_path):
         ms += migration_table_processor.process_workbook(sheet)
     return ms
 
+
 def fix_provenance(stmts, doc_id):
     """Move the document identifiers in evidences."""
     for stmt in stmts:
@@ -198,7 +199,7 @@ def check_event_context(events):
             assert False, ('Event context issue', event, event.evidence)
 
 
-def reground_stmts(stmts, eidos_reader, ont_manager, namespace):
+def reground_stmts(stmts, ont_manager, namespace, eidos_reader=None):
     # Send the latest ontology and list of concept texts to Eidos
     yaml_str = yaml.dump(ont_manager.yaml_root)
     concepts = []
@@ -206,7 +207,13 @@ def reground_stmts(stmts, eidos_reader, ont_manager, namespace):
         for concept in stmt.agent_list():
             concept_txt = concept.db_refs.get('TEXT')
             concepts.append(concept_txt)
-    groundings = eidos_reader.reground_texts(concepts, yaml_str)
+    # Either use an EidosReader instance or a local web service
+    if eidos_reader:
+        groundings = eidos_reader.reground_texts(concepts, yaml_str)
+    else:
+        res = requests.post('http://localhost:6666/reground_text',
+                            json={'text': concepts, 'ont_yml': yaml_str})
+        groundings = res.json()
     # Update the corpus with new groundings
     idx = 0
     for stmt in stmts:
@@ -266,13 +273,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     sofia_stmts = load_sofia()
-    sofia_stmts = reground_stmts(sofia_stmts, eidos_reader, wm_ont, 'WM')
+    sofia_stmts = reground_stmts(sofia_stmts, wm_ont, 'WM', eidos_reader)
     # mig_stmts = load_migration_spreadsheets(args.spreadsheet_path)
     eidos_stmts = load_eidos()
     hume_stmts = load_hume()
     cwms_stmts = load_cwms()
-    cwms_stmts = reground_stmts(cwms_stmts, eidos_reader, wm_ont, 'WM')
-    stmts = eidos_stmts + hume_stmts + sofia_stmts + cwms_stmts # + mig_stmts
+    cwms_stmts = reground_stmts(cwms_stmts, wm_ont, 'WM', eidos_reader)
+    stmts = eidos_stmts + hume_stmts + sofia_stmts + cwms_stmts  # + mig_stmts
     stmts = ac.filter_by_type(stmts, Influence)
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
 
