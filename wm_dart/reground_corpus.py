@@ -1,4 +1,6 @@
 import os
+import pickle
+from indra.tools.live_curation import Corpus
 from indra.sources import eidos
 from indra.preassembler.hierarchy_manager import YamlHierarchyManager
 from indra.preassembler.make_wm_ontologies import load_yaml_from_url, \
@@ -16,20 +18,27 @@ onts = {
          'wm_with_flattened_interventions_metadata.yml'),
     'main':
         ('https://raw.githubusercontent.com/WorldModelers/Ontologies/master/'
-         'wm_metadata.yml')
+         'wm_metadata.yml'),
+    'no_regrounding':
+        ('https://raw.githubusercontent.com/WorldModelers/Ontologies/master/'
+         'wm_metadata.yml'),
 }
 
 if __name__ == '__main__':
     eidos_reader = EidosReader()
 
     for key, ont_url in onts.items():
-        stmts = load_eidos()
-        stmts = ac.filter_by_type(stmts, Influence)
-        remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
-        hm = YamlHierarchyManager(load_yaml_from_url(ont_url), rdf_graph_from_yaml,
-                                  True)
+        with open('eidos_raw.pkl', 'rb') as fh:
+            stmts = pickle.load(fh)
+        #stmts = load_eidos()
+        #stmts = ac.filter_by_type(stmts, Influence)
+        #remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN', 'PROPS',
+        #                          'INTERVENTIONS'])
+        ont_yml = load_yaml_from_url(ont_url)
+        hm = YamlHierarchyManager(ont_yml, rdf_graph_from_yaml, True)
         hierarchies = {'entity': hm}
-        stmts = reground_stmts(stmts, hm, 'WM', None)
+        if key != 'no_regrounding':
+            stmts = reground_stmts(stmts, hm, 'WM', None, True)
 
         scorer = get_eidos_scorer()
 
@@ -43,9 +52,11 @@ if __name__ == '__main__':
                                              normalize_ns='WM',
                                              hierarchies=hierarchies,
                                              return_toplevel=False,
-                                             poolsize=None)
+                                             poolsize=4)
         print('-----Finished assembly-----')
         remove_raw_grounding(assembled_stmts)
-        corpus_name = 'eidos-regrounding-20191207-%s' % key
+        corpus_name = 'eidos-regrounding-20191209-%s' % key
         fname = os.path.join('.', corpus_name + '.json')
         sj = stmts_to_json_file(assembled_stmts, fname, matches_fun=matches_fun)
+        corpus = Corpus(assembled_stmts, raw_statements=stmts)
+        corpus.s3_put(corpus_name)

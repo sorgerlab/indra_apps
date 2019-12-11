@@ -30,12 +30,12 @@ data_path = os.path.join(os.path.expanduser('~'), 'data', 'wm', 'dart')
 #data_path = os.path.join('.', 'data')
 
 
-def load_eidos():
+def load_eidos(limit=None):
     logger.info('Loading Eidos statements')
-    fnames = glob.glob(os.path.join(data_path, 'eidos/*.jsonld'))
+    fnames = glob.glob(os.path.join(data_path, 'eidos/jsonldDir/*.jsonld'))
 
     stmts = []
-    for fname in tqdm.tqdm(fnames):
+    for fname in tqdm.tqdm(fnames[:limit]):
         doc_id = os.path.basename(fname).split('.')[0]
         ep = eidos.process_json_file(fname)
         fix_provenance(ep.statements, doc_id)
@@ -199,13 +199,15 @@ def check_event_context(events):
             assert False, ('Event context issue', event, event.evidence)
 
 
-def reground_stmts(stmts, ont_manager, namespace, eidos_reader=None):
+def reground_stmts(stmts, ont_manager, namespace, eidos_reader=None,
+                   overwrite=True):
     # Send the latest ontology and list of concept texts to Eidos
     yaml_str = yaml.dump(ont_manager.yaml_root)
     concepts = []
     for stmt in stmts:
         for concept in stmt.agent_list():
-            concept_txt = concept.db_refs.get('TEXT')
+            #concept_txt = concept.db_refs.get('TEXT')
+            concept_txt = concept.name
             concepts.append(concept_txt)
     # Either use an EidosReader instance or a local web service
     if eidos_reader:
@@ -218,8 +220,14 @@ def reground_stmts(stmts, ont_manager, namespace, eidos_reader=None):
     idx = 0
     for stmt in stmts:
         for concept in stmt.agent_list():
-            if groundings[idx] and namespace not in concept.db_refs:
-                concept.db_refs[namespace] = groundings[idx]
+            if overwrite:
+                if groundings[idx]:
+                    concept.db_refs[namespace] = groundings[idx]
+                elif namespace in concept.db_refs:
+                    concept.db_refs.pop(namespace, None)
+            else:
+                if (namespace not in concept.db_refs) and groundings[idx]:
+                    concept.db_refs[namespace] = groundings[idx]
             idx += 1
     return stmts
 
@@ -263,6 +271,27 @@ def fix_wm_ontology(stmts):
 def print_statistics(stmts):
     ev_tot = sum([len(stmt.evidence) for stmt in stmts])
     logger.info(f'Total evidence {ev_tot} for {len(stmts)} statements.')
+
+
+def filter_context_date(stmts, from_date=None, to_date=None):
+    if not from_date and not to_date:
+        return stmts
+    new_stmts = []
+    for stmt in stmts:
+        if isinstance(stmt, Influence):
+            events = [stmt.subj, stmt.obj]
+        elif isinstance(stmt, Association):
+            events = stmt.members
+        else:
+            events = [stmt]
+        for event in events:
+            if event.context and event.context.time:
+                if (event.context.time.to_date < from_date) or \
+                        (event.context.time.from_date > to_date):
+                    continue
+            new_stmts.append(stmt)
+        return new_stmts
+
 
 
 if __name__ == '__main__':
