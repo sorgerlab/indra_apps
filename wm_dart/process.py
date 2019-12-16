@@ -242,28 +242,11 @@ def _make_wm_ontology():
                                 rdf_graph_from_yaml, True)
 
 
-def filter_dart_date(stmts, datestr):
-    res = get_all_dart_resources()
-    fres = filter_dart_sources(res, datestr, before=True)
-    ids = {h['_id'] for h in fres['hits']['hits']}
-
-    logger.info(f'Filtering {len(stmts)} statements with {len(ids)} DART IDs')
-    stmts = [s for s in stmts if
-             (s.evidence[0].annotations['provenance'][0]['document']['@id']
-              in ids)]
-    logger.info(f'{len(stmts)} statements after filter')
-    return stmts
-
-
 def fix_wm_ontology(stmts):
     for stmt in stmts:
         for concept in stmt.agent_list():
             if 'WM' in concept.db_refs:
                 concept.db_refs['WM'] = [(entry.replace(' ', '_'), score)
-                                         for entry, score in
-                                         concept.db_refs['WM']]
-                concept.db_refs['WM'] = [(entry.replace('boarder', 'border'),
-                                          score)
                                          for entry, score in
                                          concept.db_refs['WM']]
 
@@ -293,28 +276,26 @@ def filter_context_date(stmts, from_date=None, to_date=None):
         return new_stmts
 
 
-
 if __name__ == '__main__':
     wm_ont = _make_wm_ontology()
-    eidos_reader = EidosReader()
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--spreadsheets-path', type=str)
-    args = parser.parse_args()
 
-    sofia_stmts = load_sofia()
-    sofia_stmts = reground_stmts(sofia_stmts, wm_ont, 'WM', eidos_reader)
-    # mig_stmts = load_migration_spreadsheets(args.spreadsheet_path)
+    # Load all raw statements
     eidos_stmts = load_eidos()
     hume_stmts = load_hume()
+    sofia_stmts = load_sofia()
     cwms_stmts = load_cwms()
-    cwms_stmts = reground_stmts(cwms_stmts, wm_ont, 'WM', eidos_reader)
-    stmts = eidos_stmts + hume_stmts + sofia_stmts + cwms_stmts  # + mig_stmts
+
+    # Reground where needed
+    sofia_stmts = reground_stmts(sofia_stmts, wm_ont, 'WM')
+    cwms_stmts = reground_stmts(cwms_stmts, wm_ont, 'WM')
+
+    # Put statements together and filter to influence
+    stmts = eidos_stmts + hume_stmts + sofia_stmts + cwms_stmts
     stmts = ac.filter_by_type(stmts, Influence)
+
+    # Remove name spaces that aren't needed in CauseMos
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
 
-    events = get_events(stmts)
-    check_event_context(events)
-    non_events = get_non_events(stmts)
     scorer = get_eidos_scorer()
 
     funs = {
@@ -327,7 +308,7 @@ if __name__ == '__main__':
     hierarchies = get_wm_hierarchies()
 
     for key, (matches_fun, refinement_fun) in funs.items():
-        assembled_non_events = ac.run_preassembly(non_events,
+        assembled_stmts = ac.run_preassembly(stmts,
                                                   belief_scorer=scorer,
                                                   matches_fun=matches_fun,
                                                   refinement_fun=refinement_fun,
@@ -337,24 +318,10 @@ if __name__ == '__main__':
                                                   hierarchies=hierarchies,
                                                   return_toplevel=False,
                                                   poolsize=16)
-        print_statistics(assembled_non_events)
-        logger.info('-----Finished assembly-----')
-        assembled_events = ac.run_preassembly(events, belief_scorer=scorer,
-                                              matches_fun=matches_fun,
-                                              refinement_fun=refinement_fun,
-                                              normalize_equivalences=True,
-                                              normalize_opposites=True,
-                                              normalize_ns='WM',
-                                              hierarchies=hierarchies,
-                                              return_toplevel=False,
-                                              poolsize=16)
-        logger.info('-----Finished assembly-----')
-        print_statistics(assembled_events)
-        check_event_context(assembled_events)
-        assembled_stmts = assembled_non_events + assembled_events
+        print_statistics(assembled_stmts)
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus_name = 'dart-20191016-stmts-%s' % key
+        corpus_name = 'dart-20191216-stmts-%s' % key
         corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:

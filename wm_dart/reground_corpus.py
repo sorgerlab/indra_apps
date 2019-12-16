@@ -55,7 +55,7 @@ if __name__ == '__main__':
                                              poolsize=4)
         print('-----Finished assembly-----')
         remove_raw_grounding(assembled_stmts)
-        corpus_name = 'eidos-regrounding-20191209-%s' % key
+        corpus_name = 'eidos-regrounding-20191214-%s' % key
         fname = os.path.join('.', corpus_name + '.json')
         sj = stmts_to_json_file(assembled_stmts, fname, matches_fun=matches_fun)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
