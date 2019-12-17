@@ -276,6 +276,8 @@ def filter_context_date(stmts, from_date=None, to_date=None):
         return stmts
     new_stmts = []
     for stmt in stmts:
+        doc_id = \
+            stmt.evidence[0].annotations['provenance'][0]['document']['@id']
         if isinstance(stmt, Influence):
             events = [stmt.subj, stmt.obj]
         elif isinstance(stmt, Association):
@@ -286,13 +288,15 @@ def filter_context_date(stmts, from_date=None, to_date=None):
             if event.context and event.context.time:
                 if from_date and event.context.time.start and \
                         (event.context.time.start < from_date):
-                    logger.info('Removing date %s' % event.context.time.start)
+                    logger.info(f'Removing date {event.context.time.start}'
+                                f'({event.context.time.text}) from {doc_id}')
                     event.context.time = None
                 if to_date and event.context.time.end and \
                         (event.context.time.end > to_date):
                     event.context.time = None
-                    logger.info('Removing date %s' % event.context.time.end)
-            new_stmts.append(stmt)
+                    logger.info(f'Removing date {event.context.time.end}'
+                                f'({event.context.time.text}) from {doc_id}')
+        new_stmts.append(stmt)
     logger.info(f'{len(new_stmts)} statements after date filter')
     return new_stmts
 
