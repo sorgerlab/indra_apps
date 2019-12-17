@@ -271,6 +271,7 @@ def print_statistics(stmts):
 
 
 def filter_context_date(stmts, from_date=None, to_date=None):
+    logger.info(f'Filtering dates on {len(stmts)} statements')
     if not from_date and not to_date:
         return stmts
     new_stmts = []
@@ -292,7 +293,8 @@ def filter_context_date(stmts, from_date=None, to_date=None):
                     event.context.time = None
                     logger.info('Removing date %s' % event.context.time.end)
             new_stmts.append(stmt)
-        return new_stmts
+    logger.info(f'{len(new_stmts)} statements after date filter')
+    return new_stmts
 
 
 if __name__ == '__main__':
