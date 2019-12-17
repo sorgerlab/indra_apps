@@ -89,8 +89,10 @@ def load_cwms(cached=True):
                 return stmts
     logger.info('Loading CWMS statements')
     fnames = glob.glob(os.path.join(data_path, 'cwms', 'ekbs', '*.ekb'))
+    fnames += glob.glob(os.path.join(data_path, 'cwms', 'j_ekbs', '*.ekb'))
     stmts = []
     for fname in tqdm.tqdm(fnames):
+        logger.info(f'Processing {fname}')
         try:
             cp = cwms.process_ekb_file(fname)
         except Exception as e:
@@ -121,6 +123,7 @@ def load_sofia(cached=True):
     stmts = []
     doc_ids = set()
     for idx, fname in enumerate(fnames):
+        logger.info(f'Processing {fname}')
         sp = sofia.process_table(fname)
         if idx == 0:
             for stmt in sp.statements:
