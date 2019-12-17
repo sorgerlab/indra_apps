@@ -63,9 +63,12 @@ def load_hume(cached=True):
             with open(pkl_name, 'rb') as fh:
                 stmts = pickle.load(fh)
                 return stmts
-    fnames = glob.glob(os.path.join(data_path, 'hume', 'wm_dart.101119.121619', '*.json-ld'))
-    fnames += glob.glob(os.path.join(data_path, 'hume', 'wm_factiva.121019.121619', '*.json-ld'))
-    fnames += glob.glob(os.path.join(data_path, 'hume', 'wm_luma.121019.121619', '*.json-ld'))
+    fnames = glob.glob(os.path.join(data_path, 'hume',
+                                    'wm_dart.101119.121619', '*.json-ld'))
+    fnames += glob.glob(os.path.join(data_path, 'hume',
+                                     'wm_factiva.121019.121619', '*.json-ld'))
+    fnames += glob.glob(os.path.join(data_path, 'hume',
+                                     'wm_luma.121019.121619', '*.json-ld'))
 
     stmts = []
     for fname in tqdm.tqdm(fnames):
@@ -140,16 +143,6 @@ def load_sofia(cached=True):
     with open(pkl_name, 'wb') as fh:
         pickle.dump(stmts, fh)
     return stmts
-
-
-def load_migration_spreadsheets(sheets_path):
-    sheets_path = sheets_path if sheets_path.endswith('/') else \
-        sheets_path + '/'
-    spreadsheets = glob.glob(sheets_path + '*.xlsx')
-    ms = []
-    for sheet in spreadsheets:
-        ms += migration_table_processor.process_workbook(sheet)
-    return ms
 
 
 def fix_provenance(stmts, doc_id):
@@ -290,9 +283,16 @@ def filter_context_date(stmts, from_date=None, to_date=None):
             events = [stmt]
         for event in events:
             if event.context and event.context.time:
-                if (event.context.time.to_date < from_date) or \
-                        (event.context.time.from_date > to_date):
-                    continue
+                if from_date and event.context.time.from_date and \
+                        (event.context.time.from_date < from_date):
+                    logger.info('Removing date %s' %
+                                event.context.time.from_date)
+                    event.context.time = None
+                if to_date and event.context.time.to_date and \
+                        (event.context.time.to_date > to_date):
+                    event.context.time = None
+                    logger.info('Removing date %s' %
+                                event.context.time.to_date)
             new_stmts.append(stmt)
         return new_stmts
 
@@ -313,6 +313,8 @@ if __name__ == '__main__':
     # Put statements together and filter to influence
     stmts = eidos_stmts + hume_stmts + sofia_stmts + cwms_stmts
     stmts = ac.filter_by_type(stmts, Influence)
+    # Make sure we don't include context before 1970
+    stmts = filter_context_date(stmts, from_date=datetime(1970, 1, 1))
 
     # Remove name spaces that aren't needed in CauseMos
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
@@ -330,19 +332,19 @@ if __name__ == '__main__':
 
     for key, (matches_fun, refinement_fun) in funs.items():
         assembled_stmts = ac.run_preassembly(stmts,
-                                                  belief_scorer=scorer,
-                                                  matches_fun=matches_fun,
-                                                  refinement_fun=refinement_fun,
-                                                  normalize_equivalences=True,
-                                                  normalize_opposites=True,
-                                                  normalize_ns='WM',
-                                                  hierarchies=hierarchies,
-                                                  return_toplevel=False,
-                                                  poolsize=16)
+                                             belief_scorer=scorer,
+                                             matches_fun=matches_fun,
+                                             refinement_fun=refinement_fun,
+                                             normalize_equivalences=True,
+                                             normalize_opposites=True,
+                                             normalize_ns='WM',
+                                             hierarchies=hierarchies,
+                                             return_toplevel=False,
+                                             poolsize=16)
         print_statistics(assembled_stmts)
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus_name = 'dart-20191216-stmts-%s' % key
+        corpus_name = 'dart-20191217-stmts-%s' % key
         corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
