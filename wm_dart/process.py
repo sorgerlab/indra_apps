@@ -283,16 +283,14 @@ def filter_context_date(stmts, from_date=None, to_date=None):
             events = [stmt]
         for event in events:
             if event.context and event.context.time:
-                if from_date and event.context.time.from_date and \
-                        (event.context.time.from_date < from_date):
-                    logger.info('Removing date %s' %
-                                event.context.time.from_date)
+                if from_date and event.context.time.start and \
+                        (event.context.time.start < from_date):
+                    logger.info('Removing date %s' % event.context.time.start)
                     event.context.time = None
-                if to_date and event.context.time.to_date and \
-                        (event.context.time.to_date > to_date):
+                if to_date and event.context.time.end and \
+                        (event.context.time.end > to_date):
                     event.context.time = None
-                    logger.info('Removing date %s' %
-                                event.context.time.to_date)
+                    logger.info('Removing date %s' % event.context.time.end)
             new_stmts.append(stmt)
         return new_stmts
 
