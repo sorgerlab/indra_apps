@@ -20,18 +20,27 @@ from indra.statements import Event, Influence, Association
 from indra.preassembler.hierarchy_manager import YamlHierarchyManager, \
     get_wm_hierarchies
 from indra.preassembler.make_wm_ontologies import eidos_ont_url, \
-    load_yaml_from_url, rdf_graph_from_yaml, wm_ont_url
+    load_yaml_from_url, rdf_graph_from_yaml
 
 import indra
 indra.logger.setLevel(logging.DEBUG)
 
 logger = logging.getLogger()
-data_path = os.path.join(os.path.expanduser('~'), 'data', 'wm', 'dart')
-#data_path = os.path.join('.', 'data')
+#data_path = os.path.join(os.path.expanduser('~'), 'data', 'wm', 'dart')
+data_path = os.path.join('.', 'data')
+
+wm_ont_url = ('https://raw.githubusercontent.com/WorldModelers/'
+              'Ontologies/master/wm_with_flattened_interventions_metadata.yml')
 
 
-def load_eidos(limit=None):
+def load_eidos(limit=None, cached=True):
     logger.info('Loading Eidos statements')
+    pkl_name = os.path.join(data_path, 'eidos', 'stmts.pkl')
+    if cached:
+        if os.path.exists(pkl_name):
+            with open(pkl_name, 'rb') as fh:
+                stmts = pickle.load(fh)
+                return stmts
     fnames = glob.glob(os.path.join(data_path, 'eidos/jsonldDir/*.jsonld'))
 
     stmts = []
@@ -41,6 +50,8 @@ def load_eidos(limit=None):
         fix_provenance(ep.statements, doc_id)
         stmts += ep.statements
     logger.info(f'Loaded {len(stmts)} statements from Eidos')
+    with open(pkl_name, 'wb') as fh:
+        pickle.dump(stmts, fh)
     return stmts
 
 
@@ -52,7 +63,9 @@ def load_hume(cached=True):
             with open(pkl_name, 'rb') as fh:
                 stmts = pickle.load(fh)
                 return stmts
-    fnames = glob.glob(os.path.join(data_path, 'hume', '*.json-ld'))
+    fnames = glob.glob(os.path.join(data_path, 'hume', 'wm_dart.101119.121619', '*.json-ld'))
+    fnames += glob.glob(os.path.join(data_path, 'hume', 'wm_factiva.121019.121619', '*.json-ld'))
+    fnames += glob.glob(os.path.join(data_path, 'hume', 'wm_luma.121019.121619', '*.json-ld'))
 
     stmts = []
     for fname in tqdm.tqdm(fnames):
@@ -91,10 +104,16 @@ def load_cwms(cached=True):
     return stmts
 
 
-def load_sofia():
+def load_sofia(cached=True):
     logger.info('Loading Sofia statements')
+    pkl_name = os.path.join(data_path, 'sofia', 'stmts.pkl')
+    if cached:
+        if os.path.exists(pkl_name):
+            with open(pkl_name, 'rb') as fh:
+                stmts = pickle.load(fh)
+                return stmts
     fnames = glob.glob(os.path.join(data_path,
-                                    'sofia/Nov_*.xlsx'))
+                                    'sofia/*.xlsx'))
 
     stmts = []
     doc_ids = set()
@@ -118,6 +137,8 @@ def load_sofia():
                                              'document': {
                                                  '@id': doc_id}}]
     logger.info(f'Loaded {len(stmts)} statements from Sofia')
+    with open(pkl_name, 'wb') as fh:
+        pickle.dump(stmts, fh)
     return stmts
 
 
