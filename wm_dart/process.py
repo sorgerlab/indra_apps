@@ -8,6 +8,7 @@ import pickle
 import logging
 import argparse
 import requests
+from collections import defaultdict
 from datetime import datetime
 from indra.sources import eidos, hume, sofia, cwms
 from indra.sources.eidos import migration_table_processor
@@ -89,7 +90,7 @@ def load_cwms(cached=True):
                 return stmts
     logger.info('Loading CWMS statements')
     fnames = glob.glob(os.path.join(data_path, 'cwms', 'ekbs', '*.ekb'))
-    fnames += glob.glob(os.path.join(data_path, 'cwms', 'j_ekbs', '*.ekb'))
+    #fnames += glob.glob(os.path.join(data_path, 'cwms', 'j_ekbs', '*.ekb'))
     stmts = []
     for fname in tqdm.tqdm(fnames):
         logger.info(f'Processing {fname}')
@@ -271,6 +272,31 @@ def fix_wm_ontology(stmts):
 def print_statistics(stmts):
     ev_tot = sum([len(stmt.evidence) for stmt in stmts])
     logger.info(f'Total evidence {ev_tot} for {len(stmts)} statements.')
+
+
+def print_grounding_statistics(stmts, limit=None):
+    groundings = defaultdict(int)
+    for stmt in stmts:
+        for ag in stmt.agent_list():
+            try:
+                wm_highest = ag.db_refs['WM'][0][0]
+                groundings[wm_highest] += 1
+            except KeyError:
+                continue
+    logger.info('Grounding concepts and their counts')
+    for grounding, count in sorted(groundings.items(), key=lambda x: x[1],
+                                   reverse=True)[:limit]:
+        logger.info(f'{grounding} : {count}')
+
+
+def print_document_statistics(stmts):
+    doc_ids = set()
+    for stmt in stmts:
+        doc_id = stmt.evidence[0].annotations['provenance'][0]['document']['@id']
+        assert len(doc_id) == 32
+        doc_ids.add(doc_id)
+    logger.info(
+        f'Extracted {len(stmts)} statements from {len(doc_ids)} documents')
 
 
 def filter_context_date(stmts, from_date=None, to_date=None):
