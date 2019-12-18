@@ -58,7 +58,7 @@ def load_eidos(limit=None, cached=True):
 
 def load_hume(cached=True):
     logger.info('Loading Hume statements')
-    pkl_name = os.path.join(data_path, 'hume', 'stmts.pkl')
+    pkl_name = os.path.join(data_path, 'hume', 'stmts_influence.pkl')
     if cached:
         if os.path.exists(pkl_name):
             with open(pkl_name, 'rb') as fh:
@@ -250,9 +250,16 @@ def reground_stmts(stmts, ont_manager, namespace, eidos_reader=None,
     return stmts
 
 
-def _make_un_ontology():
-    return YamlHierarchyManager(load_yaml_from_url(eidos_ont_url),
-                                rdf_graph_from_yaml, True)
+def remove_hume_redundant(stmts, matches_fun):
+    raw_stmt_groups = defaultdict(list)
+    for stmt in stmts:
+        sh = stmt.get_hash(matches_fun=matches_fun, refresh=True)
+        eh = (stmt.evidence[0].pmid, stmt.evidence[0].text,
+              stmt.subj.concept.name, stmt.obj.concept.name,
+              stmt.evidence[0].annotations['adjectives'])
+        key = str((sh, eh))
+        raw_stmt_groups[key].append(stmt)
+    return raw_stmt_groups
 
 
 def _make_wm_ontology():
@@ -346,8 +353,8 @@ if __name__ == '__main__':
     # Put statements together and filter to influence
     stmts = eidos_stmts + hume_stmts + sofia_stmts + cwms_stmts
     stmts = ac.filter_by_type(stmts, Influence)
-    # Make sure we don't include context before 1970
-    stmts = filter_context_date(stmts, from_date=datetime(1970, 1, 1))
+    # Make sure we don't include context before 1900
+    stmts = filter_context_date(stmts, from_date=datetime(1900, 1, 1))
 
     # Remove name spaces that aren't needed in CauseMos
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
