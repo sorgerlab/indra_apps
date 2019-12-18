@@ -36,11 +36,12 @@ wm_ont_url = ('https://raw.githubusercontent.com/WorldModelers/'
 
 def load_eidos(limit=None, cached=True):
     logger.info('Loading Eidos statements')
-    pkl_name = os.path.join(data_path, 'eidos', 'stmts.pkl')
+    pkl_name = os.path.join(data_path, 'eidos', 'stmts_influence.pkl')
     if cached:
         if os.path.exists(pkl_name):
             with open(pkl_name, 'rb') as fh:
                 stmts = pickle.load(fh)
+                logger.info(f'Loaded {len(stmts)} statements')
                 return stmts
     fnames = glob.glob(os.path.join(data_path, 'eidos/jsonldDir/*.jsonld'))
 
@@ -63,6 +64,7 @@ def load_hume(cached=True):
         if os.path.exists(pkl_name):
             with open(pkl_name, 'rb') as fh:
                 stmts = pickle.load(fh)
+                logger.info(f'Loaded {len(stmts)} statements')
                 return stmts
     fnames = glob.glob(os.path.join(data_path, 'hume',
                                     'wm_dart.101119.121619', '*.json-ld'))
@@ -82,13 +84,14 @@ def load_hume(cached=True):
 
 
 def load_cwms(cached=True):
-    pkl_name = os.path.join(data_path, 'cwms', 'stmts.pkl')
+    logger.info('Loading CWMS statements')
+    pkl_name = os.path.join(data_path, 'cwms', 'stmts_regrounded.pkl')
     if cached:
         if os.path.exists(pkl_name):
             with open(pkl_name, 'rb') as fh:
                 stmts = pickle.load(fh)
+                logger.info(f'Loaded {len(stmts)} statements')
                 return stmts
-    logger.info('Loading CWMS statements')
     fnames = glob.glob(os.path.join(data_path, 'cwms', 'ekbs', '*.ekb'))
     #fnames += glob.glob(os.path.join(data_path, 'cwms', 'j_ekbs', '*.ekb'))
     stmts = []
@@ -112,11 +115,12 @@ def load_cwms(cached=True):
 
 def load_sofia(cached=True):
     logger.info('Loading Sofia statements')
-    pkl_name = os.path.join(data_path, 'sofia', 'stmts.pkl')
+    pkl_name = os.path.join(data_path, 'sofia', 'stmts_influence.pkl')
     if cached:
         if os.path.exists(pkl_name):
             with open(pkl_name, 'rb') as fh:
                 stmts = pickle.load(fh)
+                logger.info(f'Loaded {len(stmts)} statements')
                 return stmts
     fnames = glob.glob(os.path.join(data_path,
                                     'sofia/*.xlsx'))
@@ -218,7 +222,8 @@ def check_event_context(events):
 
 
 def reground_stmts(stmts, ont_manager, namespace, eidos_reader=None,
-                   overwrite=True):
+                   overwrite=True, port=6666):
+    logger.info(f'Regrounding {len(stmts)} statements')
     # Send the latest ontology and list of concept texts to Eidos
     yaml_str = yaml.dump(ont_manager.yaml_root)
     concepts = []
@@ -231,11 +236,12 @@ def reground_stmts(stmts, ont_manager, namespace, eidos_reader=None,
     if eidos_reader:
         groundings = eidos_reader.reground_texts(concepts, yaml_str)
     else:
-        res = requests.post('http://localhost:6666/reground_text',
+        res = requests.post(f'http://localhost:{port}/reground_text',
                             json={'text': concepts, 'ont_yml': yaml_str})
         groundings = res.json()
     # Update the corpus with new groundings
     idx = 0
+    logger.info(f'Setting new grounding for {len(stmts)} statements')
     for stmt in stmts:
         for concept in stmt.agent_list():
             if overwrite:
@@ -247,6 +253,7 @@ def reground_stmts(stmts, ont_manager, namespace, eidos_reader=None,
                 if (namespace not in concept.db_refs) and groundings[idx]:
                     concept.db_refs[namespace] = groundings[idx]
             idx += 1
+    logger.info(f'Finished setting new grounding for {len(stmts)} statements')
     return stmts
 
 
@@ -265,7 +272,7 @@ def remove_hume_redundant(stmts, matches_fun):
     return new_stmts
 
 
-def _make_wm_ontology():
+def make_wm_ontology():
     return YamlHierarchyManager(load_yaml_from_url(wm_ont_url),
                                 rdf_graph_from_yaml, True)
 
@@ -341,7 +348,7 @@ def filter_context_date(stmts, from_date=None, to_date=None):
 
 
 if __name__ == '__main__':
-    wm_ont = _make_wm_ontology()
+    wm_ont = make_wm_ontology()
 
     # Load all raw statements
     eidos_stmts = load_eidos()
@@ -352,7 +359,7 @@ if __name__ == '__main__':
 
     # Reground where needed
     sofia_stmts = reground_stmts(sofia_stmts, wm_ont, 'WM')
-    cwms_stmts = reground_stmts(cwms_stmts, wm_ont, 'WM')
+    # cwms_stmts = reground_stmts(cwms_stmts, wm_ont, 'WM')
 
     # Put statements together and filter to influence
     stmts = eidos_stmts + hume_stmts + sofia_stmts + cwms_stmts
@@ -389,7 +396,7 @@ if __name__ == '__main__':
         print_statistics(assembled_stmts)
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus_name = 'dart-20191217-stmts-%s' % key
+        corpus_name = 'dart-20191218-stmts-%s' % key
         corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
