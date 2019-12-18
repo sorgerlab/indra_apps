@@ -260,7 +260,7 @@ def remove_hume_redundant(stmts, matches_fun):
               stmt.evidence[0].annotations['adjectives'])
         key = str((sh, eh))
         raw_stmt_groups[key].append(stmt)
-    new_stmts = {group[0] for group in raw_stmt_groups.values()}
+    new_stmts = list({group[0] for group in raw_stmt_groups.values()})
     logger.info(f'{len(new_stmts)} statements after filter.')
     return new_stmts
 
@@ -357,6 +357,7 @@ if __name__ == '__main__':
     # Put statements together and filter to influence
     stmts = eidos_stmts + hume_stmts + sofia_stmts + cwms_stmts
     stmts = ac.filter_by_type(stmts, Influence)
+    stmts = ac.filter_grounded_only(stmts, score_threshold=0.5)
     # Make sure we don't include context before 1900
     stmts = filter_context_date(stmts, from_date=datetime(1900, 1, 1))
 
