@@ -251,6 +251,7 @@ def reground_stmts(stmts, ont_manager, namespace, eidos_reader=None,
 
 
 def remove_hume_redundant(stmts, matches_fun):
+    logger.info(f'Removing Hume redundancies on {len(stmts)} statements.')
     raw_stmt_groups = defaultdict(list)
     for stmt in stmts:
         sh = stmt.get_hash(matches_fun=matches_fun, refresh=True)
@@ -259,7 +260,9 @@ def remove_hume_redundant(stmts, matches_fun):
               stmt.evidence[0].annotations['adjectives'])
         key = str((sh, eh))
         raw_stmt_groups[key].append(stmt)
-    return raw_stmt_groups
+    new_stmts = {group[0] for group in raw_stmt_groups.values()}
+    logger.info(f'{len(new_stmts)} statements after filter.')
+    return new_stmts
 
 
 def _make_wm_ontology():
@@ -343,6 +346,7 @@ if __name__ == '__main__':
     # Load all raw statements
     eidos_stmts = load_eidos()
     hume_stmts = load_hume()
+    hume_stmts = remove_hume_redundant(hume_stmts, None)
     sofia_stmts = load_sofia()
     cwms_stmts = load_cwms()
 
