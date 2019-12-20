@@ -377,6 +377,7 @@ if __name__ == '__main__':
     # Remove name spaces that aren't needed in CauseMos
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
 
+    stmts = filter_groundings(stmts)
     stmts = ac.filter_grounded_only(stmts, score_threshold=0.5)
     # Make sure we don't include context before 1900
     stmts = filter_context_date(stmts, from_date=datetime(1900, 1, 1))
