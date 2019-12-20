@@ -348,10 +348,10 @@ def filter_context_date(stmts, from_date=None, to_date=None):
 
 
 def filter_groundings(stmts):
-`    groundings_to_exclude = []
+    groundings_to_exclude = []
     with open('groundings_to_exclude.txt', 'r') as f: 
          for line in f:
-             groundings_to_exclude.append(line[:-1])`
+             groundings_to_exclude.append(line[:-1])
     stmts = ac.filter_by_db_refs(
         stmts, 'WM', groundings_to_exclude, 'all', invert=True)
     return stmts
