@@ -364,12 +364,12 @@ if __name__ == '__main__':
     # Put statements together and filter to influence
     stmts = eidos_stmts + hume_stmts + sofia_stmts + cwms_stmts
     stmts = ac.filter_by_type(stmts, Influence)
+    # Remove name spaces that aren't needed in CauseMos
+    remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
+
     stmts = ac.filter_grounded_only(stmts, score_threshold=0.5)
     # Make sure we don't include context before 1900
     stmts = filter_context_date(stmts, from_date=datetime(1900, 1, 1))
-
-    # Remove name spaces that aren't needed in CauseMos
-    remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
 
     scorer = get_eidos_scorer()
 
