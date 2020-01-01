@@ -5,23 +5,26 @@ from indra.assemblers.tsv import TsvAssembler
 from indra.statements import stmts_from_json_file
 
 
-def filter_subj_undef(stmt):
-    if stmt.subj.delta.polarity is None and \
-            stmt.obj.delta.polarity is not None:
+def filter_subj_undef(pair):
+    stmt, ev = pair
+    if ev.annotations['subj_polarity'] is None and \
+            ev.annotations['obj_polarity'] is not None:
         return True
     return False
 
 
-def filter_obj_undef(stmt):
-    if stmt.subj.delta.polarity is not None and \
-            stmt.obj.delta.polarity is None:
+def filter_obj_undef(pair):
+    stmt, ev = pair
+    if ev.annotations['subj_polarity'] is not None and \
+            ev.annotations['obj_polarity'] is None:
         return True
     return False
 
 
-def filter_both_undef(stmt):
-    if stmt.subj.delta.polarity is None and \
-            stmt.obj.delta.polarity is None:
+def filter_both_undef(pair):
+    stmt, ev = pair
+    if ev.annotations['subj_polarity'] is None and \
+            ev.annotations['obj_polarity'] is None:
         return True
     return False
 
@@ -45,16 +48,16 @@ def get_eidos_stmt_ev_pairs(stmts):
 
 stmts = stmts_from_json_file('data/dart-20191223-stmts-grounding.json')
 stmts = ac.filter_belief(stmts, 0.8)
-subj_undef = [s for s in stmts if filter_subj_undef(s)]
-obj_undef = [s for s in stmts if filter_obj_undef(s)]
-both_undef = [s for s in stmts if filter_both_undef(s)]
+pairs = get_eidos_stmt_ev_pairs(stmts)
+subj_undef = [s for s in pairs if filter_subj_undef(s)]
+obj_undef = [s for s in pairs if filter_obj_undef(s)]
+both_undef = [s for s in pairs if filter_both_undef(s)]
 
 stmt_groups = {'SUBJ': subj_undef, 'OBJ': obj_undef, 'BOTH': both_undef}
 nsample = 500
 idx = 1
 all_fields = []
-for key, stmts in stmt_groups.items():
-    pairs = get_eidos_stmt_ev_pairs(stmts) 
+for key, pairs in stmt_groups.items():
     sample = [random.choice(pairs) for _ in range(nsample)]
     for stmt, ev in sample:
         fields = {'IDX': idx,
