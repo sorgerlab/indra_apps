@@ -355,6 +355,15 @@ def filter_groundings(stmts):
     return stmts
 
 
+def set_positive_polarities(stmts):
+    for stmt in stmts:
+        if isinstance(stmt, Influence):
+            for event in [stmt.subj, stmt.obj]:
+                if event.delta.polarity is None:
+                    event.delta.polarity = 1
+    return stmts
+
+
 if __name__ == '__main__':
     wm_ont = make_wm_ontology()
 
@@ -379,6 +388,7 @@ if __name__ == '__main__':
     stmts = ac.filter_grounded_only(stmts, score_threshold=0.5)
     # Make sure we don't include context before 1900
     stmts = filter_context_date(stmts, from_date=datetime(1900, 1, 1))
+    stmts = set_positive_polarities(stmts)
 
     scorer = get_eidos_scorer()
 
@@ -405,7 +415,7 @@ if __name__ == '__main__':
         print_statistics(assembled_stmts)
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus_name = 'dart-20191218-stmts-%s' % key
+        corpus_name = 'dart-20200102-stmts-%s' % key
         corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
