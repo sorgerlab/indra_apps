@@ -364,6 +364,53 @@ def set_positive_polarities(stmts):
     return stmts
 
 
+def filter_to_hume_interventions_only(stmts):
+    def get_grounding(ag):
+        wmg = ag.concept.db_refs['WM'][0]
+        wmg = (wmg[0].replace('wm/concept/causal_factor/', ''), wmg[1])
+        return wmg
+
+    def is_intervention(grounding):
+        return True if 'interventions' in grounding else False
+
+    logger.info(f'Filtering to Hume interventions only on {len(stmts)}'
+                f' statements.')
+    new_stmts = []
+    for stmt in stmts:
+        sg = get_grounding(stmt.subj)
+        og = get_grounding(stmt.obj)
+        if is_intervention(sg[0]) or is_intervention(og[1]):
+            if stmt.evidence[0].source_api == 'hume':
+                new_stmts.append(stmt)
+        else:
+            new_stmts.append(stmt)
+    logger.info(f'{len(new_stmts)} statements after filter.')
+    return new_stmts
+
+
+def filter_out_long_words(stmts, k=10):
+    logger.info(f'Filtering to concepts with max {k} words on {len(stmts)}'
+                f' statements.')
+
+    def get_text(ag):
+        return ag.concept.db_refs['TEXT']
+
+    def text_too_long(txt, k):
+        if len(txt.split()) > k:
+            return True
+        return False
+
+    new_stmts = []
+    for stmt in stmts:
+        st = get_text(stmt.subj)
+        ot = get_text(stmt.obj)
+        if text_too_long(st, k) or text_too_long(ot, k):
+            continue
+        new_stmts.append(stmt)
+    logger.info(f'{len(new_stmts)} statements after filter.')
+    return new_stmts
+
+
 if __name__ == '__main__':
     wm_ont = make_wm_ontology()
 
@@ -386,6 +433,8 @@ if __name__ == '__main__':
 
     stmts = filter_groundings(stmts)
     stmts = ac.filter_grounded_only(stmts, score_threshold=0.7)
+    stmts = filter_to_hume_interventions_only(stmts)
+    stmts = filter_out_long_words(stmts, 10)
     # Make sure we don't include context before 1900
     stmts = filter_context_date(stmts, from_date=datetime(1900, 1, 1))
     stmts = set_positive_polarities(stmts)
@@ -415,7 +464,7 @@ if __name__ == '__main__':
         print_statistics(assembled_stmts)
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus_name = 'dart-20200102-grounding-curation-stmts-%s' % key
+        corpus_name = 'dart-20200103-stmts-%s' % key
         corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
