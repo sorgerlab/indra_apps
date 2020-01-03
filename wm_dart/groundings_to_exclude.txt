@@ -12,6 +12,8 @@ wm/concept/causal_factor/social_and_political/criminal
 wm/concept/causal_factor/social_and_political/educational
 wm/concept/causal_factor/social_and_political/migration
 wm/concept/causal_factor/social_and_political/political
+wm/concept/causal_factor/social_and_political/population_group
+wm/concept/causal_factor/social_and_political/government
 wm/concept/causal_factor/social_and_political
 wm/concept/causal_factor/trend
 wm/concept/causal_factor
