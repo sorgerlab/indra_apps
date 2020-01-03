@@ -385,7 +385,7 @@ if __name__ == '__main__':
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
 
     stmts = filter_groundings(stmts)
-    stmts = ac.filter_grounded_only(stmts, score_threshold=0.5)
+    stmts = ac.filter_grounded_only(stmts, score_threshold=0.7)
     # Make sure we don't include context before 1900
     stmts = filter_context_date(stmts, from_date=datetime(1900, 1, 1))
     stmts = set_positive_polarities(stmts)
@@ -415,7 +415,7 @@ if __name__ == '__main__':
         print_statistics(assembled_stmts)
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus_name = 'dart-20200102-stmts-%s' % key
+        corpus_name = 'dart-20200102-grounding-curation-stmts-%s' % key
         corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
