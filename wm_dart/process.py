@@ -379,7 +379,7 @@ def filter_to_hume_interventions_only(stmts):
     for stmt in stmts:
         sg = get_grounding(stmt.subj)
         og = get_grounding(stmt.obj)
-        if is_intervention(sg[0]) or is_intervention(og[1]):
+        if is_intervention(sg[0]) or is_intervention(og[0]):
             if stmt.evidence[0].source_api == 'hume':
                 new_stmts.append(stmt)
         else:
