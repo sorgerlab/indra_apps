@@ -6,15 +6,14 @@ wm/concept/causal_factor/crisis_and_disaster
 wm/concept/causal_factor/environmental/meteorologic
 wm/concept/causal_factor/environmental
 wm/concept/causal_factor/health_and_life
-wm/concept/causal_factor/intervention
+wm/concept/causal_factor/interventions
 wm/concept/causal_factor/movement
 wm/concept/causal_factor/social_and_political/criminal
 wm/concept/causal_factor/social_and_political/educational
 wm/concept/causal_factor/social_and_political/migration
 wm/concept/causal_factor/social_and_political/political
 wm/concept/causal_factor/social_and_political
-wm/concept/causal_factor/condition/trend
-wm/concept/causal_factor/condition/
+wm/concept/causal_factor/trend
 wm/concept/causal_factor
 wm/concept/time/temporal
 wm/concept/time
