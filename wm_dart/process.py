@@ -373,6 +373,17 @@ def filter_to_hume_interventions_only(stmts):
     def is_intervention(grounding):
         return True if 'interventions' in grounding else False
 
+    def remove_top_interventions(db_refs):
+        found = None
+        for idx, (gr, score) in enumerate(db_refs['WM']):
+            if not is_intervention(gr):
+                found = idx
+        # If no non-intervention was found, we remove all WM groundings
+        if found is None:
+            db_refs.pop('WM', None)
+        else:
+            db_refs['WM'] = db_refs['WM'][idx:]
+
     logger.info(f'Filtering to Hume interventions only on {len(stmts)}'
                 f' statements.')
     new_stmts = []
@@ -382,6 +393,10 @@ def filter_to_hume_interventions_only(stmts):
         if is_intervention(sg[0]) or is_intervention(og[0]):
             if stmt.evidence[0].source_api == 'hume':
                 new_stmts.append(stmt)
+            elif is_intervention(sg[0]):
+                remove_top_interventions(stmt.subj.concept.db_refs)
+            elif is_intervention(og[0]):
+                remove_top_interventions(stmt.obj.concept.db_refs)
         else:
             new_stmts.append(stmt)
     logger.info(f'{len(new_stmts)} statements after filter.')
@@ -431,10 +446,10 @@ if __name__ == '__main__':
     # Remove name spaces that aren't needed in CauseMos
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
 
-    stmts = filter_groundings(stmts)
-    stmts = ac.filter_grounded_only(stmts, score_threshold=0.7)
     stmts = filter_to_hume_interventions_only(stmts)
     stmts = filter_out_long_words(stmts, 10)
+    stmts = filter_groundings(stmts)
+    stmts = ac.filter_grounded_only(stmts, score_threshold=0.7)
     # Make sure we don't include context before 1900
     stmts = filter_context_date(stmts, from_date=datetime(1900, 1, 1))
     stmts = set_positive_polarities(stmts)
