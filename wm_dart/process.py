@@ -366,11 +366,15 @@ def set_positive_polarities(stmts):
 
 def filter_to_hume_interventions_only(stmts):
     def get_grounding(ag):
+        if 'WM' not in ag.concept.db_refs:
+            return None
         wmg = ag.concept.db_refs['WM'][0]
         wmg = (wmg[0].replace('wm/concept/causal_factor/', ''), wmg[1])
         return wmg
 
     def is_intervention(grounding):
+        if grounding is None:
+            return False
         return True if 'interventions' in grounding else False
 
     def remove_top_interventions(db_refs):
@@ -393,10 +397,11 @@ def filter_to_hume_interventions_only(stmts):
         if is_intervention(sg[0]) or is_intervention(og[0]):
             if stmt.evidence[0].source_api == 'hume':
                 new_stmts.append(stmt)
-            elif is_intervention(sg[0]):
-                remove_top_interventions(stmt.subj.concept.db_refs)
-            elif is_intervention(og[0]):
-                remove_top_interventions(stmt.obj.concept.db_refs)
+            else:
+                if is_intervention(sg[0]):
+                    remove_top_interventions(stmt.subj.concept.db_refs)
+                if is_intervention(og[0]):
+                    remove_top_interventions(stmt.obj.concept.db_refs)
         else:
             new_stmts.append(stmt)
     logger.info(f'{len(new_stmts)} statements after filter.')
@@ -479,7 +484,7 @@ if __name__ == '__main__':
         print_statistics(assembled_stmts)
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus_name = 'dart-20200103-stmts-%s' % key
+        corpus_name = 'dart-20200104-stmts-%s' % key
         corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
