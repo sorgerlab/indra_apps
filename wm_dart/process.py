@@ -115,7 +115,7 @@ def load_cwms(cached=True):
 
 def load_sofia(cached=True):
     logger.info('Loading Sofia statements')
-    pkl_name = os.path.join(data_path, 'sofia', 'stmts_influence.pkl')
+    pkl_name = os.path.join(data_path, 'sofia', 'stmts_regrounded.pkl')
     if cached:
         if os.path.exists(pkl_name):
             with open(pkl_name, 'rb') as fh:
@@ -163,11 +163,13 @@ def fix_provenance(stmts, doc_id):
 
 def remove_namespaces(stmts, namespaces):
     """Remove unnecessary namespaces from Concept grounding."""
+    logger.info('Removing unnecessary namespaces')
     for stmt in stmts:
         for agent in stmt.agent_list():
             for namespace in namespaces:
                 if namespace in copy.deepcopy(agent.db_refs):
                     agent.db_refs.pop(namespace, None)
+    logger.info('Finished removing unnecessary namespaces')
 
 
 def remove_raw_grounding(stmts):
@@ -355,6 +357,75 @@ def filter_groundings(stmts):
     return stmts
 
 
+def set_positive_polarities(stmts):
+    for stmt in stmts:
+        if isinstance(stmt, Influence):
+            for event in [stmt.subj, stmt.obj]:
+                if event.delta.polarity is None:
+                    event.delta.polarity = 1
+    return stmts
+
+
+def filter_to_hume_interventions_only(stmts):
+    def get_grounding(ag):
+        wmg = ag.concept.db_refs['WM'][0]
+        wmg = (wmg[0].replace('wm/concept/causal_factor/', ''), wmg[1])
+        return wmg
+
+    def is_intervention(grounding):
+        return True if 'interventions' in grounding else False
+
+    def remove_top_interventions(db_refs):
+        found = None
+        for idx, (gr, score) in enumerate(db_refs['WM']):
+            if not is_intervention(gr):
+                found = idx
+                break
+        # If no non-intervention was found, we remove all WM groundings
+        if found is None:
+            logger.info('No groundings remaining, removing WM')
+            db_refs.pop('WM', None)
+        else:
+            if idx > 0:
+                logger.info('Removing first %d groundings' % idx)
+                logger.info('New top: %s' % str(db_refs['WM'][idx]))
+            db_refs['WM'] = db_refs['WM'][idx:]
+
+    logger.info('Removing intervention groundings from non-Hume statements.')
+    for stmt in stmts:
+        sg = get_grounding(stmt.subj)
+        og = get_grounding(stmt.obj)
+        if stmt.evidence[0].source_api != 'hume':
+            if is_intervention(sg[0]):
+                remove_top_interventions(stmt.subj.concept.db_refs)
+            if is_intervention(og[0]):
+                remove_top_interventions(stmt.obj.concept.db_refs)
+    return stmts
+
+
+def filter_out_long_words(stmts, k=10):
+    logger.info(f'Filtering to concepts with max {k} words on {len(stmts)}'
+                f' statements.')
+
+    def get_text(ag):
+        return ag.concept.db_refs['TEXT']
+
+    def text_too_long(txt, k):
+        if len(txt.split()) > k:
+            return True
+        return False
+
+    new_stmts = []
+    for stmt in stmts:
+        st = get_text(stmt.subj)
+        ot = get_text(stmt.obj)
+        if text_too_long(st, k) or text_too_long(ot, k):
+            continue
+        new_stmts.append(stmt)
+    logger.info(f'{len(new_stmts)} statements after filter.')
+    return new_stmts
+
+
 if __name__ == '__main__':
     wm_ont = make_wm_ontology()
 
@@ -366,7 +437,7 @@ if __name__ == '__main__':
     cwms_stmts = load_cwms()
 
     # Reground where needed
-    sofia_stmts = reground_stmts(sofia_stmts, wm_ont, 'WM')
+    # sofia_stmts = reground_stmts(sofia_stmts, wm_ont, 'WM')
     # cwms_stmts = reground_stmts(cwms_stmts, wm_ont, 'WM')
 
     # Put statements together and filter to influence
@@ -375,10 +446,16 @@ if __name__ == '__main__':
     # Remove name spaces that aren't needed in CauseMos
     remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN'])
 
+    stmts = ac.filter_grounded_only(stmts, score_threshold=0.7)
+    stmts = filter_to_hume_interventions_only(stmts)
+    # Filter again to remove any new top level groundings after
+    # previous step.
+    stmts = ac.filter_grounded_only(stmts, score_threshold=0.7)
+    stmts = filter_out_long_words(stmts, 10)
     stmts = filter_groundings(stmts)
-    stmts = ac.filter_grounded_only(stmts, score_threshold=0.5)
     # Make sure we don't include context before 1900
     stmts = filter_context_date(stmts, from_date=datetime(1900, 1, 1))
+    stmts = set_positive_polarities(stmts)
 
     scorer = get_eidos_scorer()
 
@@ -405,7 +482,7 @@ if __name__ == '__main__':
         print_statistics(assembled_stmts)
         remove_raw_grounding(assembled_stmts)
         corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus_name = 'dart-20191218-stmts-%s' % key
+        corpus_name = 'dart-20200104-stmts-%s' % key
         corpus.s3_put(corpus_name)
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
