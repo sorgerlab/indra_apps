@@ -40,7 +40,8 @@ def read_sample(fname):
         pmcids = [l.strip() for l in fh.readlines()]
         for pmcid in pmcids:
             print('Reading %s' % pmcid)
-            sp = sparser.process_nxml_file('pmc_xmls/%s.nxml' % pmcid)
+            sp = sparser.process_nxml_file('pmc_xmls/%s.nxml' % pmcid,
+                                           cleanup=False)
             if sp:
                 stmts[pmcid] = sp.statements
             else:
