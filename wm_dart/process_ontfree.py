@@ -4,7 +4,7 @@ from indra.preassembler.custom_preassembly import agent_name_stmt_type_matches
 
 
 def norm_name(name):
-    return '_'.join(sorted(list(set(name.split()))))
+    return '_'.join(sorted(list(set(name.lower().split()))))
 
 
 def make_fake_wm(stmts):
