@@ -4,13 +4,13 @@ from indra.preassembler.custom_preassembly import agent_name_stmt_type_matches
 
 
 def norm_name(name):
-    return sorted(list(set(name.split())))
+    return '_'.join(sorted(list(set(name.split()))))
 
 
 def make_fake_wm(stmts):
     for stmt in stmts:
         for agent in stmt.agent_list():
-            agent.db_refs['WM'] = [('_'.join(norm_name(agent.name)), 1.0)]
+            agent.db_refs['WM'] = [(norm_name(agent.name), 1.0)]
 
 
 def filter_name_frequency(stmts, k=2):
