@@ -1,10 +1,15 @@
 import os
+import time
 import pickle
 import random
+import logging
 import indra
 from indra.sources import sparser
 from indra.literature import id_lookup
 from indra.literature import pmc_client
+
+
+logger = logging.getLogger('sample_pmc_corpus')
 
 
 def get_pmids():
@@ -27,7 +32,7 @@ def get_sample(pmids, k, fname):
                 print('Downloading %s' % pmcid)
                 xml = pmc_client.get_xml(pmcid)
                 if xml:
-                    with open('pmc_xmls/%s.nxml' % pmcid, 'w') as xfh:
+                    with open('docs/pmc_xmls/%s.nxml' % pmcid, 'w') as xfh:
                         xfh.write(xml)
                     done += 1
                     if done == k:
@@ -36,22 +41,27 @@ def get_sample(pmids, k, fname):
 
 def read_sample(fname):
     stmts = {}
+    errors = {}
     with open(fname, 'r') as fh:
         pmcids = [l.strip() for l in fh.readlines()]
+        ts = time.time()
         for pmcid in pmcids:
             print('Reading %s' % pmcid)
-            sp = sparser.process_nxml_file('pmc_xmls/%s.nxml' % pmcid,
+            sp = sparser.process_nxml_file('docs/pmc_xmls/%s.nxml' % pmcid,
                                            cleanup=False)
             if sp:
                 stmts[pmcid] = sp.statements
+                errors[pmcid] = sp.extraction_errors
             else:
                 stmts[pmcid] = None
-    return stmts
+        te = time.time()
+        logger.info('Took %.2f seconds' % (te-ts))
+    return stmts, errors
 
 
 if __name__ == '__main__':
-    pmids = get_pmids()
-    get_sample(pmids, 500, 'pmcids_oa_xml_sample.txt')
-    stmts = read_sample('pmcids_oa_xml_sample.txt')
-    with open('pmcids_oa_xml_sample.pkl', 'wb') as fh:
-        pickle.dump(fh, stmts)
+    #pmids = get_pmids()
+    #get_sample(pmids, 500, 'pmcids_oa_xml_sample.txt')
+    stmts, errors = read_sample('pmcids_oa_xml_sample.txt')
+    with open('pmcids_oa_xml_sample_v3.pkl', 'wb') as fh:
+        pickle.dump(fh, [stmts, errors])
