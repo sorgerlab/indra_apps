@@ -58,5 +58,5 @@ if __name__ == '__main__':
         corpus_name = 'eidos-regrounding-20191214-%s' % key
         fname = os.path.join('.', corpus_name + '.json')
         sj = stmts_to_json_file(assembled_stmts, fname, matches_fun=matches_fun)
-        corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus.s3_put(corpus_name)
+        corpus = Corpus(corpus_name, assembled_stmts, raw_statements=stmts)
+        corpus.s3_put()

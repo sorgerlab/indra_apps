@@ -39,6 +39,6 @@ if __name__ == '__main__':
     stmts = filter_name_frequency(stmts, k=2)
     assembled_stmts = ac.run_preassembly(stmts,
                                          matches_fun=agent_name_stmt_type_matches)
-    corpus = Corpus(assembled_stmts, raw_statements=stmts)
     corpus_name = 'dart-20200127-ontfree-2'
+    corpus = Corpus(corpus_name, assembled_stmts, raw_statements=stmts)
     corpus.s3_put(corpus_name)

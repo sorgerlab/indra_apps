@@ -386,9 +386,9 @@ if __name__ == '__main__':
         check_event_context(assembled_events)
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
-        corpus = Corpus(assembled_stmts, raw_statements=stmts)
         corpus_name = 'dart-20191016-stmts-%s' % key
-        corpus.s3_put(corpus_name)
+        corpus = Corpus(corpus_name, assembled_stmts, raw_statements=stmts)
+        corpus.s3_put()
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
         with open(os.path.join(data_path, corpus_name + '.json'), 'w') as fh:
             json.dump(sj, fh, indent=1)

@@ -118,8 +118,9 @@ if __name__ == '__main__':
         assembled_stmts = assembled_non_events + assembled_events
         remove_raw_grounding(assembled_stmts)
         fix_provenance(assembled_stmts)
-        corpus = Corpus(assembled_stmts, raw_statements=stmts)
-        corpus.s3_put('mitre500-20190721-stmts-%s' % key)
+        corpus_id='mitre500-20190721-stmts-%s' % key
+        corpus = Corpus(corpus_id, assembled_stmts, raw_statements=stmts)
+        corpus.s3_put()
         sj = stmts_to_json(assembled_stmts, matches_fun=matches_fun)
-        with open('mitre500-20190721-stmts-%s.json' % key, 'w') as fh:
+        with open('%s.json' % corpus_id, 'w') as fh:
             json.dump(sj, fh, indent=1)
