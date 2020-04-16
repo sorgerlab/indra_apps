@@ -63,5 +63,6 @@ if __name__ == '__main__':
     #pmids = get_pmids()
     #get_sample(pmids, 500, 'pmcids_oa_xml_sample.txt')
     stmts, errors = read_sample('pmcids_oa_xml_sample.txt')
-    with open('pmcids_oa_xml_sample_v3.pkl', 'wb') as fh:
-        pickle.dump(fh, [stmts, errors])
+    with open('pmcids_oa_xml_sample_v4.pkl', 'wb') as fh:
+        pickle.dump([stmts, errors], fh)
+
