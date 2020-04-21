@@ -1,0 +1,11 @@
+[
+ {
+  "function": "reground_stmts",
+  "args": [
+   {
+    "function": "make_wm_ontology"
+   },
+   "WM"
+  ]
+ }
+]

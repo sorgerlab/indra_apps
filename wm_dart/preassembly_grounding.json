@@ -1,0 +1,21 @@
+[
+ {
+  "function": "run_preassembly",
+  "kwargs": {
+   "belief_scorer": {
+    "function": "get_eidos_scorer"
+   },
+   "normalize_equivalences": true,
+   "normalize_opposites": true,
+   "normalize_ns": "WM",
+   "hierarchies": {
+    "function": "get_wm_hierarchies"
+   },
+   "return_toplevel": false,
+   "poolsize": 16
+  }
+ },
+ {
+  "function": "remove_raw_grounding"
+ }
+]

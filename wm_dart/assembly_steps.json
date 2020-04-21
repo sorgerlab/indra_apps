@@ -1,0 +1,60 @@
+[
+ {
+  "function": "filter_by_type",
+  "args": [
+   {
+    "stmt_type": "Influence"
+   }
+  ]
+ },
+ {
+  "function": "remove_namespaces",
+  "args": [
+   [
+    "WHO",
+    "MITRE12",
+    "UN"
+   ]
+  ]
+ },
+ {
+  "function": "filter_grounded_only",
+  "kwargs": {
+   "score_threshold": 0.7
+  }
+ },
+ {
+  "function": "filter_to_hume_interventions_only"
+ },
+ {
+  "function": "filter_grounded_only",
+  "kwargs": {
+   "score_threshold": 0.7
+  }
+ },
+ {
+  "function": "filter_out_long_words",
+  "args": [
+   10
+  ]
+ },
+ {
+  "function": "filter_groundings"
+ },
+ {
+  "function": "filter_context_date",
+  "kwargs": {
+   "from_date": {
+    "function": "datetime",
+    "args": [
+     1900,
+     1,
+     1
+    ]
+   }
+  }
+ },
+ {
+  "function": "set_positive_polarities"
+ }
+]
