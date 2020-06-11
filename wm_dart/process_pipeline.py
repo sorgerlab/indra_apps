@@ -6,22 +6,14 @@ import json
 import yaml
 import pickle
 import logging
-import argparse
 import requests
 from collections import defaultdict
 from datetime import datetime
 from indra.sources import eidos, hume, sofia, cwms
-from indra.sources.eidos import migration_table_processor
 from indra.tools.live_curation import Corpus
 from indra.tools import assemble_corpus as ac
-from indra.sources.eidos.reader import EidosReader
-from indra.belief.wm_scorer import get_eidos_scorer
 from indra.preassembler.custom_preassembly import *
 from indra.statements import Event, Influence, Association
-from indra.preassembler.hierarchy_manager import YamlHierarchyManager, \
-    get_wm_hierarchies
-from indra.preassembler.make_wm_ontologies import eidos_ont_url, \
-    load_yaml_from_url, rdf_graph_from_yaml
 from indra.pipeline import AssemblyPipeline, register_pipeline
 
 import indra
@@ -286,12 +278,6 @@ def remove_hume_redundant(stmts, matches_fun):
     new_stmts = list({group[0] for group in raw_stmt_groups.values()})
     logger.info(f'{len(new_stmts)} statements after filter.')
     return new_stmts
-
-
-@register_pipeline
-def make_wm_ontology():
-    return YamlHierarchyManager(load_yaml_from_url(wm_ont_url),
-                                rdf_graph_from_yaml, True)
 
 
 @register_pipeline

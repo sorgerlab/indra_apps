@@ -1,3 +1,4 @@
+# INDRA 1.17 is required to run this script
 import os
 import glob
 import copy
