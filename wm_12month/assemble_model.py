@@ -1,3 +1,4 @@
+# This script has to be run using INDRA 1.17
 import os
 import glob
 import json

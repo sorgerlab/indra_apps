@@ -8,7 +8,7 @@ from read_phosphosite import read_phosphosite
 from indra.statements import Agent, Dephosphorylation, Phosphorylation, \
                              IncreaseAmount, DecreaseAmount
 from indra.preassembler import Preassembler
-from indra.preassembler.hierarchy_manager import hierarchies
+from indra.ontology.bio import bio_ontology
 
 drug_col = 'Sample Description (drug abbre. | dose or time-point)'
 
@@ -29,7 +29,7 @@ def preassemble_stmts(stmts):
     for drug_name, ab_dict in stmts.items():
         pa_ab_dict = {}
         for ab_name, stmt_list in ab_dict.items():
-            pa = Preassembler(hierarchies)
+            pa = Preassembler(bio_ontology)
             pa.add_statements(stmt_list)
             pa.combine_duplicates()
             pa_ab_dict[ab_name] = pa.unique_stmts
