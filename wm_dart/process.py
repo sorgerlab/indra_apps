@@ -6,7 +6,6 @@ import json
 import yaml
 import pickle
 import logging
-import argparse
 import requests
 from collections import defaultdict
 from datetime import datetime
@@ -14,14 +13,10 @@ from indra.sources import eidos, hume, sofia, cwms
 from indra.sources.eidos import migration_table_processor
 from indra.tools.live_curation import Corpus
 from indra.tools import assemble_corpus as ac
-from indra.sources.eidos.reader import EidosReader
 from indra.belief.wm_scorer import get_eidos_scorer
 from indra.preassembler.custom_preassembly import *
 from indra.statements import Event, Influence, Association
-from indra.preassembler.hierarchy_manager import YamlHierarchyManager, \
-    get_wm_hierarchies
-from indra.preassembler.make_wm_ontologies import eidos_ont_url, \
-    load_yaml_from_url, rdf_graph_from_yaml
+from indra.ontology.world.ontology import load_world_ontology
 
 import indra
 indra.logger.setLevel(logging.DEBUG)
@@ -274,11 +269,6 @@ def remove_hume_redundant(stmts, matches_fun):
     return new_stmts
 
 
-def make_wm_ontology():
-    return YamlHierarchyManager(load_yaml_from_url(wm_ont_url),
-                                rdf_graph_from_yaml, True)
-
-
 def fix_wm_ontology(stmts):
     for stmt in stmts:
         for concept in stmt.agent_list():
@@ -427,8 +417,7 @@ def filter_out_long_words(stmts, k=10):
 
 
 if __name__ == '__main__':
-    wm_ont = make_wm_ontology()
-
+    world_ontology = load_world_ontology(wm_ont_url)
     # Load all raw statements
     eidos_stmts = load_eidos()
     hume_stmts = load_hume()
@@ -437,8 +426,10 @@ if __name__ == '__main__':
     cwms_stmts = load_cwms()
 
     # Reground where needed
-    # sofia_stmts = reground_stmts(sofia_stmts, wm_ont, 'WM')
-    # cwms_stmts = reground_stmts(cwms_stmts, wm_ont, 'WM')
+    # sofia_stmts = reground_stmts(sofia_stmts, world_ontology,
+    #                              'WM')
+    # cwms_stmts = reground_stmts(cwms_stmts, world_ontology,
+    #                             'WM')
 
     # Put statements together and filter to influence
     stmts = eidos_stmts + hume_stmts + sofia_stmts + cwms_stmts
@@ -466,8 +457,6 @@ if __name__ == '__main__':
                               location_time_refinement)
     }
 
-    hierarchies = get_wm_hierarchies()
-
     for key, (matches_fun, refinement_fun) in funs.items():
         assembled_stmts = ac.run_preassembly(stmts,
                                              belief_scorer=scorer,
@@ -476,7 +465,7 @@ if __name__ == '__main__':
                                              normalize_equivalences=True,
                                              normalize_opposites=True,
                                              normalize_ns='WM',
-                                             hierarchies=hierarchies,
+                                             ontology=world_ontology,
                                              return_toplevel=False,
                                              poolsize=16)
         print_statistics(assembled_stmts)

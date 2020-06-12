@@ -1,12 +1,12 @@
 import csv
 from collections import defaultdict, Counter
 import networkx as nx
-from indra.db import client
+from indra_db import client
 from indra.databases import hgnc_client
 from indra.statements import *
 from indra.tools import assemble_corpus as ac
 from indra.tools.expand_families import Expander
-from indra.preassembler.hierarchy_manager import hierarchies
+from indra.ontology.bio import bio_ontology
 from paths_graph import PathsGraph, CombinedPathsGraph, get_reachable_sets
 
 
@@ -133,7 +133,6 @@ if __name__ == '__main__':
 
     regulons_from_stmts(phos_stmts, '../work/kinase_regulons.gmt')
 
-    import sys; sys.exit()
     #kinases = get_kinase_counts(phos_stmts)
 
     target_list = get_stmt_subject_object(phos_stmts, 'SUBJECT')
@@ -141,7 +140,7 @@ if __name__ == '__main__':
     # Get all Tubulin child nodes as the source list
     source_list = [('FPLX', 'Tubulin')]
     tubulin_ag = Agent('Tubulin', db_refs={'FPLX': 'Tubulin'})
-    ex = Expander(hierarchies)
+    ex = Expander(bio_ontology)
     for ag_ns, ag_id in ex.get_children(tubulin_ag, ns_filter=None):
         #if ag_ns == 'HGNC':
         #    ag_id = hgnc_client.get_hgnc_id(ag_id)

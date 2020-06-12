@@ -8,8 +8,8 @@
    "normalize_equivalences": true,
    "normalize_opposites": true,
    "normalize_ns": "WM",
-   "hierarchies": {
-    "function": "get_wm_hierarchies"
+   "ontology": {
+    "function": "load_world_ontology"
    },
    "return_toplevel": false,
    "poolsize": 16

@@ -1,12 +1,11 @@
-import pickle
 import numpy as np
 from matplotlib import pyplot as plt
-from indra.db.query_db_stmts import *
+from indra_db.query_db_stmts import *
 from indra.util import plot_formatting as pf
 from indra.tools import assemble_corpus as ac
 from indra.belief import BeliefEngine
 from indra.preassembler import Preassembler
-from indra.preassembler.hierarchy_manager import hierarchies
+from indra.ontology.bio import bio_ontology
 
 # Get all the statements
 stmts = get_statements()
@@ -55,7 +54,7 @@ for pmid_sample_size, num_trials in sample_sizes_trials:
         trial_results.append(len(trial_stmts))
         #
         be = BeliefEngine()
-        pa = Preassembler(hierarchies, trial_stmts)
+        pa = Preassembler(bio_ontology, trial_stmts)
         trial_stmts_top = pa.combine_related(poolsize=16, return_toplevel=True)
         trial_stmts_uniq = pa.unique_stmts
         trial_stmts_filt = ac.filter_belief(trial_stmts_top, 0.90)

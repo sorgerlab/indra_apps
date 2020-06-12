@@ -3,7 +3,7 @@
   "function": "reground_stmts",
   "args": [
    {
-    "function": "make_wm_ontology"
+    "function": "load_world_ontology"
    },
    "WM"
   ]

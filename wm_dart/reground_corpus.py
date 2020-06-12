@@ -1,16 +1,12 @@
 import os
 import pickle
 from indra.tools.live_curation import Corpus
-from indra.sources import eidos
-from indra.preassembler.hierarchy_manager import YamlHierarchyManager
-from indra.preassembler.make_wm_ontologies import load_yaml_from_url, \
-    rdf_graph_from_yaml
+from indra.ontology.world import load_world_ontology
 import indra.tools.assemble_corpus as ac
-from indra.statements import Influence, stmts_to_json_file
+from indra.statements import stmts_to_json_file
 from indra.belief.wm_scorer import get_eidos_scorer
 from indra.sources.eidos.reader import EidosReader
-from process import reground_stmts, load_eidos, remove_namespaces, \
-    remove_raw_grounding
+from .process import reground_stmts, remove_raw_grounding
 
 onts = {
     'flattened_interventions':
@@ -34,11 +30,9 @@ if __name__ == '__main__':
         #stmts = ac.filter_by_type(stmts, Influence)
         #remove_namespaces(stmts, ['WHO', 'MITRE12', 'UN', 'PROPS',
         #                          'INTERVENTIONS'])
-        ont_yml = load_yaml_from_url(ont_url)
-        hm = YamlHierarchyManager(ont_yml, rdf_graph_from_yaml, True)
-        hierarchies = {'entity': hm}
+        ont = load_world_ontology(ont_url)
         if key != 'no_regrounding':
-            stmts = reground_stmts(stmts, hm, 'WM', None, True)
+            stmts = reground_stmts(stmts, ont, 'WM', None, True)
 
         scorer = get_eidos_scorer()
 
@@ -50,7 +44,7 @@ if __name__ == '__main__':
                                              normalize_equivalences=True,
                                              normalize_opposites=True,
                                              normalize_ns='WM',
-                                             hierarchies=hierarchies,
+                                             ontology=ont,
                                              return_toplevel=False,
                                              poolsize=4)
         print('-----Finished assembly-----')
