@@ -9,7 +9,7 @@ from indra.statements import stmts_from_json_file
 stmts_flat = stmts_from_json_file('statements.json', format='jsonl')
 
 # does not exist yet!
-stmts_comp = stmts_from_json_file('statements_comp.json', format='jsonl')
+#stmts_comp = stmts_from_json_file('statements_comp.json', format='jsonl')
 
 def make_comparison_sheet(flat_statements, comp_statements):
     header = ["Entity Text", "Grounding", "Confidence"]
@@ -30,7 +30,7 @@ def make_comparison_sheet(flat_statements, comp_statements):
                 comp_obj_text = get_entity_text(statement.obj)
                 (comp_obj_groundings, comp_obj_scores) = get_compositional_groundings(statement.obj)
 
-                if (flat_subj_text == comp_subj_text && flat_obj_text == comp_obj_text):
+                if (flat_subj_text == comp_subj_text & flat_obj_text == comp_obj_text):
                     flat_subj_line = [flat_subj_text, flat_subj_grounding[0], flat_subj_grounding[1]]
                     comp_subj_line = [comp_subj_text, comp_subj_groundings, comp_subj_scores]
                     flat_obj_line = [flat_obj_text, flat_obj_grounding[0], flat_obj_grounding[1]]
@@ -82,4 +82,25 @@ def get_compositional_groundings(event):
     return (terms, scores)
 
 
-make_comparison_sheet(stmts_flat)
+def get_CAG_nodes(statements):
+    """Returns number of nodes in CAG.
+
+    Loops through list of statements, counts unique subject/object nodes. Does
+    not distinguish if a node is the subject or object! Only counts it once.
+    Uses the node TEXT to match, not just the subj/obj, since those can show
+    the same Event but be unequal.
+    """
+    nodes = []
+    for statement in statements:
+        subj = statement.subj.to_json()["concept"]["db_refs"]["TEXT"]
+        obj = statement.obj.to_json()["concept"]["db_refs"]["TEXT"]
+        if subj not in nodes:
+            nodes.append(subj)
+        if obj not in nodes:
+            nodes.append(obj)
+    print(len(nodes))
+    return nodes
+
+
+get_CAG_nodes(stmts_flat)
+#make_comparison_sheet(stmts_flat)
