@@ -55,22 +55,19 @@ def obj_from_evidence(evidence) -> str:
 
 def get_entity_text(event):
     """Returns the text of the entity (subject or object)."""
-    db_refs = event.to_json()["concept"]["db_refs"]
-    entity_text = db_refs["TEXT"]
+    entity_text = event.concept.db_refs["TEXT"]
     return entity_text
 
 
 def get_groundings(event):
     """Returns a list of (grounding, confidence) tuples from an event."""
-    db_refs = event.to_json()["concept"]["db_refs"]
-    groundings = db_refs["WM"]
+    groundings = event.concept.db_refs["WM"]
     return groundings
 
 
 def get_compositional_groundings(event):
     """Returns a list of (grounding, confidence) tuples from an event."""
-    db_refs = event.to_json()["concept"]["db_refs"]
-    grounding = db_refs["WM"][0]
+    grounding = event.concept.db_refs["WM"][0]
     terms = []
     scores = []
     for item in grounding:
@@ -92,15 +89,31 @@ def get_CAG_nodes(statements):
     """
     nodes = []
     for statement in statements:
-        subj = statement.subj.to_json()["concept"]["db_refs"]["TEXT"]
-        obj = statement.obj.to_json()["concept"]["db_refs"]["TEXT"]
+        subj = statement.subj.concept.db_refs["TEXT"]
+        obj = statement.obj.concept.db_refs["TEXT"]
         if subj not in nodes:
             nodes.append(subj)
         if obj not in nodes:
             nodes.append(obj)
-    print(len(nodes))
+    print(f"{len(nodes)} unique nodes in the CAG.")
     return nodes
 
 
+def get_self_loops(statements):
+    """Gets list/number of nodes that point to themselves in the CAG.
+
+    Finds nodes where the subject and object top GROUNDING is the same.
+    """
+    self_loops = []
+    for statement in statements:
+        subj = statement.subj.concept.db_refs["WM"][0]
+        obj = statement.obj.concept.db_refs["WM"][0]
+        if subj == obj:
+            self_loops.append(statement)
+    print(f"{len(self_loops)} self-loops out of {len(statements)} statements.")
+
+
+
 get_CAG_nodes(stmts_flat)
+get_self_loops(stmts_flat)
 #make_comparison_sheet(stmts_flat)
