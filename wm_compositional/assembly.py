@@ -5,18 +5,21 @@ from indra.sources import eidos, hume, cwms, sofia
 from indra.statements import Influence, Event
 from indra.tools import assemble_corpus as ac
 from indra.ontology.world.ontology import WorldOntology
+from indra.pipeline import register_pipeline, AssemblyPipeline
+from indra_wm_service.assembly.operations import *
 from indra_wm_service.assembly.dart import process_reader_outputs
 
 
-flat_versions = {'cwms': '2020.08.28',
-                 'hume': 'r2020_08_19_4',
-                 'sofia': '1.1',
-                 'eidos': '1.0.3'}
-
-compositional_versions = {'cwms': '2020.09.03',
-                          'hume': 'r2020_09_01',
-                          'sofia': '1.1',
-                          'eidos': '1.0.4'}
+reader_versions = {'flat':
+                       {'cwms': '2020.08.28',
+                        'hume': 'r2020_08_19_4',
+                        'sofia': '1.1',
+                        'eidos': '1.0.3'},
+                   'compositional':
+                       {'cwms': '2020.09.03',
+                        'hume': 'r2020_09_01',
+                        'sofia': '1.1',
+                        'eidos': '1.0.4'}}
 
 
 ont_url = 'https://github.com/WorldModelers/Ontologies/blob/'\
@@ -24,14 +27,16 @@ ont_url = 'https://github.com/WorldModelers/Ontologies/blob/'\
           'CompositionalOntology_v2.1_metadata.yml'
 
 
+@register_pipeline
 def concept_matches_compositional(concept):
     wm = concept.db_refs.get('WM')
     if not wm:
-        return None
+        return concept.name
     wm_top = tuple(entry[0] if entry else None for entry in wm[0])
     return wm_top
 
 
+@register_pipeline
 def matches_compositional(stmt):
     if isinstance(stmt, Influence):
         key = (stmt.__class__.__name__,
@@ -55,29 +60,32 @@ def make_display_name(comp_grounding):
 
 
 if __name__ == '__main__':
-    #fnames = glob.glob('/Users/ben/data/dart/eidos/1.0.4/*')
-    fnames = glob.glob('/Users/ben/data/dart/hume/r2020_09_01/*')
-    fnames = glob.glob('/Users/ben/data/dart/cwms/2020.09.03/*')
+    readers = ['eidos']
+    grounding = 'flat'
     stmts = []
-    for fname in tqdm.tqdm(fnames):
-        #ep = hume.process_jsonld_file(fname)
-        ep = cwms.process_ekb_file(fname)
-        doc_id = os.path.basename(fname)
-        # TODO: fix document ID in provenance?
-        for stmt in ep.statements:
-            for ev in stmt.evidence:
-                if 'provenance' not in ev.annotations:
-                    ev.annotations['provenance'] = [
-                        {'document': {'@id': doc_id}}]
-                else:
-                    prov = ev.annotations['provenance'][0]['document']
-                    prov['@id'] = doc_id
-        stmts += ep.statements
+    for reader in readers:
+        version = reader_versions[grounding][reader]
+        fnames = glob.glob('/Users/ben/data/dart/%s/%s/*' % (reader, version))
+        print('Found %d files for %s' % (len(fnames), reader))
+        for fname in tqdm.tqdm(fnames):
+            if reader == 'eidos':
+                pp = eidos.process_json_file(fname)
+            elif reader == 'hume':
+                pp = hume.process_jsonld_file(fname)
+            elif reader == 'cwms':
+                pp = cwms.process_ekb_file(fname)
+            elif reader == 'sofia':
+                pp = sofia.process_json_file(fname)
+            doc_id = os.path.basename(fname)[:32]
+            for stmt in pp.statements:
+                for ev in stmt.evidence:
+                    if 'provenance' not in ev.annotations:
+                        ev.annotations['provenance'] = [
+                            {'document': {'@id': doc_id}}]
+                    else:
+                        prov = ev.annotations['provenance'][0]['document']
+                        prov['@id'] = doc_id
+            stmts += pp.statements
 
-    stmts = ac.filter_by_type(stmts, Influence)
-    assembled_stmts = \
-        ac.run_preassembly(stmts, matches_fun=matches_compositional,
-                           run_refinement=False)
-
-    #ont = WorldOntology(ont_url)
-    #ont.initialize()
+    ap = AssemblyPipeline.from_json_file('assembly_%s.json' % grounding)
+    assembled_stmts = ap.run(stmts)
