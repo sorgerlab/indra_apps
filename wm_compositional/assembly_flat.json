@@ -1,0 +1,78 @@
+[
+  {
+    "function": "get_expanded_events_influences"
+  },
+  {
+    "function": "remove_namespaces",
+    "args": [
+      [
+        "WHO",
+        "MITRE12",
+        "UN"
+      ]
+    ]
+  },
+  {
+    "function": "reground_stmts",
+    "args": [
+      {
+        "function": "load_world_ontology"
+      },
+      "WM"
+    ]
+  },
+  {
+    "function": "filter_grounded_only",
+    "kwargs": {
+      "score_threshold": 0.6
+    }
+  },
+  {
+    "function": "filter_out_long_words",
+    "args": [
+      10
+    ]
+  },
+  {
+    "function": "filter_groundings"
+  },
+  {
+    "function": "filter_context_date",
+    "kwargs": {
+      "from_date": {
+        "function": "datetime",
+        "args": [
+          1900,
+          1,
+          1
+        ]
+      }
+    }
+  },
+  {
+    "function": "set_positive_polarities"
+  },
+  {
+    "function": "run_preassembly",
+    "kwargs": {
+      "belief_scorer": {
+        "function": "get_eidos_scorer"
+      },
+      "normalize_equivalences": true,
+      "normalize_opposites": true,
+      "normalize_ns": "WM",
+      "ontology": {
+        "function": "load_world_ontology",
+        "kwargs": {
+          "url": "https://raw.githubusercontent.com/WorldModelers/Ontologies/master/CompositionalOntology_v2.1_metadata.yml"
+        }
+      },
+      "return_toplevel": false,
+      "poolsize": null,
+      "run_refinement": false
+    }
+  },
+  {
+    "function": "remove_raw_grounding"
+  }
+]

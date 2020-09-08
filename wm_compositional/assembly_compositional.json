@@ -1,0 +1,70 @@
+[
+  {
+    "function": "get_expanded_events_influences"
+  },
+  {
+    "function": "remove_namespaces",
+    "args": [
+      [
+        "WHO",
+        "MITRE12",
+        "UN"
+      ]
+    ]
+  },
+  {
+    "function": "compositional_grounding_filter",
+    "kwargs": {
+      "score_threshold": 0.6
+    }
+  },
+  {
+    "function": "filter_out_long_words",
+    "args": [
+      10
+    ]
+  },
+  {
+    "function": "filter_groundings"
+  },
+  {
+    "function": "filter_context_date",
+    "kwargs": {
+      "from_date": {
+        "function": "datetime",
+        "args": [
+          1900,
+          1,
+          1
+        ]
+      }
+    }
+  },
+  {
+    "function": "set_positive_polarities"
+  },
+  {
+    "function": "run_preassembly",
+    "kwargs": {
+      "belief_scorer": {
+        "function": "get_eidos_scorer"
+      },
+      "matches_fun": {
+        "function": "location_matches",
+        "no_run": true
+      },
+      "normalize_equivalences": true,
+      "normalize_opposites": true,
+      "normalize_ns": "WM",
+      "ontology": {
+        "function": "load_world_ontology"
+      },
+      "return_toplevel": false,
+      "poolsize": null,
+      "run_refinement": false
+    }
+  },
+  {
+    "function": "remove_raw_grounding"
+  }
+]
