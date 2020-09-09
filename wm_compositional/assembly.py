@@ -60,12 +60,15 @@ def make_display_name(comp_grounding):
 
 
 if __name__ == '__main__':
-    readers = ['eidos']
+    readers = ['eidos', 'sofia', 'hume', 'cwms']
     grounding = 'flat'
     stmts = []
     for reader in readers:
         version = reader_versions[grounding][reader]
-        fnames = glob.glob('/Users/ben/data/dart/%s/%s/*' % (reader, version))
+        pattern = '*' if reader != 'sofia' \
+            else ('*_new' if grounding == 'compositional' else '*_old')
+        fnames = glob.glob('/Users/ben/data/dart/%s/%s/%s' % (reader, version,
+                                                              pattern))
         print('Found %d files for %s' % (len(fnames), reader))
         for fname in tqdm.tqdm(fnames):
             if reader == 'eidos':

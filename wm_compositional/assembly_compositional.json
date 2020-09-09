@@ -50,14 +50,14 @@
         "function": "get_eidos_scorer"
       },
       "matches_fun": {
-        "function": "location_matches",
+        "function": "matches_compositional",
         "no_run": true
       },
-      "normalize_equivalences": true,
-      "normalize_opposites": true,
-      "normalize_ns": "WM",
       "ontology": {
-        "function": "load_world_ontology"
+        "function": "load_world_ontology",
+        "kwargs": {
+          "url": "https://raw.githubusercontent.com/WorldModelers/Ontologies/master/CompositionalOntology_v2.1_metadata.yml"
+        }
       },
       "return_toplevel": false,
       "poolsize": null,
