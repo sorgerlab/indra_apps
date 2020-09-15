@@ -52,16 +52,9 @@ def matches_compositional(stmt):
     return str(key)
 
 
-def make_display_name(comp_grounding):
-    entries = tuple(entry[0].split('/')[-1].replace('_', ' ')
-                    if entry else None for entry in comp_grounding)
-    entries_reversed = [entry for entry in entries[::-1] if entry is not None]
-    return ' of '.join(entries_reversed)
-
-
 if __name__ == '__main__':
     readers = ['eidos', 'sofia', 'hume', 'cwms']
-    grounding = 'flat'
+    grounding = 'compositional'
     stmts = []
     for reader in readers:
         version = reader_versions[grounding][reader]

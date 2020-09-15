@@ -71,8 +71,5 @@
       "poolsize": null,
       "run_refinement": false
     }
-  },
-  {
-    "function": "remove_raw_grounding"
   }
 ]
