@@ -8,6 +8,8 @@ from indra.ontology.world.ontology import WorldOntology
 from indra.pipeline import register_pipeline, AssemblyPipeline
 from indra_wm_service.assembly.operations import *
 from indra_wm_service.assembly.dart import process_reader_outputs
+from indra_wm_service import Corpus
+from indra.statements import stmts_to_json_file
 
 
 reader_versions = {'flat':
@@ -17,7 +19,7 @@ reader_versions = {'flat':
                         'eidos': '1.0.3'},
                    'compositional':
                        {'cwms': '2020.09.03',
-                        'hume': 'r2020_09_01',
+                        'hume': 'r2020_09_28_4',
                         'sofia': '1.1',
                         'eidos': '1.0.4'}}
 
@@ -82,6 +84,27 @@ if __name__ == '__main__':
                         prov = ev.annotations['provenance'][0]['document']
                         prov['@id'] = doc_id
             stmts += pp.statements
+        validate_grounding_format(stmts)
 
     ap = AssemblyPipeline.from_json_file('assembly_%s.json' % grounding)
     assembled_stmts = ap.run(stmts)
+
+    corpus_id = 'compositional_v2'
+    stmts_to_json_file(assembled_stmts, '%s.json' % corpus_id)
+
+    meta_data = {
+        'corpus_id': corpus_id,
+        'description': ('Assembly of 4 reader outputs with the '
+                        'compositional ontology (%s).' % ont_url),
+        'display_name': 'Compositional ontology assembly v1',
+        'readers': readers,
+        'assembly': {
+            'level': 'grounding',
+            'grounding_threshold': 0.6,
+        },
+        'num_statements': len(assembled_stmts),
+        'num_documents': 382
+    }
+    corpus = Corpus(corpus_id, statements=assembled_stmts,
+                    raw_statements=stmts,
+                    meta_data=meta_data)

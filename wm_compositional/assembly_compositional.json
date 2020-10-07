@@ -3,6 +3,9 @@
     "function": "get_expanded_events_influences"
   },
   {
+    "function": "validate_grounding_format"
+  },
+  {
     "function": "remove_namespaces",
     "args": [
       [
@@ -11,6 +14,9 @@
         "UN"
       ]
     ]
+  },
+  {
+    "function": "validate_grounding_format"
   },
   {
     "function": "compositional_grounding_filter",
@@ -34,6 +40,9 @@
         "wm_compositional/time/season"
       ]
     }
+  },
+  {
+    "function": "validate_grounding_format"
   },
   {
     "function": "filter_out_long_words",
@@ -83,5 +92,8 @@
   },
   {
     "function": "standardize_names_compositional"
+  },
+  {
+    "function": "add_flattened_grounding_compositional"
   }
 ]
