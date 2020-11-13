@@ -69,7 +69,7 @@
       },
       "return_toplevel": false,
       "poolsize": null,
-      "run_refinement": false
+      "run_refinement": true
     }
   }
 ]

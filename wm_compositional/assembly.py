@@ -84,19 +84,20 @@ if __name__ == '__main__':
                         prov = ev.annotations['provenance'][0]['document']
                         prov['@id'] = doc_id
             stmts += pp.statements
-        validate_grounding_format(stmts)
+        if grounding == 'compositional':
+            validate_grounding_format(stmts)
 
     ap = AssemblyPipeline.from_json_file('assembly_%s.json' % grounding)
     assembled_stmts = ap.run(stmts)
 
-    corpus_id = 'compositional_v2'
+    corpus_id = 'compositional_v4'
     stmts_to_json_file(assembled_stmts, '%s.json' % corpus_id)
 
     meta_data = {
         'corpus_id': corpus_id,
         'description': ('Assembly of 4 reader outputs with the '
                         'compositional ontology (%s).' % ont_url),
-        'display_name': 'Compositional ontology assembly v1',
+        'display_name': 'Compositional ontology assembly v3',
         'readers': readers,
         'assembly': {
             'level': 'grounding',
@@ -108,3 +109,4 @@ if __name__ == '__main__':
     corpus = Corpus(corpus_id, statements=assembled_stmts,
                     raw_statements=stmts,
                     meta_data=meta_data)
+    corpus.s3_put()
