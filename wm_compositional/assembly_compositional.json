@@ -19,6 +19,9 @@
     ]
   },
   {
+    "function": "print_grounding_stats"
+  },
+  {
     "function": "validate_grounding_format"
   },
   {
