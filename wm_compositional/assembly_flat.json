@@ -1,5 +1,8 @@
 [
   {
+    "function": "print_grounding_stats"
+  },
+  {
     "function": "get_expanded_events_influences"
   },
   {
@@ -22,10 +25,16 @@
     ]
   },
   {
+    "function": "print_grounding_stats"
+  },
+  {
     "function": "filter_grounded_only",
     "kwargs": {
       "score_threshold": 0.6
     }
+  },
+  {
+    "function": "print_grounding_stats"
   },
   {
     "function": "filter_out_long_words",
@@ -34,7 +43,13 @@
     ]
   },
   {
+    "function": "print_grounding_stats"
+  },
+  {
     "function": "filter_groundings"
+  },
+  {
+    "function": "print_grounding_stats"
   },
   {
     "function": "filter_context_date",
@@ -48,6 +63,9 @@
         ]
       }
     }
+  },
+  {
+    "function": "print_grounding_stats"
   },
   {
     "function": "set_positive_polarities"
@@ -71,5 +89,8 @@
       "poolsize": null,
       "run_refinement": true
     }
+  },
+  {
+    "function": "print_grounding_stats"
   }
 ]

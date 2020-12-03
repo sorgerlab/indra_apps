@@ -29,7 +29,6 @@ ont_url = 'https://github.com/WorldModelers/Ontologies/blob/'\
           'CompositionalOntology_v2.1_metadata.yml'
 
 
-@register_pipeline
 def concept_matches_compositional(concept):
     wm = concept.db_refs.get('WM')
     if not wm:
@@ -38,7 +37,6 @@ def concept_matches_compositional(concept):
     return wm_top
 
 
-@register_pipeline
 def matches_compositional(stmt):
     if isinstance(stmt, Influence):
         key = (stmt.__class__.__name__,
@@ -54,9 +52,28 @@ def matches_compositional(stmt):
     return str(key)
 
 
+@register_pipeline
+def print_grounding_stats(statements):
+    logger.info('-----------------------------------------')
+    logger.info('Number of Influences: %s' % len([s for s in statements if
+                                                  isinstance(s, Influence)]))
+    grs = []
+    gr_combos = []
+    for stmt in statements:
+        if isinstance(stmt, Influence):
+            for concept in [stmt.subj.concept, stmt.obj.concept]:
+                grs.append(concept.get_grounding())
+            gr_combos.append((stmt.subj.concept.get_grounding(),
+                              stmt.obj.concept.get_grounding()))
+    logger.info('Unique groundings: %d' % len(set(grs)))
+    logger.info('Unique combinations: %d' % len(set(gr_combos)))
+    logger.info('-----------------------------------------')
+    return statements
+
+
 if __name__ == '__main__':
     readers = ['eidos', 'sofia', 'hume', 'cwms']
-    grounding = 'compositional'
+    grounding = 'flat'
     stmts = []
     for reader in readers:
         version = reader_versions[grounding][reader]
@@ -67,13 +84,13 @@ if __name__ == '__main__':
         print('Found %d files for %s' % (len(fnames), reader))
         for fname in tqdm.tqdm(fnames):
             if reader == 'eidos':
-                pp = eidos.process_json_file(fname)
+                pp = eidos.process_json_file(fname, grounding_mode=grounding)
             elif reader == 'hume':
-                pp = hume.process_jsonld_file(fname)
+                pp = hume.process_jsonld_file(fname, grounding_mode=grounding)
             elif reader == 'cwms':
-                pp = cwms.process_ekb_file(fname)
+                pp = cwms.process_ekb_file(fname, grounding_mode=grounding)
             elif reader == 'sofia':
-                pp = sofia.process_json_file(fname)
+                pp = sofia.process_json_file(fname, grounding_mode=grounding)
             doc_id = os.path.basename(fname)[:32]
             for stmt in pp.statements:
                 for ev in stmt.evidence:
@@ -90,6 +107,7 @@ if __name__ == '__main__':
     ap = AssemblyPipeline.from_json_file('assembly_%s.json' % grounding)
     assembled_stmts = ap.run(stmts)
 
+    '''
     corpus_id = 'compositional_v4'
     stmts_to_json_file(assembled_stmts, '%s.json' % corpus_id)
 
@@ -110,3 +128,4 @@ if __name__ == '__main__':
                     raw_statements=stmts,
                     meta_data=meta_data)
     corpus.s3_put()
+    '''

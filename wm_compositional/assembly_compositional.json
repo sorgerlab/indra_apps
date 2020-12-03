@@ -1,5 +1,8 @@
 [
   {
+    "function": "print_grounding_stats"
+  },
+  {
     "function": "get_expanded_events_influences"
   },
   {
@@ -42,6 +45,9 @@
     }
   },
   {
+    "function": "print_grounding_stats"
+  },
+  {
     "function": "validate_grounding_format"
   },
   {
@@ -49,6 +55,9 @@
     "args": [
       10
     ]
+  },
+  {
+    "function": "print_grounding_stats"
   },
   {
     "function": "filter_groundings"
@@ -65,6 +74,9 @@
         ]
       }
     }
+  },
+  {
+    "function": "print_grounding_stats"
   },
   {
     "function": "set_positive_polarities"
@@ -91,9 +103,15 @@
     }
   },
   {
+    "function": "print_grounding_stats"
+  },
+  {
     "function": "standardize_names_compositional"
   },
   {
     "function": "add_flattened_grounding_compositional"
+  },
+  {
+    "function": "print_grounding_stats"
   }
 ]
