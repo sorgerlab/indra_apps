@@ -7,7 +7,7 @@ from indra.tools import assemble_corpus as ac
 from indra.ontology.world.ontology import WorldOntology
 from indra.pipeline import register_pipeline, AssemblyPipeline
 from indra_wm_service.assembly.operations import *
-from indra_wm_service.assembly.dart import process_reader_outputs
+from indra_wm_service.sources.dart import process_reader_outputs
 from indra_wm_service import Corpus
 from indra.statements import stmts_to_json_file
 
