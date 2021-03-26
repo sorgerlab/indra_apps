@@ -21,7 +21,7 @@ def filter_to_genes(df, genes):
     return df
 
 
-def download_statements(df, beliefs, ev_limit=5):
+def download_statements(df, beliefs, ev_limit=1):
     """Download the INDRA Statements corresponding to entries in a data frame.
     """
     all_stmts = []
@@ -42,17 +42,16 @@ def download_statements(df, beliefs, ev_limit=5):
 
 
 if __name__ == '__main__':
-    fnames = glob.glob('*20190919.csv')
+    fnames = glob.glob('data/*20190919.csv')
     all_genes = set()
     for fname in fnames:
         all_genes |= set(load_genes(fname))
     logger.info('Loaded a total of %d unique genes' % len(all_genes))
     all_genes = sorted(list(all_genes))
-    df = load_indra_df('db_dump_091719.pkl')
+    df = load_indra_df('/Users/ben/data/indra_db_sif_2021_01_26.pkl')
     df = filter_to_genes(df, all_genes)
-    with open('belief_dict_091719.pkl', 'rb') as fh:
-        beliefs = pickle.load(fh)
+    beliefs = {row.stmt_hash: row.belief for _, row in df.iterrows()}
     stmts = download_statements(df, beliefs)
     remap_go_ids(stmts)
-    with open('indra_stmts_20191029.pkl', 'wb') as fh:
+    with open('output/indra_stmts_20191029_v2.pkl', 'wb') as fh:
         pickle.dump(stmts, fh)
