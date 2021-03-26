@@ -1,3 +1,6 @@
+"""This script prepares outputs for the flat/compositional
+grounding evaluation before the March 2021 PI meeting."""
+
 import os
 import glob
 import tqdm
@@ -7,26 +10,26 @@ from indra.tools import assemble_corpus as ac
 from indra.ontology.world.ontology import WorldOntology
 from indra.pipeline import register_pipeline, AssemblyPipeline
 from indra_wm_service.assembly.operations import *
-from indra_wm_service.sources.dart import process_reader_outputs
+from indra_wm_service.sources.dart import process_reader_output
 from indra_wm_service import Corpus
 from indra.statements import stmts_to_json_file
 
 
 reader_versions = {'flat':
-                       {'cwms': '2020.08.28',
-                        'hume': 'r2020_08_19_4',
-                        'sofia': '1.1',
-                        'eidos': '1.0.3'},
+                       {'hume': 'r2021_03_15.7ddc68e6.flat.r1',
+                        'sofia': '1.2_flat',
+                        'eidos': '1.1.0'},
                    'compositional':
-                       {'cwms': '2020.09.03',
-                        'hume': 'r2020_09_28_4',
-                        'sofia': '1.1',
-                        'eidos': '1.0.4'}}
+                       {'hume': 'r2021_03_15.7ddc68e6.compositional.r1',
+                        'sofia': '1.2_compositional',
+                        'eidos': '1.1.0'}}
 
 
-ont_url = 'https://github.com/WorldModelers/Ontologies/blob/'\
-          '25690a258d02fdf1f35ce9140f7cd54145e2b30c/'\
-          'CompositionalOntology_v2.1_metadata.yml'
+flat_ont_url = 'https://raw.githubusercontent.com/WorldModelers/Ontologies/'\
+               'b181a2c5fb0f6f7228bce91bab0754eb4b112887/wm_flat_metadata.yml'
+comp_ont_url = 'https://raw.githubusercontent.com/WorldModelers/Ontologies/'\
+               'b181a2c5fb0f6f7228bce91bab0754eb4b112887/'\
+               'CompositionalOntology_v2.1_metadata.yml'
 
 
 def concept_matches_compositional(concept):
@@ -80,49 +83,37 @@ def print_grounding_stats(statements):
 
 
 if __name__ == '__main__':
-    readers = ['sofia', 'eidos', 'hume', 'cwms']
+    readers = ['sofia', 'eidos', 'hume']
     grounding = 'compositional'
     do_upload = False
     stmts = []
     for reader in readers:
         version = reader_versions[grounding][reader]
-        pattern = '*' if reader != 'sofia' \
-            else ('*_new' if grounding == 'compositional' else '*_old')
-        fnames = glob.glob('/Users/ben/data/dart/%s/%s/%s' % (reader, version,
-                                                              pattern))
+        fnames = glob.glob('/Users/ben/data/dart/%s/%s/*' % (reader, version))
         print('Found %d files for %s' % (len(fnames), reader))
         for fname in tqdm.tqdm(fnames):
-            if reader == 'eidos':
-                pp = eidos.process_json_file(fname, grounding_mode=grounding)
-            elif reader == 'hume':
-                pp = hume.process_jsonld_file(fname, grounding_mode=grounding)
-            elif reader == 'cwms':
-                pp = cwms.process_ekb_file(fname, grounding_mode=grounding)
-            elif reader == 'sofia':
-                pp = sofia.process_json_file(fname, grounding_mode=grounding)
             doc_id = os.path.basename(fname)[:32]
-            for stmt in pp.statements:
-                for ev in stmt.evidence:
-                    if 'provenance' not in ev.annotations:
-                        ev.annotations['provenance'] = [
-                            {'document': {'@id': doc_id}}]
-                    else:
-                        prov = ev.annotations['provenance'][0]['document']
-                        prov['@id'] = doc_id
-            stmts += pp.statements
+            with open(fname, 'r') as fh:
+                output = fh.read()
+            stmts += process_reader_output(reader,
+                                           reader_output_str=output,
+                                           doc_id=doc_id,
+                                           grounding_mode=grounding,
+                                           extract_filter=None)
         if grounding == 'compositional':
             validate_grounding_format(stmts)
 
-    ap = AssemblyPipeline.from_json_file('assembly_%s.json' % grounding)
+    ap = AssemblyPipeline.from_json_file('assembly_%s_v2.json' % grounding)
     assembled_stmts = ap.run(stmts)
 
     if do_upload:
         corpus_id = 'compositional_v4'
         stmts_to_json_file(assembled_stmts, '%s.json' % corpus_id)
-
+        ont_url = comp_ont_url if grounding == 'compositional' \
+            else flat_ont_url
         meta_data = {
             'corpus_id': corpus_id,
-            'description': ('Assembly of 4 reader outputs with the '
+            'description': ('Assembly of 3 reader outputs with the '
                             'compositional ontology (%s).' % ont_url),
             'display_name': 'Compositional ontology assembly v3',
             'readers': readers,

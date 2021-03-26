@@ -1,0 +1,99 @@
+[
+  {
+    "function": "print_grounding_stats"
+  },
+  {
+    "function": "get_expanded_events_influences"
+  },
+  {
+    "function": "remove_namespaces",
+    "args": [
+      [
+        "WHO",
+        "MITRE12",
+        "UN"
+      ]
+    ]
+  },
+  {
+    "function": "reground_stmts",
+    "args": [
+      {
+        "function": "load_world_ontology",
+        "kwargs": {
+          "url": "https://raw.githubusercontent.com/WorldModelers/Ontologies/b181a2c5fb0f6f7228bce91bab0754eb4b112887/wm_flat_metadata.yml"
+        }
+      },
+      "WM"
+    ]
+  },
+  {
+    "function": "print_grounding_stats"
+  },
+  {
+    "function": "filter_grounded_only",
+    "kwargs": {
+      "score_threshold": 0.6
+    }
+  },
+  {
+    "function": "print_grounding_stats"
+  },
+  {
+    "function": "filter_out_long_words",
+    "args": [
+      10
+    ]
+  },
+  {
+    "function": "print_grounding_stats"
+  },
+  {
+    "function": "filter_groundings"
+  },
+  {
+    "function": "print_grounding_stats"
+  },
+  {
+    "function": "filter_context_date",
+    "kwargs": {
+      "from_date": {
+        "function": "datetime",
+        "args": [
+          1900,
+          1,
+          1
+        ]
+      }
+    }
+  },
+  {
+    "function": "print_grounding_stats"
+  },
+  {
+    "function": "set_positive_polarities"
+  },
+  {
+    "function": "run_preassembly",
+    "kwargs": {
+      "belief_scorer": {
+        "function": "get_eidos_scorer"
+      },
+      "normalize_equivalences": true,
+      "normalize_opposites": true,
+      "normalize_ns": "WM",
+      "ontology": {
+        "function": "load_world_ontology",
+        "kwargs": {
+          "url": "https://raw.githubusercontent.com/WorldModelers/Ontologies/b181a2c5fb0f6f7228bce91bab0754eb4b112887/wm_flat_metadata.yml"
+        }
+      },
+      "return_toplevel": false,
+      "poolsize": null,
+      "run_refinement": true
+    }
+  },
+  {
+    "function": "print_grounding_stats"
+  }
+]
