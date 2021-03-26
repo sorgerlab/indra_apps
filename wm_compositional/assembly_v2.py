@@ -84,7 +84,7 @@ def print_grounding_stats(statements):
 
 if __name__ == '__main__':
     readers = ['sofia', 'eidos', 'hume']
-    grounding = 'flat'
+    grounding = 'compositional'
     do_upload = False
     stmts = []
     for reader in readers:
