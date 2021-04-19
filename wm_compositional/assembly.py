@@ -1,14 +1,15 @@
 import os
 import glob
 import tqdm
+import logging
 from indra.sources import eidos, hume, cwms, sofia
 from indra.statements import Influence, Event
 from indra.tools import assemble_corpus as ac
 from indra.ontology.world.ontology import WorldOntology
 from indra.pipeline import register_pipeline, AssemblyPipeline
-from indra_wm_service.assembly.operations import *
-from indra_wm_service.sources.dart import process_reader_outputs
-from indra_wm_service import Corpus
+from indra_world.assembly.operations import *
+from indra_world.sources.dart import process_reader_outputs
+from indra_world.corpus import Corpus
 from indra.statements import stmts_to_json_file
 
 
@@ -27,6 +28,8 @@ reader_versions = {'flat':
 ont_url = 'https://github.com/WorldModelers/Ontologies/blob/'\
           '25690a258d02fdf1f35ce9140f7cd54145e2b30c/'\
           'CompositionalOntology_v2.1_metadata.yml'
+
+logger = logging.getLogger('wm_compositional.assembly')
 
 
 def concept_matches_compositional(concept):
